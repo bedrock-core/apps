@@ -1,0 +1,96 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
+		"allowJs": false,
+		"checkJs": false,
+		"noEmit": true,
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@bedrock-core/ui-runtime",
+		"paths": {
+			"@bedrock-core/config": [
+				"./packages/config/src/index.ts"
+			],
+			"@bedrock-core/config/*": [
+				"./packages/config/src/*"
+			],
+			"@bedrock-core/guides": [
+				"./packages/guides/src/index.ts"
+			],
+			"@bedrock-core/guides/*": [
+				"./packages/guides/src/*"
+			],
+			"@bedrock-core/ui": [
+				"../ui/packages/ui-runtime/src/index.ts"
+			],
+			"@bedrock-core/ui/*": [
+				"../ui/packages/ui-runtime/src/*"
+			],
+			"@bedrock-core/ui/container": [
+				"../ui/packages/ui-runtime/src/hosts/chest/index.ts"
+			],
+			"@bedrock-core/ui/jsx-runtime": [
+				"../ui/packages/ui-runtime/src/jsx/jsx-runtime.ts"
+			],
+			"@bedrock-core/ui/jsx-dev-runtime": [
+				"../ui/packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+			],
+			"@bedrock-core/ui-runtime": [
+				"../ui/packages/ui-runtime/src/index.ts"
+			],
+			"@bedrock-core/ui-runtime/*": [
+				"../ui/packages/ui-runtime/src/*"
+			],
+			"@bedrock-core/ui-runtime/container": [
+				"../ui/packages/ui-runtime/src/hosts/chest/index.ts"
+			],
+			"@bedrock-core/navigation": [
+				"../ui/packages/navigation/src/index.ts"
+			],
+			"@bedrock-core/navigation/*": [
+				"../ui/packages/navigation/src/*"
+			],
+			"@bedrock-core/ore-styled": [
+				"../ui/packages/ore-styled/src/index.ts"
+			],
+			"@bedrock-core/ore-styled/*": [
+				"../ui/packages/ore-styled/src/*"
+			],
+			"@bedrock-core/flexbox": [
+				"../ui/packages/flexbox/src/index.ts"
+			],
+			"@bedrock-core/flexbox/*": [
+				"../ui/packages/flexbox/src/*"
+			],
+			"@bedrock-core/i18n": [
+				"../server/packages/i18n/src/index.ts"
+			],
+			"@bedrock-core/i18n/*": [
+				"../server/packages/i18n/src/*"
+			],
+			"@bedrock-core/server-runtime": [
+				"../server/packages/server-runtime/src/index.ts"
+			],
+			"@bedrock-core/sync": [
+				"../server/packages/sync/src/index.ts"
+			]
+		}
+	},
+	"exclude": [
+		"node_modules",
+		"**/node_modules"
+	]
+}

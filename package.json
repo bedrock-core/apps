@@ -1,0 +1,60 @@
+{
+	"name": "@bedrock-core/apps",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Applications built on the bedrock-core stack: the shared addon config UI and the in-game guides",
+	"keywords": [
+		"minecraft",
+		"bedrock",
+		"cross-addon",
+		"ui",
+		"framework"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
+	"type": "module",
+	"packageManager": "yarn@4.16.0",
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"build": "yarn workspaces foreach -ptA run build",
+		"lint": "yarn workspaces foreach -ptA run lint",
+		"test": "yarn workspaces foreach -ptA run test",
+		"coverage": "yarn workspaces foreach -ptA run coverage"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@eslint/json": "^1.2.0",
+		"@minecraft/server": "^2.9.0",
+		"@minecraft/server-ui": "^2.1.0",
+		"@minecraft/vanilla-data": "1.26.44",
+		"@stylistic/eslint-plugin": "^5.10.0",
+		"@vitest/coverage-v8": "^4.1.5",
+		"eslint": "^10.3.0",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.59.2",
+		"vitest": "^4.1.5"
+	},
+	"resolutions": {
+		"@bedrock-core/db": "portal:../server/packages/db",
+		"@bedrock-core/flexbox": "portal:../ui/packages/flexbox",
+		"@bedrock-core/i18n": "portal:../server/packages/i18n",
+		"@bedrock-core/navigation": "portal:../ui/packages/navigation",
+		"@bedrock-core/observable": "portal:../server/packages/observable",
+		"@bedrock-core/ore-styled": "portal:../ui/packages/ore-styled",
+		"@bedrock-core/server-runtime": "portal:../server/packages/server-runtime",
+		"@bedrock-core/sync": "portal:../server/packages/sync",
+		"@bedrock-core/ui-runtime": "portal:../ui/packages/ui-runtime",
+		"@minecraft/server": "2.9.0",
+		"@minecraft/server-ui": "2.1.0",
+		"@minecraft/vanilla-data": "1.26.44"
+	}
+}
