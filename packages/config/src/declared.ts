@@ -6,9 +6,6 @@
  * it — the page drawn from the manifest, the i18n bundle the filters
  * generated — so the build hands them over here and {@link ui} publishes
  * them the moment the addon is online. None of it is worth an addon repeating.
- *
- * Anything an addon names in `core.register()` itself is published by the
- * runtime, and wins: the build generates no page for an addon that named one.
  */
 import type { I18nBundle } from '@bedrock-core/i18n';
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
@@ -23,7 +20,7 @@ export interface DeclaredParts {
 
 let parts: DeclaredParts = {};
 
-/** Called by the module the ui-compile filter generates; see {@link DeclaredParts}. */
+/** Called by the module the ui-compiler filter generates; see {@link DeclaredParts}. */
 export function registerDeclared(declared: DeclaredParts): void {
   parts = { ...parts, ...declared };
 }
