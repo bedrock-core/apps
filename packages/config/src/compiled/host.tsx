@@ -7,6 +7,7 @@ import { FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE } from '../generated/framework.gene
 import { i18n } from '../i18n';
 import { PAGE_SLOTS } from './frame';
 import { AddonList, addonListElement, type AddonListMain, type AddonListModel, type AddonListRow } from './list.screen';
+import { pages } from '@bedrock-core/navigation';
 import { isAddonPageReference, type AddonPageReference } from './page.screen';
 
 /**
@@ -82,7 +83,7 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
     reference = FRAMEWORK_PAGE;
     main = { kind: 'page', slots: pageSlots(FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, false, true) };
   } else if (current !== undefined) {
-    const published = core.pages.of(current.id);
+    const published = pages(core).of(current.id);
     const hasConfig = core.config.of(current.id, { actorId: player.id }) !== undefined;
     const hasGuide = guideKeyFor(core, current.id) !== undefined;
 

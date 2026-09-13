@@ -21,7 +21,7 @@
  */
 import { world } from '@minecraft/server';
 import { addonReference, presentReference } from '@bedrock-core/ui-runtime';
-import { provideReferences } from '@bedrock-core/navigation';
+import { pages, provideReferences, screens } from '@bedrock-core/navigation';
 import type { Player } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { registerAddonCommands } from './commands/addon';
@@ -133,8 +133,9 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
  * until the addon's own modules have been evaluated. `ui()` is the first point
  * where the addon is online AND everything it ships is loaded.
  *
- * Whatever the addon named in `core.register()` was already published by the
- * runtime; nothing here is generated for a part the addon declared itself.
+ * Nothing here is generated for a part the addon declared itself — a `page` it
+ * named is announced as written, and an addon that published its own screens
+ * keeps them.
  */
 function publishDeclared(core: Runtime): void {
   const { page, translations } = declaredParts();
@@ -148,18 +149,17 @@ function publishDeclared(core: Runtime): void {
   // Every static screen this addon compiled, so any realm can show them: a guide's
   // pages, a menu, anything whose presses are links. Empty for an addon that
   // compiled none, which publishes an empty table rather than nothing.
-  core.screens.provide(addonReference(core.id));
-  announce(page, screen => core.pages.provide(addonPageReference(screen)));
+  screens(core).provide(addonReference(core.id));
+  announce(page, screen => pages(core).provide(addonPageReference(screen)));
 }
 
 /**
  * Announce one part, if there is one and the runtime has somewhere to put it.
  *
- * The registries an addon's runtime carries grow over time — `core.pages` is
- * newer than the first of them — and an addon is free to ship an older one than
- * the UI it mounts. A part with nowhere to go is simply not announced: the
- * addon keeps its screens, and the one thing that would have read it elsewhere
- * does without.
+ * An addon is free to ship an older `@bedrock-core/server-runtime` than the UI
+ * it mounts, and the registries a runtime carries grow over time. A part with
+ * nowhere to go is simply not announced: the addon keeps its screens, and the
+ * one thing that would have read it elsewhere does without.
  */
 function announce<T>(part: T | undefined, provide: (part: T) => void): void {
   if (part === undefined) {
@@ -424,7 +424,7 @@ async function prefetchScopeValues(
  *
  * Every screen the config UI needs is compiled into an addon's own pack from
  * what it declared, so reaching here means a pack that was built without the
- * ui-compile filter, or one built against a library that did not yet shape the
+ * ui-compiler filter, or one built against a library that did not yet shape the
  * screen this target wants. Either is a build to fix, which is why it is said
  * here rather than papered over.
  */
@@ -433,6 +433,6 @@ function missing(player: Player, target: OpenTarget): void {
     ? `${target.addonId} ${target.scope ?? 'config'}${target.path === undefined || target.path === '' ? '' : ` ${target.path}`}`
     : target.kind;
 
-  console.error(`[config] no compiled screen for ${what} — build this pack with the ui-compile filter`);
+  console.error(`[config] no compiled screen for ${what} — build this pack with the ui-compiler filter`);
   player.sendMessage({ translate: i18n.key($ => $.errors.notCompiled) });
 }

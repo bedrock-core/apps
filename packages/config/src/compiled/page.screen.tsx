@@ -82,7 +82,10 @@ export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon }: AddonPag
   <Embed frame={FRAME} area={MAIN}>
     {/* Short of the area on the right and below, so the track clears the card's border. */}
     <Scroll width={MAIN.width - 2} height={MAIN.height - 1} marginTop={1}>
-      <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.md} width={MAIN.width - 2 - 5}>
+      {/* Tighter above and below than at the sides: the card's own border reads as
+          the margin there, and the few texels it saves are what keeps a short page
+          inside the viewport — a page that fits draws no scrollbar at all. */}
+      <Panel flexDirection={'column'} gap={spacing.md} paddingTop={spacing.sm} paddingBottom={spacing.sm} paddingLeft={spacing.md} paddingRight={spacing.md} width={MAIN.width - 2 - 5}>
         {/* Absolute, so a page without a banner loses no room: an empty background draws nothing. */}
         <Panel position={'absolute'} left={0} right={0} top={0} aspectRatio={THUMBNAIL_RATIO} background={addon.thumbnail ?? ''} />
         <Panel justifyContent={'center'} alignItems={'center'}>

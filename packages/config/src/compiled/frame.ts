@@ -24,7 +24,7 @@ export const HEADER_HEIGHT = 23;
 /** Space between the header and the regions below it. */
 const HEADER_GAP = 1;
 
-export const SIDEBAR_WIDTH = 112;
+export const SIDEBAR_WIDTH = 120;
 const DIVIDER_WIDTH = 2;
 
 /** The main area, relative to the frame: where an addon's page draws. The sidebar and the divider share its rows. */

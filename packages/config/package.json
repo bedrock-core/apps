@@ -19,7 +19,7 @@
 			"url": "https://drav.dev"
 		}
 	],
-	"repository": "github:bedrock-core/ui",
+	"repository": "github:bedrock-core/apps",
 	"type": "module",
 	"main": "src/index.ts",
 	"types": "src/index.ts",
@@ -58,11 +58,11 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/guides": "workspace:*",
-		"@bedrock-core/i18n": "workspace:*",
-		"@bedrock-core/navigation": "workspace:*",
-		"@bedrock-core/ore-styled": "workspace:*",
+		"@bedrock-core/i18n": "*",
+		"@bedrock-core/navigation": "*",
+		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "^0.1.0",
-		"@bedrock-core/ui-runtime": "workspace:*",
+		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/server": "^2.9.0",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.5"

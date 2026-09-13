@@ -9,6 +9,7 @@
  * published.
  */
 import { isScreenReference, type ScreenReference } from '@bedrock-core/ui-runtime';
+import { screens } from '@bedrock-core/navigation';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { FRAMEWORK_SCREENS } from './generated/framework.generated';
 
@@ -41,7 +42,7 @@ export function screenReferenceFor(core: Runtime, key: string): ScreenReference 
     return own;
   }
 
-  const published = core.screens.find(key);
+  const published = screens(core).find(key);
 
   return isScreenReference(published) ? published : undefined;
 }
@@ -54,7 +55,7 @@ export function screenReferenceFor(core: Runtime, key: string): ScreenReference 
  * rather than assumed to be its id.
  */
 export function guideKeyFor(core: Runtime, addonId: string, options: { back?: boolean } = {}): string | undefined {
-  const namespace = addonId === FRAMEWORK_ADDON_ID ? FRAMEWORK_SCREENS.ns : core.screens.of(addonId)?.ns;
+  const namespace = addonId === FRAMEWORK_ADDON_ID ? FRAMEWORK_SCREENS.ns : screens(core).of(addonId)?.ns;
 
   if (namespace === undefined) {
     return undefined;

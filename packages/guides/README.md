@@ -14,7 +14,7 @@ packs/data/guides/<locale>/**.mdx
       ├─→ @bedrock-core/generated/guides    (manifest: sidebar tree, pages, prev/next)
       └─→ BP/scripts/guides/*.screen.tsx    (one screen module per page + the index)
                 │
-                ▼  this package, through the ui-compile filter
+                ▼  this package, through the ui-compiler filter
       one compiled screen per page, navigated by key
 ```
 
@@ -60,7 +60,7 @@ openGuide('my_addon', player, { manifest });
 
 It is a `navigate()` to the guide's index key (`<addon>:guide_home`), which is also how another
 addon opens it — `navigate('my_addon:guide_home', player)` — from the reference this addon
-published with `core.register({ screens: uiReference() })`. The header's × closes the whole UI via
+published with `screens(core).provide(uiReference())`. The header's × closes the whole UI via
 `useExit`, and a guide belonging to a realm that is not running this addon's script is walked from
 its references, drawn by the pack every client already holds.
 
