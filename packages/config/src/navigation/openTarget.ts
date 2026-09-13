@@ -1,16 +1,15 @@
 /**
  * Turning a fired command into a place in the UI.
  *
- * This runs on the ELECTED HOST, not necessarily on the realm whose command was typed, and that
- * is the whole point: what a request means is a decision the newest installed runtime gets to
- * make. Adding a scope, renaming one, fixing a mis-parse — all of it ships by installing one
- * updated addon, without touching the realm the player typed into.
+ * A command names a place in the UI; an {@link OpenTarget} is that place as data. Separating the
+ * two is what lets a target travel: the realm that shows a screen is the one whose pack holds it,
+ * so a target crosses to its owner over RPC and is read there.
  *
- * Arguments arrive as raw wire values and are read defensively for the same reason. The commands
- * in this version send only the addon id, but a scope and target are still understood: a caller
- * reaching {@link openTargetFrom} directly can deep-link, and a future command shape gets to
- * without the host having to change. Absent values arrive as `undefined` or (after JSON transit)
- * `null`, and {@link stringAt} flattens both.
+ * Arguments arrive as raw wire values and are read defensively. The commands in this version send
+ * only the addon id, but a scope and target are still understood: a caller reaching
+ * {@link openTargetFrom} directly can deep-link, and a realm forwarding a richer command shape is
+ * understood without this one changing. Absent values arrive as `undefined` or (after JSON
+ * transit) `null`, and {@link stringAt} flattens both.
  */
 import type { DisplayText } from '@bedrock-core/i18n';
 import { CONFIG_SCOPES, type ConfigScope } from '../types';
@@ -24,10 +23,25 @@ import { CONFIG_SCOPES, type ConfigScope } from '../types';
  */
 export type OpenCommand = 'list' | 'guide' | 'config';
 
-/** Where a command wants the UI to open. */
+/**
+ * Where the UI should open.
+ *
+ * Plain data, and read by whichever realm ends up showing it: a target is what
+ * travels when one addon asks another to draw a screen out of its own pack, and
+ * what comes back the other way when the player leaves it.
+ */
 export type OpenTarget
   = | { kind: 'list'; addonId?: string }
     | { kind: 'guide'; addonId?: string }
+    | {
+      /**
+       * One compiled screen, by the key it is navigated under. What a
+       * cross-realm `navigate()` carries — the screen lives in its owner's
+       * pack, so the key is the whole of what the owner needs.
+       */
+      kind: 'screen';
+      key: string;
+    }
     | {
       kind: 'config';
       addonId?: string;
@@ -44,6 +58,27 @@ export type OpenTarget
       /** The trail the screen is titled with, as references, when the caller already built it. */
       trail?: readonly DisplayText[];
     };
+
+/**
+ * Narrow a target that arrived from somewhere this build does not control — off the wire, or out
+ * of a return address another realm set.
+ *
+ * The kind, and the one field with nothing behind it if it is missing: a `screen` target is
+ * nothing but its key, while every other kind is optional fields the screens already read
+ * defensively. A kind this build has never heard of is refused rather than guessed at — the
+ * realm that sent it is newer, and guessing would open the wrong place.
+ */
+export function isOpenTarget(value: unknown): value is OpenTarget {
+  if (typeof value !== 'object' || value === null || !('kind' in value)) { return false; }
+
+  const { kind } = value;
+
+  if (kind === 'screen') {
+    return 'key' in value && typeof value.key === 'string';
+  }
+
+  return kind === 'list' || kind === 'guide' || kind === 'config';
+}
 
 /** Positional read that tolerates `undefined`, `null`, and anything non-string. */
 function stringAt(args: readonly unknown[], index: number): string | undefined {

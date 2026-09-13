@@ -9,20 +9,19 @@ const { key } = i18n;
  * One item of a list, on a screen that belongs to no addon in particular.
  *
  * A shaped screen is compiled into the pack of the addon whose schema it was
- * written for — and the realm that draws config is the ELECTED HOST, which is
- * usually somebody else. The host has every shaped screen of its own and none
- * of the addon's it is drawing, so a list item had nowhere to be edited.
+ * written for, so a realm holds every shaped screen of its own and none of an
+ * addon whose build predates the shaping. These two are what covers that: the
+ * fallback, compiled into every addon by the same setting that bakes the rest
+ * of this package's screens.
  *
- * These two are the fallback, compiled into every addon by the same setting
- * that bakes the rest of this package's screens. An item is one field and
- * nothing else, so a generic one costs nothing a shaped one would have saved:
- * the trail already says which list this is, the value travels per present, and
- * a dropdown's options travel with it — the engine reads those off the modal
- * row rather than off the bake.
+ * An item is one field and nothing else, so a generic one costs nothing a
+ * shaped one would have saved: the trail already says which list this is, the
+ * value travels per present, and a dropdown's options travel with it — the
+ * engine reads those off the modal row rather than off the bake.
  *
  * Two screens rather than one with both fields: which control an item wants is
- * decided by the LIST, not by the moment, so the host picks the screen and
- * neither carries a field it will not draw.
+ * decided by the LIST, not by the moment, so the realm drawing it picks the
+ * screen and neither carries a field it will not draw.
  */
 
 /** A list of free strings: the item is typed. */

@@ -7,7 +7,7 @@ import { AddonList, type AddonListModel } from '../list.screen';
 import { MenuList, type MenuListModel } from '../menu.screen';
 import { ScopePicker, type PickerModel } from '../picker.screen';
 import { configScreens, type LeafModel, type LeafProps } from '../shaped';
-import type { ConfigDefinition } from '@bedrock-core/server-runtime';
+import type { ConfigDefinition } from '../../server';
 
 /**
  * A compiled screen is baked from a render with no model, and shown with

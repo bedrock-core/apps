@@ -3,11 +3,11 @@
  *
  * This is the side of the config domain that leaves the process: every `get`/`patch` here is an
  * RPC round trip to the owning addon, which authorizes it against the `actorId` the accessor was
- * built with. Screens obtain that accessor from `core.config.of(addonId, { actorId })` — passing
+ * built with. Screens obtain that accessor from `configOf(core).of(addonId, { actorId })` — passing
  * the viewing player, never omitting it.
  */
 import { DimensionTypes, world } from '@minecraft/server';
-import type { RemoteConfigAccessor } from '@bedrock-core/server-runtime';
+import type { RemoteConfigAccessor } from '../server';
 import type { ConfigScope } from '../types';
 import { isRecord } from './nested';
 

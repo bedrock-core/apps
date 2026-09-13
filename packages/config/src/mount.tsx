@@ -2,34 +2,39 @@
 /**
  * Getting a fired command onto a screen.
  *
- * ## Why the realm that receives a command rarely renders it
+ * ## A screen is drawn by the addon whose pack holds it
  *
- * Each addon owns its own commands, in its own namespace (see `commands/addon.ts`), so nothing
- * is contended and nothing is frozen. But a world can easily hold an addon built a year ago and
- * one built today, and the old one's bundled copy of THIS package cannot be patched — its
- * author may never ship again.
+ * Each addon owns its own commands, in its own namespace (see `commands/addon.ts`), and each
+ * addon's build compiles its own screens into its own pack. Most of the UI is in every pack —
+ * the addon list, the scope pickers, the menus are the same layouts everywhere — so whichever
+ * realm a command is typed into draws them itself.
  *
- * So receiving a command and answering it are split. The realm whose command was typed does the
- * smallest possible slice: identify the player, name the request, forward the raw arguments.
- * Every real decision — what the arguments mean, which screen opens, how anything renders —
- * happens on the elected host, which by construction runs the newest `@bedrock-core/server-runtime`
- * installed. Installing one up-to-date addon therefore fixes the shared UI for every addon in
- * the world, including the ones typed into an ancient realm.
+ * What is NOT in every pack is what one addon declared: a config section shaped for its schema
+ * exists in exactly one bundle, and the script that answers a press on that addon's page runs in
+ * exactly one realm. Reaching either means asking that addon's realm, which is the single
+ * {@link UiRpc} call below, and leaving it again means going back to the realm that asked — the
+ * `returnTo` the request carries.
  *
- * Everything below {@link dispatch} is host-side. Keep it that way when extending this: logic
- * added before the forward is logic that can never be fixed in the field.
+ * So anything ABOUT another addon travels rather than being drawn here. Its row in the addon list
+ * hands the player over to it ({@link openAddonList}), and its page, its config and its guide are
+ * all reached inside its own realm from there.
+ *
+ * Everything a request may be asked to interpret arrives as plain data ({@link OpenTarget}), so
+ * a realm running an older copy of this package understands as much of it as it knows and falls
+ * back for the rest.
  */
 import { world } from '@minecraft/server';
-import { addonReference, presentReference } from '@bedrock-core/ui-runtime';
-import { pages, provideReferences, screens } from '@bedrock-core/navigation';
+import { addonReference, presentReference, screenOwner, screenForKey, handOff } from '@bedrock-core/ui-runtime';
+import { currentKey, navigate, pages, provideReferences, screens, setReturnAddress } from '@bedrock-core/navigation';
 import type { Player } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
+import { configOf } from './server';
 import { registerAddonCommands } from './commands/addon';
-import { openTargetFrom, type OpenCommand, type OpenTarget } from './navigation/openTarget';
+import { isOpenTarget, openTargetFrom, type OpenCommand, type OpenTarget } from './navigation/openTarget';
 import { clampTarget } from './permissions';
 import { getScopeValues } from './config/values';
-import { guideKeyFor, screenReferenceFor } from './frameworkGuide';
-import { canPresentAddonList, presentAddonList } from './compiled/host';
+import { FRAMEWORK_ADDON_ID, guideKeyFor, screenReferenceFor } from './frameworkGuide';
+import { canPresentAddonList, presentAddonList, type AddonListOpeners } from './compiled/host';
 import {
   canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel,
   presentEntityRoster, presentListEditor, presentScopePicker, presentShapedEditor,
@@ -37,37 +42,37 @@ import {
 } from './compiled/configHost';
 import { i18n } from './i18n';
 import { declaredParts } from './declared';
-import type { DisplayText } from '@bedrock-core/i18n';
 import { addonPageReference } from './compiled/page.screen';
 import { shapedScreen } from './compiled/shaped';
 
-/** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
-interface OpenRequest {
-  playerId: string;
-  command: OpenCommand;
-  args: (string | undefined)[];
+/** The realm a player came from, and what it shows them when they leave what it asked for. */
+interface ReturnTo {
+  /** The addon whose realm asked. */
+  realm: string;
+  /** What that realm is asked to show again. */
+  target: OpenTarget;
 }
 
 /**
- * A section the host asks its owner to draw: the screen a section is drawn on is
- * baked into the pack of the addon that declared it, and the realm drawing
- * config is the elected host — usually somebody else.
+ * One realm asking another to show a player a place in the UI.
+ *
+ * The target is plain data and the receiving realm interprets it, so what is asked for and what
+ * is drawn stay separable: an addon whose build shaped a screen draws that screen, and neither
+ * side has to hold the other's layouts.
  */
-interface SectionRequest {
+interface ShowRequest {
   playerId: string;
-  scope: SectionTarget['scope'];
-  scopeId?: string;
-  path: string;
-  trail: DisplayText[];
+  target: OpenTarget;
+  /** Where a `back()` that runs out of screens in the receiving realm returns to. */
+  returnTo?: ReturnTo;
 }
 
 /**
- * The RPC surface every realm that mounts this UI serves, since any of them may win the
- * election later. Namespaced like the runtime's own methods (`core:config.*`).
+ * The RPC surface every realm that mounts this UI serves. Namespaced like the runtime's own
+ * methods (`core:config.*`).
  */
-interface HostUiRpc {
-  'core:ui.open': (params: OpenRequest) => boolean;
-  'core:ui.section': (params: SectionRequest) => boolean;
+interface UiRpc {
+  'core:ui.show': (params: ShowRequest) => boolean;
 }
 
 /** Options for {@link ui}. */
@@ -90,32 +95,31 @@ export interface UiOptions {
 /**
  * Mount the shared config UI on a runtime. Call once, after `core.register()`.
  *
- * Registers this addon's commands and serves the open RPC, so this realm can render on behalf
- * of another whenever it wins the host election.
+ * Registers this addon's commands and serves the show RPC, so another realm can reach the
+ * screens this addon's build compiled into its own pack.
  */
 export function ui(core: Runtime, options: UiOptions = {}): void {
-  core.rpc.serve<HostUiRpc>({
-    'core:ui.open': ({ playerId, command, args }) => {
+  core.rpc.serve<UiRpc>({
+    'core:ui.show': ({ playerId, target, returnTo }) => {
       const player = world.getPlayers().find(candidate => candidate.id === playerId);
 
-      // Disconnected between typing the command and this request. Nothing the caller can do
+      // Disconnected between the request being sent and it arriving. Nothing the caller can do
       // about it, so reject rather than drop it silently.
-      if (!player) { throw new Error(`core:ui.open: player '${playerId}' is not in the world`); }
+      if (!player) { throw new Error(`core:ui.show: player '${playerId}' is not in the world`); }
 
-      void openUi(core, player, openTargetFrom(command, args));
+      // Recorded before the screen is shown, so a back press out of the bottom of THIS realm's
+      // stack lands back where the player came from. A request carrying no address clears
+      // whatever the last one left, which is what a player arriving fresh should find.
+      setReturnAddress(player.id, returnTo);
 
-      return true;
-    },
-    'core:ui.section': ({ playerId, scope, scopeId, path, trail }) => {
-      const player = world.getPlayers().find(candidate => candidate.id === playerId);
-
-      if (!player) { throw new Error(`core:ui.section: player '${playerId}' is not in the world`); }
-
-      void openUi(core, player, { kind: 'config', addonId: core.id, scope, ...scopeId === undefined ? {} : { scopeId }, path, trail });
+      void openUi(core, player, target);
 
       return true;
     },
   });
+
+  // A player who left takes their place with them; nothing else prunes this map.
+  world.afterEvents.playerLeave.subscribe(({ playerId }) => { showing.delete(playerId); });
 
   if (options.commands !== false) {
     registerAddonCommands(core, (player, command, args) => { dispatch(core, player, command, args); });
@@ -141,9 +145,30 @@ function publishDeclared(core: Runtime): void {
   const { page, translations } = declaredParts();
 
   // How a key this bundle did not compile resolves from here on: the framework's
-  // own screens, then whatever any addon published. Installed once, so every
-  // `navigate()` and every `<Link>` in this realm reaches another addon's screens.
-  provideReferences(key => screenReferenceFor(core, key));
+  // own screens, then whatever any addon published, then the owning realm itself
+  // for a screen no reference can describe. Installed once, so every `navigate()`
+  // and every `<Link>` in this realm reaches another addon's screens.
+  provideReferences(key => screenReferenceFor(core, key), {
+    ask: (owner, key, player): boolean => {
+      // Only a realm that is online can draw anything, and asking ourselves for a key we have
+      // already failed to resolve is a loop. Either way the caller says "no such screen"
+      // immediately rather than spending an RPC timeout on the same answer.
+      if (owner === core.id || core.registry.get(owner) === undefined) { return false; }
+
+      void askRealm(core, owner, player, { kind: 'screen', key }, returnTo(core, player));
+
+      return true;
+    },
+    sendBack: (address, player): boolean => {
+      // The target is this package's own, sent by whichever realm asked — read back through
+      // the same narrowing as anything else off the wire, since that realm may be older.
+      if (!isOpenTarget(address.target)) { return false; }
+
+      void askRealm(core, address.realm, player, address.target);
+
+      return true;
+    },
+  });
 
   announce(translations, bundle => core.translations.provide(bundle));
   // Every static screen this addon compiled, so any realm can show them: a guide's
@@ -173,25 +198,98 @@ function announce<T>(part: T | undefined, provide: (part: T) => void): void {
   }
 }
 
-/**
- * Send a fired command to whoever should answer it: this realm when it is the host, otherwise
- * the elected host over RPC.
- */
+/** Send a fired command to the realm that can draw what it asked for. */
 function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (string | undefined)[]): void {
-  if (core.host.isHost) {
-    void openUi(core, player, openTargetFrom(command, args));
+  void show(core, player, openTargetFrom(command, args));
+}
 
-    return;
+/**
+ * Show a target wherever it can be drawn: here, or in the realm of the addon that owns it.
+ *
+ * Most of the UI is compiled into EVERY pack — the addon list, the scope pickers, the menus are
+ * the same layouts wherever they are drawn — so drawing a screen is rarely the question; being
+ * able to answer its presses is. A `screen` target this bundle did not compile is handed to the
+ * addon that did, since its component exists in exactly one bundle. {@link presentShaped} applies
+ * the same rule to a config section, and {@link openAddonList} to a row for another addon.
+ */
+function show(core: Runtime, player: Player, target: OpenTarget): Promise<void> {
+  if (target.kind === 'screen' && screenForKey(target.key) === undefined) {
+    const owner = screenOwner(target.key);
+
+    if (owner !== undefined && owner !== core.id) {
+      return askRealm(core, owner, player, target, returnTo(core, player)).then(() => undefined);
+    }
   }
 
-  core.rpc.typed<HostUiRpc>(core.host.hostId)['core:ui.open']({ playerId: player.id, command, args })
-    .catch((error: unknown) => {
-      // The host went down between the election and the request, or is wedged. Our own copy
-      // may be older and buggier, but showing it beats the command doing nothing.
-      console.warn(`[config] host '${core.host.hostId}' did not answer ${command} (${String(error)}) - opening locally`);
+  return openUi(core, player, target);
+}
 
-      void openUi(core, player, openTargetFrom(command, args));
+/**
+ * Ask another addon's realm to show a target, and say where the player goes when they leave it.
+ *
+ * Never rejects, and resolves whether that realm took the player: the owner being absent, wedged
+ * or too old to understand the target all read the same from here — nothing was drawn — and there
+ * is no second realm to try, so what a caller can still do is put the player somewhere itself.
+ */
+function askRealm(
+  core: Runtime,
+  owner: string,
+  player: Player,
+  target: OpenTarget,
+  from?: ReturnTo,
+): Promise<boolean> {
+  return core.rpc.typed<UiRpc>(owner)['core:ui.show']({
+    playerId: player.id,
+    target,
+    ...from === undefined ? {} : { returnTo: from },
+  })
+    // An older realm that answers with nothing served the request the only way it knew; only an
+    // explicit no means the player is still standing where they were.
+    .then((shown) => {
+      // The other realm is drawing now, so this one stops: its component tree,
+      // its input lock and its stack go, and the forms on screen stay — closing
+      // them would close the one that realm just opened.
+      if (shown !== false) {
+        showing.delete(player.id);
+        handOff(player);
+      }
+
+      return shown !== false;
+    })
+    .catch((error: unknown) => {
+      console.warn(`[config] '${owner}' did not show ${describeTarget(target)}: ${String(error)}`);
+
+      return false;
     });
+}
+
+/**
+ * The return address this realm sends with a request: who it is, and what it has on screen.
+ *
+ * Undefined when the player is not on a compiled screen here — a command opens the UI from
+ * nothing, and there is no step to come back to.
+ */
+/**
+ * Where each player is, as the target that put them there.
+ *
+ * A screen drawn from a MODEL — the addon list, a menu level, a roster — cannot
+ * be returned to by its key: rendering its component with no model draws the
+ * empty shape of it. The target that opened it is the thing that can be sent
+ * back across a realm, so the funnel every such screen goes through records it.
+ */
+const showing = new Map<string, OpenTarget>();
+
+function returnTo(core: Runtime, player: Player): ReturnTo | undefined {
+  const place = showing.get(player.id);
+
+  if (place !== undefined) {
+    return { realm: core.id, target: place };
+  }
+
+  // A screen this realm reached by key alone: no model, so the key IS the place.
+  const key = currentKey(player);
+
+  return key === undefined ? undefined : { realm: core.id, target: { kind: 'screen', key } };
 }
 
 /**
@@ -209,14 +307,17 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
  *
  * The target picks the screen: `{ kind: 'list' }` for the addon browser, `{ kind: 'guide' }` for
  * an addon's guide, `{ kind: 'config' }` for its settings — each optionally naming an `addonId`,
- * and config additionally a `scope` and `scopeId` to open straight into one scope.
+ * and config additionally a `scope` and `scopeId` to open straight into one scope. `{ kind:
+ * 'screen' }` names one compiled screen by its key, which is what a navigation between addons
+ * carries.
  *
  * `clampTarget` still applies, so a non-operator cannot reach past their own player scope even
  * if you pass a target that says otherwise. Values for a deep-linked config scope are fetched
  * before the first render.
  *
- * Renders in THIS realm. A typed command forwards to the elected host so the world's newest UI
- * answers it; a direct call is your own code and renders your own copy.
+ * Renders in THIS realm, except for what belongs to another addon: a screen compiled into its
+ * pack, a section shaped for its schema, or its row in the addon list. Those it is asked to show,
+ * and the player comes back here when it cannot.
  *
  * Returns a promise that settles once the screen is handed to the renderer. From a ui-runtime
  * presser, RETURN it — `onPress={() => openUi(core, player, target)}` — so the handoff lands
@@ -225,6 +326,18 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
  */
 export function openUi(core: Runtime, player: Player, target: OpenTarget): Promise<void> {
   const clamped = clampTarget(target, player, core);
+
+  // What this realm is showing, for a return address another realm can use.
+  showing.set(player.id, clamped);
+
+  // One compiled screen by its key. Shown in PLACE of whatever the player is on: arriving here
+  // is either a press in this realm, which already put the screen it left behind them, or
+  // another realm handing the player over, which sent the way back as the return address.
+  if (clamped.kind === 'screen') {
+    navigate(clamped.key, player, { replace: true });
+
+    return Promise.resolve();
+  }
 
   // A compiled guide is walked from its screens' references with native forms — no app
   // rendered, nothing of the owning addon's script involved. Returned like the render below:
@@ -246,16 +359,11 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
     }
   }
 
-  // The compiled list when this build carries it: the sidebar is the host's,
-  // the page for each addon is the addon's own, drawn from its pack. Its
-  // presses come back here, so what they open is decided in one place.
+  // The compiled list when this build carries it: the sidebar is the registry's,
+  // the page beside it one addon's own. Its presses come back here, so what they
+  // open is decided in one place.
   if (clamped.kind === 'list' && canPresentAddonList()) {
-    presentAddonList(core, player, {
-      config: (addonId): Promise<void> => openUi(core, player, { kind: 'config', addonId }),
-      guide: (addonId): Promise<void> => openUi(core, player, { kind: 'guide', addonId }),
-    }, clamped.addonId);
-
-    return Promise.resolve();
+    return openAddonList(core, player, clamped.addonId);
   }
 
   // The compiled scope picker when this build carries it. Its rows come back
@@ -321,6 +429,69 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
   });
 }
 
+/**
+ * The addon list, with one addon selected.
+ *
+ * The roster is every registered addon, wherever its screens live — that is the registry, and the
+ * sidebar shows all of it. The page beside it is not: a page's presses are answered by the realm
+ * that declared the page, so the only pages drawn here are the ones this realm can answer,
+ * {@link isLocalRow}.
+ *
+ * A selection for any other addon is therefore a handoff rather than a re-render. That addon's
+ * realm shows the same list out of its own pack with itself selected, and everything the player
+ * reaches from there — its page, its config, its guide — is local to it. What travels with the
+ * request is the whole of the stack the player has here, which is this one screen.
+ *
+ * The row is drawn here when that realm does not answer: registered but running without this UI
+ * mounted, or wedged. A page whose presses have nobody to answer them is still the addon, and a
+ * row that does nothing is not.
+ *
+ * @param from - The row this list has selected as the player leaves it, which is what a handoff
+ *   sends as the way back. Absent when the list is being opened rather than left.
+ */
+function openAddonList(core: Runtime, player: Player, addonId: string | undefined, from?: string): Promise<void> {
+  const draw = (id: string | undefined): void => {
+    const openers: AddonListOpeners = {
+      config: (selected): Promise<void> => openUi(core, player, { kind: 'config', addonId: selected }),
+      guide: (selected): Promise<void> => openUi(core, player, { kind: 'guide', addonId: selected }),
+      select: (next, current): Promise<void> => openAddonList(core, player, next, current),
+    };
+
+    presentAddonList(core, player, openers, id);
+  };
+
+  if (addonId === undefined || isLocalRow(core, addonId)) {
+    draw(addonId);
+
+    return Promise.resolve();
+  }
+
+  return askRealm(core, addonId, player, { kind: 'list', addonId }, homeList(core, from))
+    .then((shown) => {
+      if (!shown) { draw(addonId); }
+    });
+}
+
+/**
+ * Whether the page for a row is one this realm answers presses on: this addon's own, and the
+ * framework's, which every build of this package carries and nothing registers a realm for.
+ */
+const isLocalRow = (core: Runtime, addonId: string): boolean =>
+  addonId === core.id || addonId === FRAMEWORK_ADDON_ID;
+
+/**
+ * Where a `back()` out of the bottom of another realm's stack returns to: this list, as the player
+ * left it.
+ *
+ * The place, not the screen's key. The list is shown from a model this realm builds out of the
+ * registry, so it is asked for the way a command asks for it; its key alone would draw the layout
+ * with no rows in it.
+ */
+const homeList = (core: Runtime, selected?: string): ReturnTo => ({
+  realm: core.id,
+  target: { kind: 'list', ...selected === undefined ? {} : { addonId: selected } },
+});
+
 /** Where a level of the tree sends its presses: every one comes back through `openUi`. */
 const levelOpeners = (core: Runtime, player: Player): SectionListOpeners => ({
   editor: ({ addonId, scope, entityId, path, trail }): Promise<void> =>
@@ -342,7 +513,7 @@ function presentShaped(core: Runtime, player: Player, target: OpenTarget, values
   const path = target.path ?? '';
   const trail = target.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path });
 
-  const accessor = core.config.of(addonId, { actorId: player.id });
+  const accessor = configOf(core).of(addonId, { actorId: player.id });
 
   const level: SectionTarget = { addonId, scope, entityId: scopeId, path, trail };
   const openers = levelOpeners(core, player);
@@ -351,10 +522,13 @@ function presentShaped(core: Runtime, player: Player, target: OpenTarget, values
   // one: the owner draws it out of its own pack, and every press that leaves
   // it goes back through the same funnel as any other.
   if (shapedScreen(scope, path) === undefined && addonId !== core.id) {
-    core.rpc.typed<HostUiRpc>(addonId)['core:ui.section']({ playerId: player.id, scope, ...scopeId === undefined ? {} : { scopeId }, path, trail: [...trail] })
-      .catch((error: unknown) => {
-        console.warn(`[config] '${addonId}' did not draw its ${scope} section '${path}' (${String(error)})`);
-      });
+    void askRealm(
+      core,
+      addonId,
+      player,
+      { kind: 'config', addonId, scope, ...scopeId === undefined ? {} : { scopeId }, path, trail: [...trail] },
+      returnTo(core, player),
+    );
 
     return true;
   }
@@ -406,7 +580,7 @@ async function prefetchScopeValues(
   // Only the server scope identifies itself; the other two need to know which entity.
   if (target.scope !== 'server' && target.scopeId === undefined) { return undefined; }
 
-  const accessor = core.config.of(target.addonId, { actorId: player.id });
+  const accessor = configOf(core).of(target.addonId, { actorId: player.id });
 
   if (!accessor) { return undefined; }
 
@@ -429,10 +603,17 @@ async function prefetchScopeValues(
  * here rather than papered over.
  */
 function missing(player: Player, target: OpenTarget): void {
-  const what = target.kind === 'config' && target.addonId !== undefined
-    ? `${target.addonId} ${target.scope ?? 'config'}${target.path === undefined || target.path === '' ? '' : ` ${target.path}`}`
-    : target.kind;
-
-  console.error(`[config] no compiled screen for ${what} — build this pack with the ui-compiler filter`);
+  console.error(`[config] no compiled screen for ${describeTarget(target)} — build this pack with the ui-compiler filter`);
   player.sendMessage({ translate: i18n.key($ => $.errors.notCompiled) });
+}
+
+/** What a target asked for, for a log line. */
+function describeTarget(target: OpenTarget): string {
+  if (target.kind === 'screen') { return target.key; }
+
+  if (target.kind !== 'config' || target.addonId === undefined) { return target.kind; }
+
+  const where = target.path === undefined || target.path === '' ? '' : ` ${target.path}`;
+
+  return `${target.addonId} ${target.scope ?? 'config'}${where}`;
 }

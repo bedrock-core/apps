@@ -22,8 +22,8 @@ export const guideKeyOf = (namespace: string): string => `${namespace}:guide_hom
 /**
  * The same index with a back control on it.
  *
- * A screen's shape is frozen, so the index a HOST opened — and which the reader has to be able to
- * leave — is a second compiled screen rather than a state of the first. Its back press closes the
+ * A screen's shape is frozen, so the index opened from somewhere the reader has to be able to get
+ * back to is a second compiled screen rather than a state of the first. Its back press closes the
  * form, which ends the walk and hands the reader back to whatever opened the guide.
  */
 export const guideBackKeyOf = (namespace: string): string => `${namespace}:guide_home_back`;

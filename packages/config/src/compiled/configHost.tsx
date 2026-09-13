@@ -1,6 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { DisplayText } from '@bedrock-core/i18n';
-import type { RemoteConfigAccessor, Runtime } from '@bedrock-core/server-runtime';
+import type { Runtime } from '@bedrock-core/server-runtime';
+import { configOf, type RemoteConfigAccessor } from '../server';
 import { compiledTitleOf, render } from '@bedrock-core/ui-runtime';
 import { world, type Player } from '@minecraft/server';
 import {
@@ -89,7 +90,7 @@ export function trailOf(core: Runtime, player: Player, place: ConfigPlace): Disp
     trail.push(entityNameOf(scope, entityId));
   }
 
-  const accessor = core.config.of(addonId, { actorId: player.id });
+  const accessor = configOf(core).of(addonId, { actorId: player.id });
 
   if (accessor === undefined || path === '') {
     return trail;
@@ -123,7 +124,7 @@ export function trailText(core: Runtime, player: Player, trail: readonly Display
 
 export function presentScopePicker(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners): void {
   const { t } = translationsFor(core.translations.forPlayer(player));
-  const accessor = core.config.of(addonId, { actorId: player.id });
+  const accessor = configOf(core).of(addonId, { actorId: player.id });
   const addonName = addonNameOf(core, addonId);
   // Declared by the addon AND permitted for this player, in the order the rows draw.
   const schema = accessor === undefined ? {} : getScopedSchema(accessor);
@@ -200,7 +201,7 @@ export function presentEntityRoster(
   page = 1,
 ): void {
   const { addonId, scope } = target;
-  const accessor = core.config.of(addonId, { actorId: player.id });
+  const accessor = configOf(core).of(addonId, { actorId: player.id });
   const trail = trailOf(core, player, { addonId, scope });
   const roster = accessor !== undefined && allowedScopes(player).includes(scope)
     ? getRoster(scope).filter(entry => isOperator(player) || entry.id === player.id)
@@ -265,7 +266,7 @@ export interface SectionListOpeners {
 
 /** The level of the tree `target` names, or undefined when the schema no longer holds it. */
 const sectionAt = (core: Runtime, player: Player, target: SectionTarget): SectionNode | undefined => {
-  const accessor = core.config.of(target.addonId, { actorId: player.id });
+  const accessor = configOf(core).of(target.addonId, { actorId: player.id });
 
   if (accessor === undefined) {
     return undefined;
@@ -376,7 +377,7 @@ export function presentListEditor(
   openers: SectionListOpeners,
   page = 1,
 ): void {
-  const accessor = core.config.of(target.addonId, { actorId: player.id });
+  const accessor = configOf(core).of(target.addonId, { actorId: player.id });
   const entry = accessor === undefined ? undefined : filterScope(getScopedSchema(accessor), target.scope)[target.key];
 
   if (accessor === undefined || entry === undefined) {

@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { DisplayText } from '@bedrock-core/i18n';
-import type { ConfigDefinition, ConfigScopeName } from '@bedrock-core/server-runtime';
-import { flattenGroups, flattenSchema } from '@bedrock-core/server-runtime';
+import type { ConfigDefinition, ConfigScopeName } from '../server';
+import { flattenGroups, flattenSchema } from '../server';
 import { Card, Checkbox, Divider, Dropdown, Form, Header, Input, Radio, Slider, theme, type TrailSegment } from '@bedrock-core/ore-styled';
 import { Panel, Scroll, Text, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';

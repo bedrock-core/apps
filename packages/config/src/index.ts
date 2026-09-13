@@ -3,11 +3,12 @@
  * addon mounts with one line:
  *
  * ```ts
- * import { config, core } from '@bedrock-core/server-runtime';
+ * import { core } from '@bedrock-core/server-runtime';
  * import { ui } from '@bedrock-core/config';
+ * import { config } from '@bedrock-core/config/server';
  *
  * core.register({ manifest, config: config(definition) });
- * ui(core);                         // registers the commands and joins the host election
+ * ui(core);                         // registers the commands and serves the show RPC
  * ```
  *
  * The addon declares; the build does the rest. The ui-compiler filter reads that
@@ -18,12 +19,14 @@
  *
  * This file is the package's public surface and nothing else. The map:
  *
- * - `mount.tsx` — `ui()`, command dispatch, and the host-side open funnel where the
- *   permission clamp lives. Start there; it explains why the command owner does so little.
+ * - `mount.tsx` — `ui()`, command dispatch, and the open funnel where the permission clamp
+ *   lives. Start there; it explains which realm draws what.
  * - `commands/` — the per-addon commands generated from the config schema, with their
  *   argument parsing and scope targeting.
  * - `navigation/` — turning a fired command into a route stack (`openTarget` → `initialState`).
  * - `config/` — the config domain: schema shaping, value transport over RPC, flat/nested paths.
+ * - `server/` — the config subsystem itself, at `@bedrock-core/config/server`: an addon that wants
+ *   settings and no screens imports that subpath alone, and never reaches this file.
  * - `permissions.ts` — who may reach which scope, the caller-side half of authorization.
  * - `screens/` — the screens themselves, reading everything through `context.ts`.
  */
@@ -34,6 +37,7 @@ export { registerAddonCommands } from './commands/addon';
 export type { OpenCallback } from './commands/addon';
 export { allowedScopes, clampTarget, guideAudienceFor, isOperator } from './permissions';
 
+export { isOpenTarget } from './navigation/openTarget';
 export type { OpenCommand, OpenTarget } from './navigation/openTarget';
 export { CONFIG_SCOPES } from './types';
 export type { ConfigScope, EntrySchema, FlatSchemaLike } from './types';

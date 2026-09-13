@@ -35,6 +35,10 @@
 		"./compiled": {
 			"types": "./src/compiled/index.ts",
 			"import": "./src/compiled/index.ts"
+		},
+		"./server": {
+			"types": "./src/server/index.ts",
+			"import": "./src/server/index.ts"
 		}
 	},
 	"bedrockCore": {
@@ -48,6 +52,7 @@
 	},
 	"files": [
 		"src",
+		"!src/**/__type-tests__/**",
 		"tsconfig.json"
 	],
 	"sideEffects": false,
@@ -57,22 +62,28 @@
 		"lint": "eslint ."
 	},
 	"devDependencies": {
+		"@bedrock-core/db": "*",
 		"@bedrock-core/guides": "workspace:*",
 		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "*",
+		"@bedrock-core/observable": "*",
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "^0.1.0",
+		"@bedrock-core/sync": "*",
 		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/server": "^2.9.0",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.5"
 	},
 	"peerDependencies": {
+		"@bedrock-core/db": "*",
 		"@bedrock-core/guides": "*",
 		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "*",
+		"@bedrock-core/observable": "*",
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/sync": "*",
 		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/server": "*"
 	}

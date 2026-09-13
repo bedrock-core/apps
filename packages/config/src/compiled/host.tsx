@@ -1,5 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
+import { configOf } from '../server';
 import { closeUi, compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, presentReference, render } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
 import { FRAMEWORK_ADDON_ID, guideKeyFor, screenReferenceFor } from '../frameworkGuide';
@@ -13,18 +14,34 @@ import { isAddonPageReference, type AddonPageReference } from './page.screen';
 /**
  * Showing the compiled addon list for one player.
  *
- * The host fills the sidebar from the registry, resolved for the player's
- * language, and the main area from what the selected addon published: its
- * page reference — the values its reserved entries are shown with and where
- * each press leads — with the marker written first so the addon's pack
- * draws the page. A selection is a re-render with another model; a press
- * on the page is answered here, since the page's own script is never run.
+ * The sidebar is the registry, resolved for the player's language: every
+ * registered addon has a row, wherever its screens live. The main area beside
+ * it is one addon's page — its reference, the values its reserved entries are
+ * shown with and where each press leads, with the marker written first so the
+ * page is drawn from the pack it was baked in — and the page shown there is
+ * the one this realm can answer presses on: its own, or the framework's, which
+ * every build of this package carries.
+ *
+ * So a row for another addon is not a re-render. It is a handoff: that addon's
+ * realm shows this same list out of its own pack with itself selected, and
+ * everything reached from there — its page, its config, its guide — is local
+ * to it. Where a selection is drawn is decided by whoever wired
+ * {@link AddonListOpeners.select}; a press on the page is answered here, since
+ * the page's own script is never run.
  */
 
 /** Where the list sends a press it does not answer itself. */
 export interface AddonListOpeners {
   config: (addonId: string) => unknown | Promise<unknown>;
   guide: (addonId: string) => unknown | Promise<unknown>;
+  /**
+   * Show the list with `addonId` selected, wherever that has to happen: here for
+   * a page this realm can answer, and in that addon's own realm for any other.
+   *
+   * `current` is the row this list has selected now — what the player is leaving,
+   * and so where a `back()` out of the bottom of another realm returns to.
+   */
+  select: (addonId: string, current?: string) => unknown | Promise<unknown>;
 }
 
 /** Whether this build carries the compiled list. */
@@ -73,8 +90,6 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
   const selected = found < 0 ? 0 : found;
   const current = rows[selected];
 
-  const show = (id: string | undefined): void => { presentAddonList(core, player, openers, id); };
-
   let main: AddonListMain = { kind: 'fallback' };
   let reference: AddonPageReference | undefined;
 
@@ -83,8 +98,12 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
     reference = FRAMEWORK_PAGE;
     main = { kind: 'page', slots: pageSlots(FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, false, true) };
   } else if (current !== undefined) {
+    // The page of the addon selected, from what it published. That is this
+    // addon's own, and an addon whose realm could not take the player when
+    // their row was pressed: a page shown here for a row this realm cannot
+    // answer presses on is better than a row that does nothing.
     const published = pages(core).of(current.id);
-    const hasConfig = core.config.of(current.id, { actorId: player.id }) !== undefined;
+    const hasConfig = configOf(core).of(current.id, { actorId: player.id }) !== undefined;
     const hasGuide = guideKeyFor(core, current.id) !== undefined;
 
     if (isAddonPageReference(published)) {
@@ -98,7 +117,13 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
     rows,
     selected,
     main,
-    onSelect: (index: number): void => { show(rows[index]?.id); },
+    onSelect: (index: number): unknown => {
+      const row = rows[index];
+
+      // A row is an ADDON, not a page: which realm draws what it selects is the
+      // openers' to decide, and a foreign one is answered by its own realm.
+      return row === undefined ? undefined : openers.select(row.id, current?.id);
+    },
     onSlot: (slot: number): unknown => {
       const target = reference?.targets[slot - 1] ?? null;
       const addonId = current?.id;

@@ -4,7 +4,7 @@
  * Everything here is pure and operates on the schema alone — no values, no RPC, no world.
  */
 import type { ConfigScope, EntrySchema, FlatGroupsLike, FlatSchemaLike } from '../types';
-import type { RemoteConfigAccessor } from '@bedrock-core/server-runtime';
+import type { RemoteConfigAccessor } from '../server';
 import { buildNestedPatch } from './nested';
 
 /** Get the scoped schema from an accessor (has scope prefixes on every key). */
@@ -15,10 +15,10 @@ export function getScopedSchema(accessor: RemoteConfigAccessor): FlatSchemaLike 
 /**
  * Group display strings from an accessor, keyed the same way the schema is.
  *
- * Read defensively even though the property is typed: `@bedrock-core/server-runtime` is a PEER
- * dependency, so a consumer can pair this package with a runtime published before the group key
- * existed, and the getter would simply not be there. `{}` then means what it means for an addon
- * that names no group — fall back to the key-derived titles.
+ * Read defensively even though the property is typed: a remote accessor may have been built from
+ * a schema announced by an addon shipping an older `@bedrock-core/config`, published before the
+ * group key existed, and the getter would simply not be there. `{}` then means what it means for
+ * an addon that names no group — fall back to the key-derived titles.
  */
 export function getScopedGroups(accessor: RemoteConfigAccessor): FlatGroupsLike {
   return accessor.scopedGroups ?? {};

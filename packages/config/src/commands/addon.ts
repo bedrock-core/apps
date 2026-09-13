@@ -83,6 +83,7 @@ import type {
   Player,
 } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
+import { configOf } from '../server';
 import { CONFIG_SCOPES, type EntrySchema, type FlatSchemaLike } from '../types';
 import { buildNestedPatch } from '../config/nested';
 import { translationsFor, type CoreT } from '../i18n';
@@ -107,8 +108,8 @@ const VERBS = ['get', 'set', 'add', 'remove'] as const;
  * Register this addon's commands. Called by `ui(core)`.
  *
  * `onOpen` receives the request completely uninterpreted — who ran it, which kind, and the raw
- * arguments — because interpreting it is the elected host's job, not this realm's. The host
- * runs the newest installed code, so what an argument means stays patchable in the field.
+ * arguments — because a command names a place in the UI and turning that into a target is one
+ * decision, made in one place (`navigation/openTarget.ts`).
  *
  * Enums are registered before the commands that reference them, and each group independently:
  * a registration cannot be undone, so a rejected enum has to leave its commands unregistered
@@ -147,7 +148,7 @@ function registerAll(reg: CustomCommandRegistry, core: Runtime, ns: string, onOp
     );
   });
 
-  const local = core.config.local;
+  const local = configOf(core).local;
   const scoped: ScopedSchemas | undefined = local && {
     server: local.server.schema,
     dimension: local.dimension.schema,
@@ -229,8 +230,8 @@ function runOwn(
   key: string | undefined,
   value: string | undefined,
 ): CustomCommandResult {
-  // The runner is the one being answered, so the reply is built in their language — the host
-  // realm's published bundle carries this package's strings for every locale the world ships.
+  // The runner is the one being answered, so the reply is built in their language — the chained
+  // resolver carries this package's strings for every locale the world ships.
   const { t } = translationsFor(core.translations.forPlayer(player));
 
   if (key === undefined) {

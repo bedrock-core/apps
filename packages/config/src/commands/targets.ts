@@ -5,12 +5,13 @@
  * or a player name — so it is resolved once, into a value discriminated by scope. After that the
  * read and write helpers never have to sniff what they were handed.
  *
- * These reach the addon's OWN config through `core.config.local`, not over RPC: the command is
+ * These reach the addon's OWN config through `configOf(core).local`, not over RPC: the command is
  * registered by the realm that owns the data, so there is nobody to ask.
  */
 import { Player, world } from '@minecraft/server';
 import type { Dimension } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
+import { configOf } from '../server';
 import type { ConfigScope } from '../types';
 import { asRecord, getNestedValue } from '../config/nested';
 
@@ -61,7 +62,7 @@ export function resolveTarget(
 
 /** Effective values for a resolved target, as the nested object the dot-paths index into. */
 export function read(core: Runtime, target: ResolvedTarget): Record<string, unknown> {
-  const local = core.config.local;
+  const local = configOf(core).local;
 
   if (!local) { return {}; }
 
@@ -73,7 +74,7 @@ export function read(core: Runtime, target: ResolvedTarget): Record<string, unkn
 }
 
 export function write(core: Runtime, target: ResolvedTarget, patch: Record<string, unknown>): void {
-  const local = core.config.local;
+  const local = configOf(core).local;
 
   if (!local) { return; }
 

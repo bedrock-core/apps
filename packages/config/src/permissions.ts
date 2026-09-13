@@ -32,7 +32,7 @@ export function isOperator(player: Player): boolean {
 /**
  * Which slice of a guide this player reads. Guides gate pages with `access: op`, and the
  * renderer takes the audience rather than a `Player` — `@bedrock-core/guides` never imports
- * `@minecraft/server`, so deciding this is the host's job.
+ * `@minecraft/server`, so deciding this belongs to the realm showing the guide.
  */
 export function guideAudienceFor(player: Player): GuideAudience {
   return isOperator(player) ? 'op' : 'player';

@@ -1,4 +1,4 @@
-import type { ConfigDefinition } from '@bedrock-core/server-runtime';
+import type { ConfigDefinition } from '../../server';
 import { describe, expect, it } from 'vitest';
 import { configScreens, leafName } from '../shaped';
 
