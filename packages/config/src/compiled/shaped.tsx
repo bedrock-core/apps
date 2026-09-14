@@ -2,9 +2,9 @@
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { ConfigDefinition, ConfigScopeName } from '../server';
 import { flattenGroups, flattenSchema } from '../server';
-import { Card, Checkbox, Divider, Dropdown, Form, Header, Input, Slider, theme, ToggleButtonGroup, type TrailSegment } from '@bedrock-core/ore-styled';
-import { Panel, Scroll, Text, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
-import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';
+import { Card, Checkbox, Divider, Dropdown, fieldLabel, Form, Header, Input, Slider, theme, Toggle, ToggleButtonGroup, ToggleButtons, type TrailSegment } from '@bedrock-core/ore-styled';
+import { Panel, Scroll, Text, useTranslationResolver, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
+import { BODY, FRAME, HEADER_HEIGHT, TRAIL_LENGTHS } from './frame';
 import { i18n } from '../i18n';
 import { buildSectionTree, formEntries, listEntries, type SectionNode } from '../config/schema';
 import { resolveInitialValue } from '../config/nested';
@@ -71,21 +71,6 @@ export interface LeafProps {
  * they diverged, silently and in the player's saved config.
  */
 
-/**
- * How many segments the gauge beside a number is cut into.
- *
- * The bar is DRAWN, not a native slider. A `slider` control validates the step
- * it is handed against the form field behind it, and every compiled screen in
- * every installed addon is laid out whenever any form opens — so a slider
- * routinely meets a form that has no field for it and asserts. A panel
- * validates nothing, so a row of them is safe on any screen.
- *
- * Each segment is shown or hidden per player, which is a carried boolean the
- * compiled screen already knows how to send. Twenty is finer than the eye reads
- * on a bar this wide and costs twenty bits.
- */
-const GAUGE_SEGMENTS = 20;
-
 /** Choices a segmented control stays readable at; beyond it, a dropdown. */
 const SEGMENTS_MAX = 3;
 
@@ -98,16 +83,67 @@ const SEGMENTS_MAX = 3;
  */
 export const OPTION_OF = '#';
 
+const { spacing } = theme.tokens;
+
+/** A setting's purpose, under its caption, in the muted grey. */
+function Note({ text }: { text: string }): JSX.Element {
+  // A key the resolver knows passes through untouched: a colour prefix would
+  // stop it resolving. The same rule the caption follows.
+  const resolver = useTranslationResolver();
+  const literal = resolver?.(text) === undefined;
+
+  // Full width, and told to WRAP at it: a width alone makes a long note end in an
+  // ellipsis, which is the engine's default for text that does not fit its box.
+  return <Text scale={NOTE_SCALE} width={'100%'} wordBreak={'break-word'}>{literal ? `${theme.tokens.fontColor.muted}${text}` : text}</Text>;
+}
+
+const note = (description: string | undefined): JSX.Element[] =>
+  (description === undefined || description === '' ? [] : [<Note text={description} />]);
+
+/** A note is drawn a step under the caption's size, so the two lines read as caption and aside. */
+const NOTE_SCALE = 0.8;
+
+/** Space between a caption and its note, and between a caption and the box under it. */
+const NOTE_GAP = spacing.sm;
+
+/** Space a slider's track keeps below the lines above it, which the thumb overhangs. */
+const TRACK_GAP = spacing.sm;
+
 /**
- * One setting, as the control it is.
+ * Room the engine's live value takes at the end of a slider's caption row.
  *
- * Every label is baked: the screen was built for this entry, so nothing about
- * it has to travel. Only the value does, and it rides the modal row the engine
- * reads anyway.
+ * The value is the engine's own text, drawn by the slider cell at its top-right
+ * corner — so the cell spans the whole block, caption to track, and the caption
+ * row leaves this much clear beside it. Wide enough for a five-digit number.
+ */
+const VALUE_WIDTH = 40;
+
+/** One setting's rows, stacked: caption, then what follows it. */
+const stacked = (parts: JSX.Element[]): JSX.Element => (
+  <Panel flexDirection={'column'} gap={NOTE_GAP} width={'100%'}>{parts}</Panel>
+);
+
+/**
+ * One setting, as the control it is, in the settings-row shape the engine's
+ * own screens use (`settings_common.option_generic`): the caption on the
+ * left, what it is for beneath, and the control under the two.
+ *
+ *  - A boolean is a switch pinned to the right of its caption, the note
+ *    under the caption.
+ *  - A number is a slider under its caption and note, the live value at the
+ *    caption's far end, drawn by the engine's own row.
+ *  - A short choice is a row of segments; a long one a dropdown. A set of
+ *    choices is the same pair, with each segment answering on its own. The
+ *    note follows the control.
+ *  - Text is a box under its caption, the note under the box.
+ *
+ * Every caption is baked: the screen was built for this entry, so nothing
+ * about it has to travel. Only the value does, and it rides the modal row the
+ * engine reads anyway.
  */
 const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): JSX.Element => {
   const name = key;
-  const label = entry.label;
+  const caption = fieldLabel(entry.label, true);
   // A scope's values are the stored DOCUMENT, nested as the schema is, while a
   // field is named by its flat path — so the value is read down the path rather
   // than looked up whole, and falls back to what the schema declares.
@@ -115,7 +151,14 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
   const offered = model?.options?.[key];
 
   if (entry.type === 'boolean') {
-    return <Checkbox name={name} label={label} defaultValue={Boolean(current ?? entry.default)} />;
+    return (
+      <Panel flexDirection={'row'} alignItems={'center'} justifyContent={'space-between'} gap={spacing.sm} width={'100%'}>
+        <Panel flexDirection={'column'} gap={NOTE_GAP} width={0} flexGrow={1} flexShrink={1}>
+          {[caption, ...note(entry.description)]}
+        </Panel>
+        <Toggle name={name} defaultValue={Boolean(current ?? entry.default)} />
+      </Panel>
+    );
   }
 
   if (entry.type === 'number') {
@@ -123,24 +166,45 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
     const max = entry.max ?? 100;
     const value = typeof current === 'number' ? current : Number(current ?? entry.default ?? 0);
 
-    return <Slider name={name} label={label} min={min} max={max} step={entry.step} defaultValue={value} />;
+    // The slider covers the whole block, so the engine's value lands beside
+    // the caption; the flow below only reserves the track's room at the bottom,
+    // where the cell draws it.
+    return (
+      <Panel flexDirection={'column'} gap={TRACK_GAP} width={'100%'}>
+        <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.sm} width={'100%'}>
+          <Panel flexDirection={'column'} gap={NOTE_GAP} width={0} flexGrow={1} flexShrink={1}>
+            {[caption, ...note(entry.description)]}
+          </Panel>
+          <Panel width={VALUE_WIDTH} />
+        </Panel>
+        {/* The track's room is the thumb's height: the cell draws the track centred on it. */}
+        <Panel width={'100%'} height={theme.components.slider.thumb.height} />
+        <Slider name={name} min={min} max={max} step={entry.step} defaultValue={value} position={'absolute'} left={0} top={0} width={'100%'} height={'100%'} />
+      </Panel>
+    );
   }
 
   if (entry.type === 'multiselect' && entry.options !== undefined) {
     const chosen = new Set(Array.isArray(current) ? current.map(String) : []);
+    // Every option answers on its own, under the setting's key and its place
+    // in the set, and the host folds them back into the array.
+    const segments = entry.options.map((option, index) => ({
+      name: `${key}${OPTION_OF}${String(index)}`,
+      label: option,
+      on: chosen.has(option),
+    }));
 
-    // Every option on screen at once, which is what makes this a multiselect
-    // rather than a list: the whole set is known at declaration, so there is
-    // nothing to add and nothing to page through.
-    const boxes: JSX.Element[] = entry.options.map((option, index) => (
-      <Checkbox name={`${key}${OPTION_OF}${String(index)}`} label={option} defaultValue={chosen.has(option)} />
-    ));
-
-    return (
-      <Panel flexDirection={'column'} gap={spacing.xs}>
-        {[<Text>{label}</Text>, ...boxes]}
-      </Panel>
-    );
+    return stacked([
+      caption,
+      segments.length <= SEGMENTS_MAX
+        ? <ToggleButtons options={segments} />
+        : (
+            <Panel flexDirection={'column'} gap={spacing.xs} width={'100%'}>
+              {segments.map(segment => <Checkbox name={segment.name} label={segment.label} defaultValue={segment.on} />)}
+            </Panel>
+          ),
+      ...note(entry.description),
+    ]);
   }
 
   if (entry.type === 'enum' && entry.options !== undefined) {
@@ -150,24 +214,33 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
     // A short list is a segmented control: every choice visible, one press to
     // change it, and no popup to open. A long one stays a dropdown, where
     // side-by-side segments would be unreadable.
-    return options.length <= SEGMENTS_MAX
-      ? <ToggleButtonGroup name={name} label={label} options={options.map(option => ({ value: option, label: option }))} defaultValue={selected} />
-      : <Dropdown name={name} label={label} options={options} defaultValue={selected} />;
+    return stacked([
+      caption,
+      options.length <= SEGMENTS_MAX
+        ? <ToggleButtonGroup name={name} options={options.map(option => ({ value: option, label: option }))} defaultValue={selected} width={'100%'} />
+        : <Dropdown name={name} options={options} defaultValue={selected} width={'100%'} />,
+      ...note(entry.description),
+    ]);
   }
 
-  return <Input name={name} label={label} defaultValue={String(current ?? entry.default ?? '')} />;
+  return stacked([
+    caption,
+    <Input name={name} defaultValue={String(current ?? entry.default ?? '')} width={'100%'} />,
+    ...note(entry.description),
+  ]);
 };
-
-const { spacing } = theme.tokens;
 
 /** Space between the card's border and the regions inside it. */
 const BODY_PADDING = spacing.sm;
 
+/** A row's inset on both sides, inside the dividers, which span the card's width. */
+const ROW_PADDING_X = spacing.lg;
+
+/** Space a row keeps above and below itself, either side of the divider that follows it. */
+const ROW_PADDING_Y = spacing.sm + spacing.xs;
+
 /** The submit button's row, held below the scroll rather than scrolling with it. */
 const ACTION_HEIGHT = 20;
-
-/** The scrollbar's own column, which the content leaves clear. */
-const TRACK_WIDTH = 5;
 
 /** The primary button's word, white: a key takes no colour code, so the colour is the label's. */
 const SAVE_COLOR: readonly [number, number, number] = [1, 1, 1];
@@ -186,9 +259,10 @@ const trailSegments = (trail: readonly DisplayText[]): TrailSegment[] =>
  * there is none left over for a close.
  */
 export const sheet = (model: LeafModel | undefined, rows: readonly [string, EntrySchema][]): JSX.Element => {
-  const bodyHeight = FRAME.height - HEADER_HEIGHT - 2 * PADDING;
-  const contentWidth = FRAME.width - 2 * PADDING - 2 * BODY_PADDING;
-  const scrollHeight = bodyHeight - 2 * BODY_PADDING - ACTION_HEIGHT - spacing.xs;
+  // The scroll spans the body, border to border, so the dividers do; the
+  // rows inset themselves. The save button keeps the body's inset.
+  const contentWidth = BODY.width - 2 * BODY_PADDING;
+  const scrollHeight = BODY.height - BODY_PADDING - ACTION_HEIGHT - spacing.xs;
 
   return (
     <Form
@@ -197,18 +271,22 @@ export const sheet = (model: LeafModel | undefined, rows: readonly [string, Entr
     >
       <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
         <Header segments={trailSegments(model?.trail ?? [])} cancel={i18n.key($ => $.action.cancel)} height={HEADER_HEIGHT} />
-        <Panel flexDirection={'column'} gap={spacing.xs} padding={BODY_PADDING} height={bodyHeight}>
-          <Scroll width={contentWidth} height={scrollHeight}>
-            <Panel flexDirection={'column'} gap={spacing.sm} width={contentWidth - TRACK_WIDTH}>
+        <Panel flexDirection={'column'} gap={spacing.xs} paddingBottom={BODY_PADDING} marginLeft={BODY.x} width={BODY.width} height={BODY.height}>
+          <Scroll width={BODY.width} height={scrollHeight}>
+            {/* The whole column the region shows: the layout leaves the track's
+                width beside it only when the content actually scrolls. */}
+            <Panel flexDirection={'column'} width={'100%'}>
               {rows.map(([key, entry]): JSX.Element => (
-                <Panel flexDirection={'column'} gap={spacing.xs}>
-                  {rowFor(key, entry, model)}
+                <Panel flexDirection={'column'} gap={ROW_PADDING_Y} paddingTop={ROW_PADDING_Y}>
+                  <Panel width={'100%'} paddingLeft={ROW_PADDING_X} paddingRight={ROW_PADDING_X}>
+                    {rowFor(key, entry, model)}
+                  </Panel>
                   <Divider />
                 </Panel>
               ))}
             </Panel>
           </Scroll>
-          <Form.Button type={'submit'} width={contentWidth} height={ACTION_HEIGHT} justifyContent={'center'} alignItems={'center'}>
+          <Form.Button type={'submit'} width={contentWidth} height={ACTION_HEIGHT} marginLeft={BODY_PADDING} justifyContent={'center'} alignItems={'center'}>
             <Text color={SAVE_COLOR}>{i18n.key($ => $.action.save)}</Text>
           </Form.Button>
         </Panel>

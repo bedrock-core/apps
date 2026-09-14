@@ -54,6 +54,26 @@ export function buildNestedPatch(flat: Record<string, unknown>): Record<string, 
   return result;
 }
 
+/**
+ * A nested document with a patch laid over it: objects merge down, anything
+ * else in the patch replaces what was there. What a screen keeps as its values
+ * after writing one setting, so the next present reads the setting the way the
+ * transport will hand it back — down its path, not under a flat key.
+ */
+export function mergeNested(base: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...base };
+
+  for (const [key, value] of Object.entries(patch)) {
+    const existing = result[key];
+
+    result[key] = isRecord(existing) && isRecord(value) && !Array.isArray(value)
+      ? mergeNested(existing, value)
+      : value;
+  }
+
+  return result;
+}
+
 /** Resolve the initial value for a flat key from nested current values. */
 export function resolveInitialValue(
   flatKey: string,

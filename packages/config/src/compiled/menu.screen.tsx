@@ -3,7 +3,7 @@ import { Card, Header, Button as OreButton, theme, type TrailSegment } from '@be
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Button, Image, List, Panel, Screen, Scroll, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
-import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';
+import { BODY, FRAME, HEADER_HEIGHT, TRAIL_LENGTHS } from './frame';
 
 /**
  * A screen of rows that lead somewhere, as ONE compiled screen: the entity
@@ -87,18 +87,15 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
   const { rows, page, pages } = model;
   const isEmpty = rows.length === 0;
   const paged = pages > 1;
-  const bodyHeight = FRAME.height - HEADER_HEIGHT - 2 * PADDING;
-  const listHeight = bodyHeight - 2 * BODY_PADDING - PAGER_HEIGHT - spacing.xs;
-  const rowWidth = FRAME.width - 2 * PADDING - 2 * BODY_PADDING - 5;
-  // The reset button takes a square off the row's right, whether or not the row shows one.
-  const faceWidth = rowWidth - ROW_HEIGHT - spacing.xs;
+  const listHeight = BODY.height - 2 * BODY_PADDING - PAGER_HEIGHT - spacing.xs;
+  const contentWidth = BODY.width - 2 * BODY_PADDING;
 
   return (
     <Screen>
       <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
         <Header segments={trailSegments(model.trail)} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} height={HEADER_HEIGHT} />
-        <Panel flexDirection={'column'} gap={spacing.xs} padding={BODY_PADDING} height={bodyHeight}>
-          <Scroll width={rowWidth + 5} height={listHeight}>
+        <Panel flexDirection={'column'} gap={spacing.xs} padding={BODY_PADDING} marginLeft={BODY.x} width={BODY.width} height={BODY.height}>
+          <Scroll width={contentWidth} height={listHeight}>
             <List
               max={MENU_ROWS}
               items={rows}
@@ -108,66 +105,73 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
 
                 // A row's text is live, and a button's children bake into its
                 // face, so the face is a button beneath and the text a panel above it.
+                // The face takes whatever width the list gives the row, less one
+                // square: the slot beside it is the row's whether or not this row
+                // shows a button in it, and whichever button it shows sits in it.
                 return (
-                  <Panel width={rowWidth} height={ROW_HEIGHT}>
-                    <Button
-                      position={'absolute'}
-                      left={0}
-                      top={0}
-                      width={faceWidth}
-                      height={ROW_HEIGHT}
-                      background={row.textures.background}
-                      backgroundHover={row.textures.backgroundHover}
-                      backgroundPressed={row.textures.backgroundPressed}
-                      onPress={(event): unknown => model.onRow?.(index, event)}
-                    />
-                    <Panel position={'absolute'} left={0} top={0} width={faceWidth} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={row.padding}>
-                      <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
-                        <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={ROW_TITLE_MAX}>{item?.title ?? ''}</Text>
-                        <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={ROW_SUBTITLE_MAX}>{item?.subtitle ?? ''}</Text>
+                  <Panel width={'100%'} height={ROW_HEIGHT} flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
+                    <Panel flexGrow={1} flexShrink={1} width={0} height={ROW_HEIGHT}>
+                      <Button
+                        position={'absolute'}
+                        left={0}
+                        top={0}
+                        width={'100%'}
+                        height={ROW_HEIGHT}
+                        background={row.textures.background}
+                        backgroundHover={row.textures.backgroundHover}
+                        backgroundPressed={row.textures.backgroundPressed}
+                        onPress={(event): unknown => model.onRow?.(index, event)}
+                      />
+                      <Panel position={'absolute'} left={0} top={0} width={'100%'} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={row.padding} paddingLeft={row.padding + spacing.xs}>
+                        <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
+                          <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={ROW_TITLE_MAX}>{item?.title ?? ''}</Text>
+                          <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={ROW_SUBTITLE_MAX}>{item?.subtitle ?? ''}</Text>
+                        </Panel>
+                        <Text>{`${row.textStyle.muted}>`}</Text>
                       </Panel>
-                      <Text>{`${row.textStyle.muted}>`}</Text>
                     </Panel>
-                    {action !== 'remove' && action !== 'none' && (
-                      // Always drawn, because the square is the row's whether or
-                      // not this row can use it: the row's boxes are solved at
-                      // build, so a row without the button would be a row with a
-                      // hole. Disabled says the same thing the hole was trying to
-                      // — there is nothing here to reset — and says it visibly.
-                      <OreButton
-                        position={'absolute'}
-                        left={faceWidth + spacing.xs}
-                        top={0}
-                        variant={'secondary'}
-                        width={ROW_HEIGHT}
-                        height={ROW_HEIGHT}
-                        paddingLeft={0}
-                        paddingRight={0}
-                        paddingTop={0}
-                        paddingBottom={0}
-                        enabled={action === 'reset'}
-                        onPress={(event): unknown => model.onReset?.(index, event)}
-                      >
-                        <Image width={10} height={10} texture={ICON_RESET} />
-                      </OreButton>
-                    )}
-                    {action === 'remove' && (
-                      <OreButton
-                        position={'absolute'}
-                        left={faceWidth + spacing.xs}
-                        top={0}
-                        variant={'secondary'}
-                        width={ROW_HEIGHT}
-                        height={ROW_HEIGHT}
-                        paddingLeft={0}
-                        paddingRight={0}
-                        paddingTop={0}
-                        paddingBottom={0}
-                        onPress={(event): unknown => model.onReset?.(index, event)}
-                      >
-                        <Image width={10} height={10} texture={ICON_REMOVE} />
-                      </OreButton>
-                    )}
+                    <Panel width={ROW_HEIGHT} height={ROW_HEIGHT}>
+                      {action !== 'remove' && action !== 'none' && (
+                        // Always drawn, because the square is the row's whether or
+                        // not this row can use it: the row's boxes are solved at
+                        // build, so a row without the button would be a row with a
+                        // hole. Disabled says the same thing the hole was trying to
+                        // — there is nothing here to reset — and says it visibly.
+                        <OreButton
+                          position={'absolute'}
+                          left={0}
+                          top={0}
+                          variant={'secondary'}
+                          width={ROW_HEIGHT}
+                          height={ROW_HEIGHT}
+                          paddingLeft={0}
+                          paddingRight={0}
+                          paddingTop={0}
+                          paddingBottom={0}
+                          enabled={action === 'reset'}
+                          onPress={(event): unknown => model.onReset?.(index, event)}
+                        >
+                          <Image width={10} height={10} texture={ICON_RESET} />
+                        </OreButton>
+                      )}
+                      {action === 'remove' && (
+                        <OreButton
+                          position={'absolute'}
+                          left={0}
+                          top={0}
+                          variant={'secondary'}
+                          width={ROW_HEIGHT}
+                          height={ROW_HEIGHT}
+                          paddingLeft={0}
+                          paddingRight={0}
+                          paddingTop={0}
+                          paddingBottom={0}
+                          onPress={(event): unknown => model.onReset?.(index, event)}
+                        >
+                          <Image width={10} height={10} texture={ICON_REMOVE} />
+                        </OreButton>
+                      )}
+                    </Panel>
                   </Panel>
                 );
               }}
@@ -175,7 +179,7 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
           </Scroll>
           {/* Over the scroll rather than in it: a scroll whose only child is the list follows the live row count. */}
           {isEmpty && (
-            <Panel position={'absolute'} left={BODY_PADDING} top={BODY_PADDING} width={rowWidth} height={listHeight} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
+            <Panel position={'absolute'} left={BODY_PADDING} top={BODY_PADDING} width={contentWidth} height={listHeight} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
               <Text wordBreak={'break-word'} color={row.textStyle.mutedRgb} maxLength={EMPTY_MAX}>{model.empty}</Text>
             </Panel>
           )}

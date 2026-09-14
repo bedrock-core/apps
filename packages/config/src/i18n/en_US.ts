@@ -76,6 +76,7 @@ export default {
 
   list: {
     add: 'Add item',
+    edit: 'Edit',
     addTitle: 'Add to {{label}}',
     editTitle: 'Edit item',
     save: 'Save item',
@@ -110,6 +111,6 @@ export default {
   framework: {
     name: '@bedrock-core',
     creator: 'DrAv0011',
-    description: 'The framework that powers every addon above.',
+    description: 'Addons Better Connected',
   },
 } as const;

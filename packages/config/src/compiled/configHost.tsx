@@ -8,7 +8,7 @@ import {
   buildSectionTree, filterScope, filterScopeGroups, findSection, getScopedGroups, getScopedSchema, isPureSection,
   listEntries, schemaDefaultsPatch, type SectionNode,
 } from '../config/schema';
-import { buildNestedPatch, resolveInitialValue, toItems } from '../config/nested';
+import { buildNestedPatch, mergeNested, resolveInitialValue, toItems } from '../config/nested';
 import { getRoster, patchScope } from '../config/values';
 import { i18n, translationsFor } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
@@ -17,6 +17,7 @@ import { ConfirmReset, confirmResetElement } from './confirm.screen';
 import { MENU_ROWS, MenuList, menuListElement, pageOf, type MenuListRow } from './menu.screen';
 import { ScopePicker, scopePickerElement } from './picker.screen';
 import { listItemChoice, listItemText } from './item.screen';
+import { itemsListElement, type ItemsListRow, LIST_ROWS, pageOfItems } from './items.screen';
 import { ITEM_FIELD, OPTION_OF, shapedElement, shapedItemScreen, shapedScreen } from './shaped';
 
 /**
@@ -405,58 +406,69 @@ export function presentListEditor(
 
   /** Stage and write in one step — see the note above about why there is no Save. */
   const commit = (next: string[], at = page): void => {
-    patchScope(accessor, target.scope, target.entityId, buildNestedPatch({ [target.key]: next }));
-    presentListEditor(core, player, target, { ...values, [target.key]: next }, openers, at);
+    const patch = buildNestedPatch({ [target.key]: next });
+
+    patchScope(accessor, target.scope, target.entityId, patch);
+    presentListEditor(core, player, target, mergeNested(values, patch), openers, at);
   };
 
-  const rows: MenuListRow[] = [
-    ...items.map((item): MenuListRow => ({ title: item, action: 'remove' })),
-    ...canAdd ? [{ title: { translate: key($ => $.list.add) }, action: 'none' } satisfies MenuListRow] : [],
-  ];
-  const shown = pageOf(rows, page);
+  /**
+   * The item editor for one place in the list: an index to edit what is
+   * there, or none to add. What comes back is applied in one step — see the
+   * note above about why there is no Save.
+   */
+  const editAt = (at: number | undefined): void => {
+    presentItemEditor(player, target, at, {
+      current: at === undefined ? '' : items[at] ?? '',
+      options: isEnum ? optionsFor(at) : undefined,
+      back: (): void => { presentListEditor(core, player, target, values, openers, page); },
+      apply: (item: string): void => {
+        if (item === '') {
+          presentListEditor(core, player, target, values, openers, page);
 
-  render(menuListElement({
+          return;
+        }
+
+        if (at === undefined) {
+          // A duplicate is dropped rather than reported: the enum path cannot
+          // produce one, so the only way here is retyping a string already in.
+          commit(items.includes(item) ? items : [...items, item]);
+
+          return;
+        }
+
+        commit(items[at] !== item && items.includes(item)
+          ? items
+          : items.map((existing: string, other: number) => (other === at ? item : existing)));
+      },
+    });
+  };
+
+  const shown = pageOfItems(items.map((item): ItemsListRow => ({ title: item })), page);
+
+  render(itemsListElement({
     trail: target.trail,
     rows: shown.rows,
     empty: { translate: key($ => $.list.empty) },
+    canAdd,
     page: shown.page,
     pages: shown.pages,
-    onRow: (index): void => {
-      const at = (shown.page - 1) * MENU_ROWS + index;
+    onEdit: (index): void => {
+      const at = (shown.page - 1) * LIST_ROWS + index;
 
-      presentItemEditor(player, target, at < items.length ? at : undefined, {
-        current: items[at] ?? '',
-        options: isEnum ? optionsFor(at < items.length ? at : undefined) : undefined,
-        back: (): void => { presentListEditor(core, player, target, values, openers, page); },
-        apply: (item: string): void => {
-          if (item === '') {
-            presentListEditor(core, player, target, values, openers, page);
-
-            return;
-          }
-
-          if (at >= items.length) {
-            // A duplicate is dropped rather than reported: the enum path cannot
-            // produce one, so the only way here is retyping a string already in.
-            commit(items.includes(item) ? items : [...items, item]);
-
-            return;
-          }
-
-          commit(items[at] !== item && items.includes(item)
-            ? items
-            : items.map((existing: string, other: number) => (other === at ? item : existing)));
-        },
-      });
+      if (at < items.length) {
+        editAt(at);
+      }
     },
-    onReset: (index): void => {
-      const at = (shown.page - 1) * MENU_ROWS + index;
+    onAdd: (): void => { editAt(undefined); },
+    onRemove: (index): void => {
+      const at = (shown.page - 1) * LIST_ROWS + index;
 
       if (at < items.length) {
         const next = items.filter((_: string, other: number) => other !== at);
 
         // The last item of the last page leaves that page behind.
-        commit(next, Math.min(page, Math.max(1, Math.ceil((next.length + 1) / MENU_ROWS))));
+        commit(next, Math.min(page, Math.max(1, Math.ceil(Math.max(1, next.length) / LIST_ROWS))));
       }
     },
     onPage: (at): void => { presentListEditor(core, player, target, values, openers, at); },

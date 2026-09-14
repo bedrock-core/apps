@@ -107,8 +107,10 @@ export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon }: AddonPag
       <Scroll width={MAIN.width - 2} height={MAIN.height} zIndex={1}>
         {/* Tighter above and below than at the sides: the card's own border reads as
           the margin there, and the few texels it saves are what keeps a short page
-          inside the viewport — a page that fits draws no scrollbar at all. */}
-        <Panel flexDirection={'column'} gap={spacing.md} paddingTop={spacing.sm} paddingBottom={spacing.sm} paddingLeft={spacing.md} paddingRight={spacing.md} width={MAIN.width - 2 - 5}>
+          inside the viewport — a page that fits draws no scrollbar at all. Less on
+          the right than the left: the scroll already keeps a gutter before its
+          track, and the two together match the left inset. */}
+        <Panel flexDirection={'column'} gap={spacing.md} paddingTop={spacing.sm} paddingBottom={spacing.sm} paddingLeft={spacing.md} paddingRight={spacing.sm} width={'100%'}>
           <Panel justifyContent={'center'} alignItems={'center'}>
             <Image width={40} height={40} texture={addon.icon ?? ICON_MISSING} />
           </Panel>

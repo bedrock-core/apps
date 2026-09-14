@@ -50,7 +50,7 @@ export const canPresentAddonList = (): boolean => compiledTitleOf(AddonList) !==
 const { key } = i18n;
 
 const rowsFor = (core: Runtime): AddonListRow[] => {
-  const registered: RegisteredAddon[] = core.registry.all();
+  const registered: readonly RegisteredAddon[] = core.registry.all();
   const runtimeVersion = registered.find(addon => addon.self)?.runtimeVersion ?? 'unknown';
   // By id, so every realm lists the same addons in the same order. A registry
   // holds them in the order that realm met them, which is load order and differs

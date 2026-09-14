@@ -21,6 +21,18 @@ export const PADDING_BOTTOM = 4;
 /** Header bar: the theme's icon plus its padding. */
 export const HEADER_HEIGHT = 23;
 
+/**
+ * The card below the header, inside its painted border: where every screen's
+ * body goes. The sides and the top are one texel of border, the bottom is
+ * four, so a body inset equally from this rect reads as equal on all sides.
+ */
+export const BODY = {
+  x: PADDING,
+  y: PADDING + HEADER_HEIGHT,
+  width: FRAME.width - 2 * PADDING,
+  height: FRAME.height - PADDING - HEADER_HEIGHT - PADDING_BOTTOM,
+} as const;
+
 /** Space between the header and the regions below it. */
 const HEADER_GAP = 1;
 

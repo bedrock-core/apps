@@ -25,7 +25,7 @@ const ICON_RESET = 'textures/ui/config/reset';
 const NAME_MAX = 16;
 
 /** The reset button's edge: the row's height, so it reads as part of the row. */
-const RESET_SIZE = 24;
+const RESET_SIZE = 28;
 
 // Keys localize on the client; a string that takes a colour code bakes in the package's default locale.
 const { key, t } = i18n;
