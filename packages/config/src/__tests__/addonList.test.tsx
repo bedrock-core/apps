@@ -135,7 +135,8 @@ describe('a press on a row of the addon list', () => {
       params: {
         playerId: 'p1',
         target: { kind: 'list', addonId: 'other' },
-        returnTo: { realm: 'me', target: { kind: 'list', addonId: 'me' } },
+        // The way back is a PATH: this realm appended to whatever the player already crossed.
+        returnTo: [{ realm: 'me', target: { kind: 'list', addonId: 'me' } }],
       },
     }]);
     // Nothing more was drawn here: that realm has the player, and its page is its own to show.

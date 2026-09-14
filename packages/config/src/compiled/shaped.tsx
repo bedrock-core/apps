@@ -2,11 +2,12 @@
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { ConfigDefinition, ConfigScopeName } from '../server';
 import { flattenGroups, flattenSchema } from '../server';
-import { Card, Checkbox, Divider, Dropdown, Form, Header, Input, Radio, Slider, theme, type TrailSegment } from '@bedrock-core/ore-styled';
+import { Card, Checkbox, Divider, Dropdown, Form, Header, Input, Slider, theme, ToggleButtonGroup, type TrailSegment } from '@bedrock-core/ore-styled';
 import { Panel, Scroll, Text, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';
 import { i18n } from '../i18n';
 import { buildSectionTree, formEntries, listEntries, type SectionNode } from '../config/schema';
+import { resolveInitialValue } from '../config/nested';
 import type { EntrySchema } from '../types';
 
 /**
@@ -70,8 +71,32 @@ export interface LeafProps {
  * they diverged, silently and in the player's saved config.
  */
 
-/** The widest range a slider covers; a number spanning more is typed instead. */
-const RANGE_MAX = 100;
+/**
+ * How many segments the gauge beside a number is cut into.
+ *
+ * The bar is DRAWN, not a native slider. A `slider` control validates the step
+ * it is handed against the form field behind it, and every compiled screen in
+ * every installed addon is laid out whenever any form opens — so a slider
+ * routinely meets a form that has no field for it and asserts. A panel
+ * validates nothing, so a row of them is safe on any screen.
+ *
+ * Each segment is shown or hidden per player, which is a carried boolean the
+ * compiled screen already knows how to send. Twenty is finer than the eye reads
+ * on a bar this wide and costs twenty bits.
+ */
+const GAUGE_SEGMENTS = 20;
+
+/** Choices a segmented control stays readable at; beyond it, a dropdown. */
+const SEGMENTS_MAX = 3;
+
+/**
+ * What separates a multiselect's key from the option a checkbox stands for.
+ *
+ * A modal answers by control NAME, and a multiselect is several controls
+ * answering for one setting — so each says which setting it belongs to and
+ * which of its options it is, and the host folds them back into the array.
+ */
+export const OPTION_OF = '#';
 
 /**
  * One setting, as the control it is.
@@ -83,7 +108,10 @@ const RANGE_MAX = 100;
 const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): JSX.Element => {
   const name = key;
   const label = entry.label;
-  const current = model?.values[key];
+  // A scope's values are the stored DOCUMENT, nested as the schema is, while a
+  // field is named by its flat path — so the value is read down the path rather
+  // than looked up whole, and falls back to what the schema declares.
+  const current = resolveInitialValue(key, entry, model?.values ?? {});
   const offered = model?.options?.[key];
 
   if (entry.type === 'boolean') {
@@ -95,18 +123,35 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
     const max = entry.max ?? 100;
     const value = typeof current === 'number' ? current : Number(current ?? entry.default ?? 0);
 
-    return max - min > RANGE_MAX
-      ? <Input name={name} label={label} defaultValue={String(value)} />
-      : <Slider name={name} label={label} min={min} max={max} step={entry.step} defaultValue={value} />;
+    return <Slider name={name} label={label} min={min} max={max} step={entry.step} defaultValue={value} />;
+  }
+
+  if (entry.type === 'multiselect' && entry.options !== undefined) {
+    const chosen = new Set(Array.isArray(current) ? current.map(String) : []);
+
+    // Every option on screen at once, which is what makes this a multiselect
+    // rather than a list: the whole set is known at declaration, so there is
+    // nothing to add and nothing to page through.
+    const boxes: JSX.Element[] = entry.options.map((option, index) => (
+      <Checkbox name={`${key}${OPTION_OF}${String(index)}`} label={option} defaultValue={chosen.has(option)} />
+    ));
+
+    return (
+      <Panel flexDirection={'column'} gap={spacing.xs}>
+        {[<Text>{label}</Text>, ...boxes]}
+      </Panel>
+    );
   }
 
   if (entry.type === 'enum' && entry.options !== undefined) {
     const options = [...offered ?? entry.options];
     const selected = typeof current === 'string' && options.includes(current) ? current : String(entry.default ?? options[0] ?? '');
 
-    // A short list reads better as rows than as a popup to open.
-    return options.length <= 3
-      ? <Radio name={name} label={label} options={options.map(option => ({ value: option, label: option }))} defaultValue={selected} />
+    // A short list is a segmented control: every choice visible, one press to
+    // change it, and no popup to open. A long one stays a dropdown, where
+    // side-by-side segments would be unreadable.
+    return options.length <= SEGMENTS_MAX
+      ? <ToggleButtonGroup name={name} label={label} options={options.map(option => ({ value: option, label: option }))} defaultValue={selected} />
       : <Dropdown name={name} label={label} options={options} defaultValue={selected} />;
   }
 

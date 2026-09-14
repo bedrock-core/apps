@@ -52,9 +52,13 @@ const { key } = i18n;
 const rowsFor = (core: Runtime): AddonListRow[] => {
   const registered: RegisteredAddon[] = core.registry.all();
   const runtimeVersion = registered.find(addon => addon.self)?.runtimeVersion ?? 'unknown';
+  // By id, so every realm lists the same addons in the same order. A registry
+  // holds them in the order that realm met them, which is load order and differs
+  // per realm — and this list is one screen the player walks between realms.
+  const ordered = [...registered].sort((left, right) => left.id.localeCompare(right.id));
 
   return [
-    ...registered.map((addon): AddonListRow => ({
+    ...ordered.map((addon): AddonListRow => ({
       id: addon.id,
       name: { translate: addon.packName },
       version: addon.version,

@@ -17,7 +17,7 @@ import { ConfirmReset, confirmResetElement } from './confirm.screen';
 import { MENU_ROWS, MenuList, menuListElement, pageOf, type MenuListRow } from './menu.screen';
 import { ScopePicker, scopePickerElement } from './picker.screen';
 import { listItemChoice, listItemText } from './item.screen';
-import { ITEM_FIELD, shapedElement, shapedItemScreen, shapedScreen } from './shaped';
+import { ITEM_FIELD, OPTION_OF, shapedElement, shapedItemScreen, shapedScreen } from './shaped';
 
 /**
  * Showing the compiled config screens that lead up to the editor.
@@ -460,7 +460,17 @@ export function presentListEditor(
       }
     },
     onPage: (at): void => { presentListEditor(core, player, target, values, openers, at); },
-    onBack: (): unknown => openers.back(target),
+    // The section the list sits IN, not the scope's root: a list is one setting
+    // of a level, and leaving it is leaving that setting rather than the tree.
+    // `key` is the list's dot-path, so its section is the path without the last
+    // segment — the same step a level's own back takes.
+    onBack: (): unknown => {
+      const path = target.key.slice(0, Math.max(0, target.key.lastIndexOf('.')));
+
+      return path === ''
+        ? openers.back(target)
+        : openLevel(core, player, { ...target, path, trail: target.trail.slice(0, -1) }, openers);
+    },
   }), player);
 }
 
@@ -533,7 +543,7 @@ export function presentShapedEditor(
     onSubmit: (submitted: Record<string, unknown>): void => {
       const patch: Record<string, unknown> = {};
 
-      for (const [key, raw] of Object.entries(submitted)) {
+      for (const [key, raw] of Object.entries(foldOptions(submitted, schema))) {
         const entry = schema[key];
         const value = entry === undefined ? undefined : settingValue(entry, raw);
 
@@ -543,6 +553,11 @@ export function presentShapedEditor(
       }
 
       patchScope(accessor, target.scope, target.entityId, buildNestedPatch(patch));
+
+      // Saving leaves the screen: a leaf is one section's settings, and there is
+      // nothing further to do on it once they are written. Where it goes is where
+      // its dismiss goes — the level above.
+      void back?.();
     },
     // The modal's dismiss is the way back up the tree, since a modal has no
     // third control to navigate with.
@@ -561,7 +576,54 @@ export function presentShapedEditor(
  * that produced it was built from the same range, so an out-of-range answer is
  * a schema that moved, not a player doing something wrong.
  */
+/**
+ * A multiselect's checkboxes, back as the array the setting holds.
+ *
+ * Each answers under `<key>#<option index>`, so the ones belonging to a setting
+ * are gathered in the schema's own option order and everything else passes
+ * through untouched. A setting whose boxes are all clear folds to an empty
+ * array rather than vanishing — clearing the last one is a change, not a
+ * no-op.
+ */
+const foldOptions = (submitted: Record<string, unknown>, schema: Record<string, EntrySchema>): Record<string, unknown> => {
+  const folded: Record<string, unknown> = {};
+  const chosen = new Map<string, Set<number>>();
+
+  for (const [name, raw] of Object.entries(submitted)) {
+    const at = name.indexOf(OPTION_OF);
+
+    if (at === -1) {
+      folded[name] = raw;
+      continue;
+    }
+
+    const key = name.slice(0, at);
+    const index = Number(name.slice(at + OPTION_OF.length));
+    const picked = chosen.get(key) ?? new Set<number>();
+
+    if (raw === true && Number.isInteger(index)) {
+      picked.add(index);
+    }
+
+    chosen.set(key, picked);
+  }
+
+  for (const [key, picked] of chosen) {
+    const options = schema[key]?.options ?? [];
+
+    folded[key] = options.filter((_option, index) => picked.has(index));
+  }
+
+  return folded;
+};
+
 const settingValue = (entry: EntrySchema, raw: unknown): unknown => {
+  if (entry.type === 'multiselect') {
+    const picked = Array.isArray(raw) ? raw.filter((option): option is string => typeof option === 'string') : [];
+
+    return picked.filter(option => entry.options?.includes(option) === true);
+  }
+
   if (entry.type === 'boolean') {
     return Boolean(raw);
   }

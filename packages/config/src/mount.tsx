@@ -25,7 +25,7 @@
  */
 import { world } from '@minecraft/server';
 import { addonReference, presentReference, screenOwner, screenForKey, handOff } from '@bedrock-core/ui-runtime';
-import { currentKey, navigate, pages, provideReferences, screens, setReturnAddress } from '@bedrock-core/navigation';
+import { currentKey, navigate, pages, pathThrough, provideReferences, returnPathOf, screens, setReturnPath } from '@bedrock-core/navigation';
 import type { Player } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { configOf } from './server';
@@ -45,12 +45,21 @@ import { declaredParts } from './declared';
 import { addonPageReference } from './compiled/page.screen';
 import { shapedScreen } from './compiled/shaped';
 
-/** The realm a player came from, and what it shows them when they leave what it asked for. */
+/** One realm a player crossed, and what it shows them when they come back to it. */
 interface ReturnTo {
-  /** The addon whose realm asked. */
+  /** The addon whose realm asked for the hop. */
   realm: string;
   /** What that realm is asked to show again. */
   target: OpenTarget;
+}
+
+/** Narrows one hop of a way back that arrived over the wire. */
+function isReturnTo(value: unknown): value is ReturnTo {
+  if (typeof value !== 'object' || value === null) { return false; }
+
+  const hop = value as Partial<ReturnTo>;
+
+  return typeof hop.realm === 'string' && isOpenTarget(hop.target);
 }
 
 /**
@@ -63,8 +72,12 @@ interface ReturnTo {
 interface ShowRequest {
   playerId: string;
   target: OpenTarget;
-  /** Where a `back()` that runs out of screens in the receiving realm returns to. */
-  returnTo?: ReturnTo;
+  /**
+   * The realms the player crossed to get here, oldest first. A `back()` that runs out of
+   * screens in the receiving realm takes the last one and hands the rest on, so a chain of
+   * any depth walks home through exactly the realms it came through.
+   */
+  returnTo?: ReturnTo[];
 }
 
 /**
@@ -108,9 +121,14 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
       if (!player) { throw new Error(`core:ui.show: player '${playerId}' is not in the world`); }
 
       // Recorded before the screen is shown, so a back press out of the bottom of THIS realm's
-      // stack lands back where the player came from. A request carrying no address clears
+      // stack lands back where the player came from. A request carrying no way back clears
       // whatever the last one left, which is what a player arriving fresh should find.
-      setReturnAddress(player.id, returnTo);
+      //
+      // Every hop is narrowed: the realms that sent them may be older or newer than this one,
+      // and a path with anything unreadable in it is dropped rather than half-walked.
+      const path = returnTo ?? [];
+
+      setReturnPath(player.id, path.every(isReturnTo) ? path : []);
 
       void openUi(core, player, target);
 
@@ -159,12 +177,14 @@ function publishDeclared(core: Runtime): void {
 
       return true;
     },
-    sendBack: (address, player): boolean => {
+    sendBack: (address, rest, player): boolean => {
       // The target is this package's own, sent by whichever realm asked — read back through
       // the same narrowing as anything else off the wire, since that realm may be older.
       if (!isOpenTarget(address.target)) { return false; }
 
-      void askRealm(core, address.realm, player, address.target);
+      // What is left of the way back travels with the request, so the realm the player lands
+      // in can carry them further home without this one remembering anything.
+      void askRealm(core, address.realm, player, address.target, rest.filter(isReturnTo));
 
       return true;
     },
@@ -236,12 +256,12 @@ function askRealm(
   owner: string,
   player: Player,
   target: OpenTarget,
-  from?: ReturnTo,
+  from: readonly ReturnTo[] = [],
 ): Promise<boolean> {
   return core.rpc.typed<UiRpc>(owner)['core:ui.show']({
     playerId: player.id,
     target,
-    ...from === undefined ? {} : { returnTo: from },
+    ...from.length === 0 ? {} : { returnTo: [...from] },
   })
     // An older realm that answers with nothing served the request the only way it knew; only an
     // explicit no means the player is still standing where they were.
@@ -279,7 +299,24 @@ function askRealm(
  */
 const showing = new Map<string, OpenTarget>();
 
-function returnTo(core: Runtime, player: Player): ReturnTo | undefined {
+/**
+ * The way back a request hands on: the realms this player already crossed, with this one
+ * appended. `pathThrough` caps it, so a long chain loses its far end rather than growing a
+ * request without limit.
+ */
+function returnTo(core: Runtime, player: Player): readonly ReturnTo[] {
+  const here = hereFor(core, player);
+
+  return here === undefined ? returnPath(player) : pathThrough(player.id, here).filter(isReturnTo);
+}
+
+/** The way back as it stands, for a hop this realm cannot name a place for. */
+function returnPath(player: Player): readonly ReturnTo[] {
+  return returnPathOf(player.id).filter(isReturnTo);
+}
+
+/** Where this realm has the player right now, as something it can be asked for again. */
+function hereFor(core: Runtime, player: Player): ReturnTo | undefined {
   const place = showing.get(player.id);
 
   if (place !== undefined) {
@@ -466,7 +503,7 @@ function openAddonList(core: Runtime, player: Player, addonId: string | undefine
     return Promise.resolve();
   }
 
-  return askRealm(core, addonId, player, { kind: 'list', addonId }, homeList(core, from))
+  return askRealm(core, addonId, player, { kind: 'list', addonId }, homeList(core, player, from))
     .then((shown) => {
       if (!shown) { draw(addonId); }
     });
@@ -487,10 +524,12 @@ const isLocalRow = (core: Runtime, addonId: string): boolean =>
  * registry, so it is asked for the way a command asks for it; its key alone would draw the layout
  * with no rows in it.
  */
-const homeList = (core: Runtime, selected?: string): ReturnTo => ({
-  realm: core.id,
-  target: { kind: 'list', ...selected === undefined ? {} : { addonId: selected } },
-});
+const homeList = (core: Runtime, player: Player, selected?: string): readonly ReturnTo[] => (
+  pathThrough(player.id, {
+    realm: core.id,
+    target: { kind: 'list', ...selected === undefined ? {} : { addonId: selected } },
+  }).filter(isReturnTo)
+);
 
 /** Where a level of the tree sends its presses: every one comes back through `openUi`. */
 const levelOpeners = (core: Runtime, player: Player): SectionListOpeners => ({
