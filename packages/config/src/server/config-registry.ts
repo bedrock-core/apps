@@ -20,7 +20,7 @@
  * An addon declares its config in `register()`, and the `config(definition)` declaration delegates
  * here; the accessors it returns are these:
  * ```ts
- * const declared = core.register({
+ * const { config } = core.register({
  *   manifest,
  *   config: config({
  *     server:    { pricing: { taxRate: { type: 'number', default: 0.05, min: 0, max: 1, label: 'Tax Rate' } } },
@@ -29,7 +29,6 @@
  *   }),
  * });
  *
- * const config = declared.config;
  *
  * // Every scope is a dotted accessor tree mirroring the schema — every node, group or leaf, is an
  * // observable with get / set / subscribe (groups also patch). Entity scopes pick the entity with for().

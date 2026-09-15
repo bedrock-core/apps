@@ -11,7 +11,7 @@
  */
 import type { Player } from '@minecraft/server';
 import type { AddonManifest, Runtime } from '@bedrock-core/server-runtime';
-import { config } from '../declaration';
+import { registerConfig } from '../declaration';
 
 /** Declares the `server` scope only, so the entity scopes carry no keys at all. */
 const DEFINITION = {
@@ -27,7 +27,7 @@ declare const MANIFEST: AddonManifest;
 declare const player: Player;
 
 export function roundTrip(core: Runtime): void {
-  const { config: cfg } = core.register({ manifest: MANIFEST, config: config(DEFINITION) });
+  const { config: cfg } = core.register({ manifest: MANIFEST, config: registerConfig(DEFINITION) });
 
   // The declared leaf comes back as its own type, though the runtime never saw the schema.
   const taxRate: number = cfg.server.economy.taxRate.get();

@@ -2,13 +2,12 @@
 
 ![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
-The shared **addon list + config + guide UI** for [`@bedrock-core/ui`](https://github.com/bedrock-core/ui).
+An addon's **settings and the screens that edit them**, for
+[`@bedrock-core/ui`](https://github.com/bedrock-core/ui).
 
-Every bedrock-core addon mounts it with one line and gets settings screens, an in-game guide and a
-directory of every other addon in the world — because the registry, config schemas, guides and
-translations all replicate over [`@bedrock-core/sync`](https://bedrock-core.drav.dev/docs/server/sync).
-Whichever realm runs the newest runtime renders the UI for all of them, so an addon shipped a year
-ago is served today's screens.
+One of three peer apps — `@bedrock-core/catalog` browses every addon in the world and
+`@bedrock-core/guides` shows their guides. Each installs on its own, and each is a field of the
+one `core.register()` call.
 
 ## Install
 
@@ -16,39 +15,39 @@ ago is served today's screens.
 yarn add @bedrock-core/config
 ```
 
-It also ships inside the umbrella package as `@bedrock-core/ui/config`. The package depends on
-`@bedrock-core/server-runtime` for **types only** — no value import, so the two build and version
-independently.
+It also ships inside the apps umbrella as `@bedrock-core/apps/config`.
 
 ## What it gives you
 
-- `ui(core, options?)` — mounts everything: the commands, the open RPC, and this addon's place in
-  the host election
-- **Commands under your own namespace** — `<ns>:config` and `<ns>:configat` (read and write
-  settings from chat, with generated autocomplete for every verb and setting), `<ns>:guide`,
-  `<ns>:list`. Turn them off with `ui(core, { commands: false })`
-- **Screens for free** — the addon list, the scope and target pickers, the config form for a scope,
-  a reset confirmation, and each addon's guide
+- `registerConfig(definition)` — the field `core.register()` takes. It installs the scopes, registers
+  the commands, serves `core:config.show`, and hands back the typed accessors.
+- **Commands under your own namespace** — `<ns>:config` and `<ns>:configat`, reading and writing
+  settings from chat with generated autocomplete for every verb and setting. Turn them off with
+  `config(definition, { commands: false })`.
+- **Screens for free** — the scope and target pickers, one form per section of your schema, the
+  list editors, and a reset confirmation. The ui-compiler filter shapes them from the same
+  definition the runtime installs.
+- **Settings without screens** — `@bedrock-core/config/server` is the same field name over the
+  subsystem alone, for an addon that draws nothing.
 - **A permission rule you can reuse** — `isOperator`, `allowedScopes` and `clampTarget`, the
-  caller-side half of authorization (the owning addon re-checks every write)
-- `App` for a custom mount, `registerAddonCommands` for the commands alone, and `CONFIG_SCOPES`
-  with the `ConfigScope` / `EntrySchema` / `FlatSchemaLike` types for code building its own pickers
+  caller-side half of authorization (the owning addon re-checks every write).
 
 ## Usage
 
 ```ts
 import { core } from '@bedrock-core/server-runtime';
-import { ui } from '@bedrock-core/config';
+import { registerConfig } from '@bedrock-core/config';
 
 const { config } = core.register({
   manifest: { creator: 'bt', pack: 'gc_graves', packName: 'Graves', version: '1.0.0' },
-  config: { server: { keepInventory: { type: 'boolean', default: false, label: 'Keep Inventory' } } },
+  config: registerConfig({ server: { keepInventory: { type: 'boolean', default: false, label: 'Keep Inventory' } } }),
 });
 
-ui(core); // registers bt_gc_graves:config, :configat, :guide, :list
+config.server.keepInventory.get();
+config.open(player);
 ```
 
-Call `ui(core)` once, after `core.register()`.
+Nothing else runs: `register()` is the whole mount.
 
 ## Documentation
 

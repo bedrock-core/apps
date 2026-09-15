@@ -1,57 +1,51 @@
 /**
- * `@bedrock-core/config` — the addon list + config + guide UI every bedrock-core
- * addon mounts with one line:
+ * `@bedrock-core/config` — an addon's settings and the screens that edit them, mounted as a field
+ * of `core.register()`:
  *
  * ```ts
  * import { core } from '@bedrock-core/server-runtime';
- * import { ui } from '@bedrock-core/config';
- * import { config } from '@bedrock-core/config/server';
+ * import { registerConfig } from '@bedrock-core/config';
  *
- * core.register({ manifest, config: config(definition) });
- * ui(core);                         // registers the commands and serves the show RPC
+ * const { config } = core.register({ manifest, config: registerConfig(definition) });
+ *
+ * config.server.taxRate.get();
  * ```
  *
- * The addon declares; the build does the rest. The ui-compiler filter reads that
- * register call and compiles what follows from it — the addon's page in the
- * shared list, drawn from its manifest, and one config screen per section of its
- * schema — and `ui()` announces those along with the i18n bundle and guide the
- * other filters generated. Nothing above is repeated anywhere else.
+ * The addon declares; the build does the rest. The ui-compiler filter reads that register call and
+ * compiles one config screen per section of the schema, shaped for the settings that section has.
+ * Nothing above is repeated anywhere else.
+ *
+ * An addon that wants the settings and none of the screens imports the lighter half under the
+ * same field name, from `@bedrock-core/config/server`, and never reaches this file.
  *
  * This file is the package's public surface and nothing else. The map:
  *
- * - `mount.tsx` — `ui()`, command dispatch, and the open funnel where the permission clamp
- *   lives. Start there; it explains which realm draws what.
- * - `commands/` — the per-addon commands generated from the config schema, with their
- *   argument parsing and scope targeting.
- * - `navigation/` — turning a fired command into a route stack (`openTarget` → `initialState`).
+ * - `declaration.ts` — `registerConfig()`, and the funnel every screen is reached through, where the
+ *   permission clamp lives. Start there; it explains which realm draws what.
+ * - `commands/` — the per-addon commands generated from the schema, with their argument parsing
+ *   and scope targeting.
+ * - `target.ts` — where the app opens, as data that crosses a realm.
  * - `config/` — the config domain: schema shaping, value transport over RPC, flat/nested paths.
- * - `server/` — the config subsystem itself, at `@bedrock-core/config/server`: an addon that wants
- *   settings and no screens imports that subpath alone, and never reaches this file.
+ * - `server/` — the config subsystem itself, at `@bedrock-core/config/server`.
  * - `permissions.ts` — who may reach which scope, the caller-side half of authorization.
- * - `screens/` — the screens themselves, reading everything through `context.ts`.
+ * - `compiled/` — the screens themselves.
  */
-export { ui, openUi } from './mount';
-export type { UiOptions } from './mount';
+export { registerConfig, CONFIG_APP, CONFIG_COMPILED } from './declaration';
+export type { ConfigApp, ConfigAppDeclaration, ConfigOptions } from './declaration';
 
 export { registerAddonCommands } from './commands/addon';
 export type { OpenCallback } from './commands/addon';
-export { allowedScopes, clampTarget, guideAudienceFor, isOperator } from './permissions';
 
-export { isOpenTarget } from './navigation/openTarget';
-export type { OpenCommand, OpenTarget } from './navigation/openTarget';
+export { allowedScopes, clampTarget, isOperator } from './permissions';
+
+export { configTargetFrom, CONFIG_METHOD, isConfigTarget } from './target';
+export type { ConfigTarget } from './target';
+
 export { CONFIG_SCOPES } from './types';
 export type { ConfigScope, EntrySchema, FlatSchemaLike } from './types';
 
 /**
- * The config screens an addon's own schema becomes, for the ui-compiler filter's
- * `screens` setting: one per section that holds settings, shaped for it.
+ * The config screens an addon's own schema becomes, one per section that holds settings, shaped
+ * for it: the parts of `shape` in `@bedrock-core/config/compiled`, which is what the build calls.
  */
 export { configScreens, leafName, registerConfigScreens, type LeafModel, type LeafProps } from './compiled/shaped';
-
-/**
- * What a build declares on its addon's behalf: the page drawn from its manifest,
- * its i18n bundle, its guide manifest. The ui-compiler filter generates the
- * module that calls these; `ui()` publishes what they carry.
- */
-export { addonPageScreen, type AddonPageInfo } from './compiled/page.screen';
-export { registerDeclared, type DeclaredParts } from './declared';

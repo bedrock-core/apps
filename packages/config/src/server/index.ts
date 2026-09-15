@@ -6,16 +6,16 @@
  *
  * ```ts
  * import { core } from '@bedrock-core/server-runtime';
- * import { config } from '@bedrock-core/config/server';
+ * import { registerConfig } from '@bedrock-core/config/server';
  *
- * const { config: cfg } = core.register({ manifest, config: config(definition) });
+ * const { config } = core.register({ manifest, config: registerConfig(definition) });
  *
- * cfg.server.taxRate.get();
+ * config.server.taxRate.get();
  * ```
  *
  * The map:
  *
- * - `declaration.ts` — `config(definition)`, the field `register()` takes.
+ * - `declaration.ts` — `registerConfig(definition)`, the field `register()` takes.
  * - `slot.ts` — `configOf(core)`, how everything else reaches the registry the declaration filled.
  * - `config-registry.ts` — the registry itself: the announced schema, the local scopes, the rpc
  *   methods a remote realm calls, and `of(ns)` for another addon's config.
@@ -25,7 +25,7 @@
  *
  * The package's default export is the UI half, which reads this one through `configOf`.
  */
-export { config } from './declaration';
+export { registerConfig } from './declaration';
 export type { ConfigDeclaration } from './declaration';
 
 export { configOf } from './slot';

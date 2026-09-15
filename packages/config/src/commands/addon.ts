@@ -1,6 +1,6 @@
 /**
- * Every command this UI registers, all under the addon's own namespace:
- * `bt_gc_graves:config`, `:configat`, `:guide`, `:list`.
+ * The two commands the config app registers, under the addon's own namespace:
+ * `bt_gc_graves:config` and `:configat`. The catalog and the guide app each register their own.
  *
  * ## Shape
  *
@@ -84,17 +84,16 @@ import type {
 } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { configOf } from '../server';
-import { CONFIG_SCOPES, type EntrySchema, type FlatSchemaLike } from '../types';
+import { CONFIG_SCOPES, type ConfigScope, type EntrySchema, type FlatSchemaLike } from '../types';
 import { buildNestedPatch } from '../config/nested';
 import { translationsFor, type CoreT } from '../i18n';
-import type { OpenCommand } from '../navigation/openTarget';
 import { addToList, describeList, readList, removeFromList, setList } from './lists';
 import { failure, success, withOperator, withPlayer } from './origin';
 import { editableKeys, parseValue, splitScopedKey, type ScopedSchemas } from './parse';
 import { describe, read, resolveTarget, write } from './targets';
 
-/** Hands a fired command to whoever should answer it: `(player, what, args)`, uninterpreted. */
-export type OpenCallback = (player: Player, command: OpenCommand, args: (string | undefined)[]) => void;
+/** Hands a fired command to whoever should answer it: who ran it, and where it asked to land. */
+export type OpenCallback = (player: Player, target: { addonId?: string; scope?: ConfigScope; scopeId?: string }) => void;
 
 /**
  * What a config command can do. Registered as an enum so every verb autocompletes.
@@ -122,32 +121,6 @@ export function registerAddonCommands(core: Runtime, onOpen: OpenCallback): void
 }
 
 function registerAll(reg: CustomCommandRegistry, core: Runtime, ns: string, onOpen: OpenCallback): void {
-  attempt(ns, `${ns}:guide`, () => {
-    reg.registerCommand(
-      {
-        name: `${ns}:guide`,
-        description: `${ns} - open this addon's in-game guide.`,
-        permissionLevel: CommandPermissionLevel.Any,
-        cheatsRequired: false,
-      },
-      origin => forward(origin, onOpen, 'guide', [ns]),
-    );
-  });
-
-  attempt(ns, `${ns}:list`, () => {
-    reg.registerCommand(
-      {
-        name: `${ns}:list`,
-        description: `${ns} - open the addon list, with this addon selected.`,
-        permissionLevel: CommandPermissionLevel.Any,
-        cheatsRequired: false,
-      },
-      // The full list, with this addon selected — it is the one the player named by typing
-      // this command, so it is the one worth showing first.
-      origin => forward(origin, onOpen, 'list', [ns]),
-    );
-  });
-
   const local = configOf(core).local;
   const scoped: ScopedSchemas | undefined = local && {
     server: local.server.schema,
@@ -212,7 +185,7 @@ function registerConfig(
       },
       (origin: CustomCommandOrigin, verb?: string, key?: string, value?: string) => {
         // No verb at all is the plain "open it" form, whatever else the shape allows.
-        if (verb === undefined) { return forward(origin, onOpen, 'config', [ns]); }
+        if (verb === undefined) { return forward(origin, onOpen); }
 
         return withPlayer(origin, player => runOwn(core, ns, schema ?? {}, player, verb, key, value));
       },
@@ -418,14 +391,9 @@ function applyWrite(
 }
 
 /** Identify the acting player and hand the request on, one tick later. */
-function forward(
-  origin: CustomCommandOrigin,
-  onOpen: OpenCallback,
-  command: OpenCommand,
-  args: (string | undefined)[],
-): CustomCommandResult {
+function forward(origin: CustomCommandOrigin, onOpen: OpenCallback): CustomCommandResult {
   return withPlayer(origin, (player) => {
-    system.run(() => onOpen(player, command, args));
+    system.run(() => { onOpen(player, {}); });
 
     return success();
   });

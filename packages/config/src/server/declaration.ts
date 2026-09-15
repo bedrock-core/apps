@@ -1,10 +1,10 @@
 /**
- * `config(definition)` — the config declaration an addon passes to `register()`.
+ * `registerConfig(definition)` — the config declaration an addon passes to `register()`.
  *
  * ```ts
- * const declared = core.register({ manifest, config: config(definition) });
+ * const { config } = core.register({ manifest, config: registerConfig(definition) });
  *
- * declared.config.server.taxRate.get();   // typed by the definition
+ * config.server.taxRate.get();   // typed by the definition
  * configOf(core).of<ShopConfigDef>('vendor_shop');
  * ```
  *
@@ -18,7 +18,7 @@ import type { ConfigDefinition } from './schema';
 // Type-only, and erased: it pulls in the `core:config` slot declaration `fill` is keyed by.
 import type {} from './slot';
 
-/** What `config(definition)` hands `register()`: the installer, and the definition it was given. */
+/** What `registerConfig(definition)` hands `register()`: the installer, and the definition it was given. */
 export interface ConfigDeclaration<I extends ConfigDefinition> extends Declaration<Config<I>> {
   /**
    * The definition as written. An addon's BUILD reads it here — the config screens a section gets
@@ -28,7 +28,7 @@ export interface ConfigDeclaration<I extends ConfigDefinition> extends Declarati
 }
 
 /** Declare this addon's config: the scopes, their entries, and the schema version. */
-export function config<I extends ConfigDefinition>(definition: I): ConfigDeclaration<I> {
+export function registerConfig<I extends ConfigDefinition>(definition: I): ConfigDeclaration<I> {
   let registry: ConfigRegistry | undefined;
 
   return {

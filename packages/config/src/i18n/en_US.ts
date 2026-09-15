@@ -1,26 +1,15 @@
 /**
- * bedrock-core's own UI strings.
+ * The config app's own UI strings.
  *
- * The framework used to hardcode these in English, which meant a Spanish player got a Spanish
- * addon list inside an English window. Now it goes through exactly the mechanism addons use: the
- * strings are keyed under the `core` namespace and published into the merged translation table
- * when the UI mounts, so a player sees them in their own language wherever a translation exists.
- *
- * Because merge is last-write-wins per key, an addon that wants to rename something — "Addons" to
- * "Mods", say — can ship `core.addons.title` itself and win.
+ * Keyed under the `core` namespace, the same one the rest of the bedrock-core family uses, and
+ * folded into every consuming addon's `.lang` by the i18n Regolith filter. Merge is
+ * last-write-wins per key, so an addon that wants to rename something ships the key itself and
+ * wins.
  *
  * This is the DEFAULT locale, and its shape is the type. Every other locale in this directory must
  * carry exactly these paths; the build checks it.
  */
 export default {
-  addons: {
-    title: 'Addons',
-    authors: 'Author(s):',
-    version: 'Version: {{version}}',
-    config: 'Config',
-    guide: 'Guide',
-  },
-
   errors: {
     notCompiled: 'This addon was built without its screens. Rebuild its pack with the ui-compiler filter.',
   },
@@ -108,9 +97,4 @@ export default {
     },
   },
 
-  framework: {
-    name: '@bedrock-core',
-    creator: 'DrAv0011',
-    description: 'Addons Better Connected',
-  },
 } as const;

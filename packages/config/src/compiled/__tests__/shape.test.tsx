@@ -3,7 +3,6 @@ import { analyze, buildScreenTree, probeLiveness, shapeOf, visiblesAt } from '@b
 import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { ConfirmReset, type ConfirmModel } from '../confirm.screen';
-import { AddonList, type AddonListModel } from '../list.screen';
 import { MenuList, type MenuListModel } from '../menu.screen';
 import { ScopePicker, type PickerModel } from '../picker.screen';
 import { configScreens, type LeafModel, type LeafProps } from '../shaped';
@@ -87,19 +86,6 @@ describe('a compiled config screen keeps its shape when shown', () => {
       onSubmit: press,
     };
     const { baked, shown } = shapeAgainstBake(Screen, <Screen model={model} />);
-
-    expect(shown).toBe(baked);
-  });
-
-  it('addon list', () => {
-    const model: AddonListModel = {
-      rows: [{ id: 'a', name: { translate: 'a.meta.name' }, version: '1' }, { id: 'b', name: 'B', version: '2', icon: 'x' }],
-      selected: 1,
-      main: { kind: 'page', slots: ['m', 't'] },
-      onSelect: press,
-      onSlot: press,
-    };
-    const { baked, shown } = shapeAgainstBake(AddonList, <AddonList model={model} />);
 
     expect(shown).toBe(baked);
   });
