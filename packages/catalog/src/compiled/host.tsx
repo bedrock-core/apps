@@ -1,4 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
+import type { DisplayText } from '@bedrock-core/i18n';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, render } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
@@ -74,7 +75,7 @@ const rowsFor = (core: Runtime): AddonListRow[] => {
  * except a press that names an app, whose enabled state is what that addon announced rather than
  * anything the page can know.
  */
-const pageSlots = (namespace: string, reference: AddonPageReference, apps: readonly string[]): string[] => {
+const pageSlots = (namespace: string, reference: AddonPageReference, apps: readonly string[]): DisplayText[] => {
   const values = reference.values.map((value, index) => {
     const target = reference.targets[index] ?? null;
 

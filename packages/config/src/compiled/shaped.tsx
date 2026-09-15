@@ -2,9 +2,8 @@
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { ConfigDefinition, ConfigScopeName } from '../server';
 import { flattenGroups, flattenSchema } from '../server';
-import { Card, Checkbox, Divider, Dropdown, fieldLabel, Form, Header, Input, Slider, theme, Toggle, ToggleButtonGroup, ToggleButtons, type TrailSegment } from '@bedrock-core/ore-styled';
+import { BODY, Card, Checkbox, Divider, Dropdown, fieldLabel, Form, FRAME, Header, HEADER_HEIGHT, Input, Slider, theme, Toggle, ToggleButtonGroup, ToggleButtons } from '@bedrock-core/ore-styled';
 import { Panel, Scroll, Text, useTranslationResolver, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
-import { BODY, FRAME, HEADER_HEIGHT, TRAIL_LENGTHS } from './frame';
 import { i18n } from '../i18n';
 import { buildSectionTree, formEntries, listEntries, type SectionNode } from '../config/schema';
 import { resolveInitialValue } from '../config/nested';
@@ -33,8 +32,8 @@ import type { EntrySchema } from '../types';
 
 /** What one present fills a shaped screen with. The shape is the schema's; only the values travel. */
 export interface LeafModel {
-  /** The trail the screen is titled with, one segment per {@link TRAIL_LENGTHS} slot. */
-  trail: readonly DisplayText[];
+  /** The trail the screen is titled with, composed by `trailText`. */
+  trail: DisplayText;
   /** The current value per key, as the section's own paths name them. */
   values: Record<string, unknown>;
   /**
@@ -245,10 +244,6 @@ const ACTION_HEIGHT = 20;
 /** The primary button's word, white: a key takes no colour code, so the colour is the label's. */
 const SAVE_COLOR: readonly [number, number, number] = [1, 1, 1];
 
-/** Every trail slot, live: a slot the present leaves empty hides with its separator. */
-const trailSegments = (trail: readonly DisplayText[]): TrailSegment[] =>
-  TRAIL_LENGTHS.map((maxLength, index) => ({ text: trail[index] ?? '', maxLength }));
-
 /**
  * The frame every shaped screen wears, so a leaf sits in the same card the
  * screens before it do: the header and its trail, the settings in a scroll,
@@ -270,7 +265,7 @@ export const sheet = (model: LeafModel | undefined, rows: readonly [string, Entr
       onCancel={(): void => { model?.onCancel?.(); }}
     >
       <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-        <Header segments={trailSegments(model?.trail ?? [])} cancel={i18n.key($ => $.action.cancel)} height={HEADER_HEIGHT} />
+        <Header trail={model?.trail ?? ''} cancel={i18n.key($ => $.action.cancel)} height={HEADER_HEIGHT} />
         <Panel flexDirection={'column'} gap={spacing.xs} paddingBottom={BODY_PADDING} marginLeft={BODY.x} width={BODY.width} height={BODY.height}>
           <Scroll width={BODY.width} height={scrollHeight}>
             {/* The whole column the region shows: the layout leaves the track's

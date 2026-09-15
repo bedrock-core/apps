@@ -257,7 +257,7 @@ function presentShaped(core: Runtime, player: Player, target: ConfigTarget, valu
     ? openers.back(level)
     : openLevel(core, player, { ...level, path: path.slice(0, Math.max(0, path.lastIndexOf('.'))), trail: trail.slice(0, -1) }, openers));
 
-  return accessor !== undefined && presentShapedEditor(accessor, player, level, values, up);
+  return accessor !== undefined && presentShapedEditor(core, accessor, player, level, values, up);
 }
 
 /**

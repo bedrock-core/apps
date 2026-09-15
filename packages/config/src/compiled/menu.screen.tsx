@@ -1,9 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Header, Button as OreButton, theme, type TrailSegment } from '@bedrock-core/ore-styled';
+import { BODY, Card, FRAME, Header, HEADER_HEIGHT, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Button, Image, List, Panel, Screen, Scroll, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
-import { BODY, FRAME, HEADER_HEIGHT, TRAIL_LENGTHS } from './frame';
 
 /**
  * A screen of rows that lead somewhere, as ONE compiled screen: the entity
@@ -57,8 +56,8 @@ export interface MenuListRow {
 }
 
 export interface MenuListModel {
-  /** The trail the screen is titled with, one segment per {@link TRAIL_LENGTHS} slot. */
-  trail: readonly DisplayText[];
+  /** The trail the screen is titled with, composed by `trailText`. */
+  trail: DisplayText;
   /** This page's rows. */
   rows: readonly MenuListRow[];
   /** What the screen says when there are no rows at all. */
@@ -76,11 +75,7 @@ export interface MenuListProps {
   model?: MenuListModel;
 }
 
-const EMPTY_MODEL: MenuListModel = { trail: [], rows: [], empty: '', page: 1, pages: 1 };
-
-/** Every trail slot, live: a slot the present leaves empty hides with its separator. */
-const trailSegments = (trail: readonly DisplayText[]): TrailSegment[] =>
-  TRAIL_LENGTHS.map((maxLength, index) => ({ text: trail[index] ?? '', maxLength }));
+const EMPTY_MODEL: MenuListModel = { trail: '', rows: [], empty: '', page: 1, pages: 1 };
 
 export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL }: MenuListProps): JSX.Element => {
   const exit = useExit();
@@ -93,7 +88,7 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
   return (
     <Screen>
       <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-        <Header segments={trailSegments(model.trail)} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} height={HEADER_HEIGHT} />
+        <Header trail={model.trail} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} height={HEADER_HEIGHT} />
         <Panel flexDirection={'column'} gap={spacing.xs} padding={BODY_PADDING} marginLeft={BODY.x} width={BODY.width} height={BODY.height}>
           <Scroll width={contentWidth} height={listHeight}>
             <List

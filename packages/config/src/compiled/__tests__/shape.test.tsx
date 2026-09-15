@@ -1,5 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { analyze, buildScreenTree, probeLiveness, shapeOf, visiblesAt } from '@bedrock-core/ui-runtime/compile';
+import { trailText } from '@bedrock-core/ore-styled';
 import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { ConfirmReset, type ConfirmModel } from '../confirm.screen';
@@ -17,6 +18,10 @@ import type { ConfigDefinition } from '../../server';
 
 const press = (): void => {};
 
+/** A present's trail, composed the way the host composes one. */
+const trail = (segments: string[], back?: 'cancel'): ReturnType<typeof trailText> =>
+  trailText(segments.map(segment => ({ translate: segment })), undefined, back === undefined ? {} : { back });
+
 const shapeAgainstBake = <P,>(Screen: FunctionComponent<P>, shown: JSX.Element): { baked: string; shown: string } => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the bake renders a screen with no props, the way the build does
   const bare = Screen as FunctionComponent;
@@ -32,7 +37,7 @@ const shapeAgainstBake = <P,>(Screen: FunctionComponent<P>, shown: JSX.Element):
 
 describe('a compiled config screen keeps its shape when shown', () => {
   it('scope picker', () => {
-    const model: PickerModel = { addonName: { translate: 'drav0011_economy.meta.name' }, scopes: ['server', 'dimension', 'player'], onScope: press, onReset: press, onBack: press };
+    const model: PickerModel = { trail: trail(['drav0011_economy.meta.name', 'core.config.breadcrumb']), scopes: ['server', 'dimension', 'player'], onScope: press, onReset: press, onBack: press };
     const { baked, shown } = shapeAgainstBake(ScopePicker, <ScopePicker model={model} />);
 
     expect(shown).toBe(baked);
@@ -40,7 +45,7 @@ describe('a compiled config screen keeps its shape when shown', () => {
 
   it('menu list, with rows, resets and pages', () => {
     const model: MenuListModel = {
-      trail: [{ translate: 'drav0011_economy.meta.name' }, { translate: 'core.scope.player.label' }],
+      trail: trail(['drav0011_economy.meta.name', 'core.scope.player.label']),
       rows: [{ title: 'Steve', subtitle: 'op', action: 'reset' }, { title: 'Alex' }],
       empty: '',
       page: 2,
@@ -56,7 +61,7 @@ describe('a compiled config screen keeps its shape when shown', () => {
   });
 
   it('reset confirmation', () => {
-    const model: ConfirmModel = { trail: [{ translate: 'drav0011_economy.meta.name' }, 'Server'], question: 'Reset?', onConfirm: press, onCancel: press };
+    const model: ConfirmModel = { trail: trail(['drav0011_economy.meta.name', 'core.scope.server.label']), question: 'Reset?', onConfirm: press, onCancel: press };
     const { baked, shown } = shapeAgainstBake(ConfirmReset, <ConfirmReset model={model} />);
 
     expect(shown).toBe(baked);
@@ -81,7 +86,7 @@ describe('a compiled config screen keeps its shape when shown', () => {
     if (Screen === undefined) { return; }
 
     const model: LeafModel = {
-      trail: [{ translate: 'drav0011_economy.meta.name' }, { translate: 'core.scope.server.label' }, { translate: 'drav0011_economy.config.pricing' }],
+      trail: trail(['drav0011_economy.meta.name', 'core.scope.server.label', 'drav0011_economy.config.pricing'], 'cancel'),
       values: { 'pricing.enabled': false, 'pricing.rate': 7, 'pricing.mode': 'x', 'pricing.note': 'hello' },
       onSubmit: press,
     };

@@ -1,17 +1,16 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Form, theme, Trail, type TrailSegment } from '@bedrock-core/ore-styled';
+import { Card, Form, theme, Trail, trailMaxLength } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Panel, Text, type FunctionComponent, type JSX } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
-import { TRAIL_LENGTHS } from './frame';
 
 /**
  * The step in front of a reset, as a compiled modal: the native modal's two
  * controls are its submit and its dismiss, which is exactly a confirm/cancel
  * pair. What the question names — the scope or the entity being reset — is
- * only known when it is asked, so the trail's segments and the question are
- * live rows; the warning and the buttons are baked. Both answers lead
- * somewhere the host decides: the screen that asked, or what follows the reset.
+ * only known when it is asked, so the trail and the question are live rows;
+ * the warning and the buttons are baked. Both answers lead somewhere the host
+ * decides: the screen that asked, or what follows the reset.
  */
 
 const { spacing, fontColor } = theme.tokens;
@@ -24,8 +23,8 @@ const QUESTION_MAX = 96;
 const { key, t } = i18n;
 
 export interface ConfirmModel {
-  /** The trail the screen is titled with, one segment per {@link TRAIL_LENGTHS} slot. */
-  trail: readonly DisplayText[];
+  /** The trail the screen is titled with, composed by `trailText`. */
+  trail: DisplayText;
   /** The question, with what it names filled in, in the viewing player's language. */
   question: string;
   onConfirm?: () => unknown;
@@ -36,17 +35,14 @@ export interface ConfirmResetProps {
   model?: ConfirmModel;
 }
 
-const EMPTY_MODEL: ConfirmModel = { trail: [], question: '' };
-
-const trailSegments = (trail: readonly DisplayText[]): TrailSegment[] =>
-  TRAIL_LENGTHS.map((maxLength, index) => ({ text: trail[index] ?? '', maxLength }));
+const EMPTY_MODEL: ConfirmModel = { trail: '', question: '' };
 
 export const ConfirmReset: FunctionComponent<ConfirmResetProps> = ({ model = EMPTY_MODEL }: ConfirmResetProps): JSX.Element => (
   <Form onSubmit={(): unknown => model.onConfirm?.()} onCancel={(): unknown => model.onCancel?.()}>
     <Card variant={'raised'} flexDirection={'column'} gap={0} padding={0}>
       <Panel flexDirection={'row'} alignItems={'center'} gap={header.gap} padding={header.padding} marginTop={1} marginLeft={1} marginRight={1} background={header.textures.background}>
         <Panel width={header.iconSize} height={header.iconSize} />
-        <Trail segments={trailSegments(model.trail)} flexGrow={1} flexShrink={1} />
+        <Trail text={model.trail} maxLength={trailMaxLength()} flexGrow={1} flexShrink={1} />
         <Panel width={header.iconSize} height={header.iconSize} />
       </Panel>
       <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>

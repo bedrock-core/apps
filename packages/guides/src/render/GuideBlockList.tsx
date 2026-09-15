@@ -181,7 +181,7 @@ function renderList(items: GuideListItem[], start: number | undefined, ctx: Rend
       {items.map((item, i) => (
         <Fragment>
           <Panel flexDirection={'row'} gap={spacing.xs} alignItems={'flex-start'}>
-            <Text>{start === undefined ? '§7•' : `§7${start + i}.`}</Text>
+            <Text>{start === undefined ? '§7-' : `§7${start + i}.`}</Text>
             <Panel flexGrow={1} flexShrink={1}>
               {renderRuns(item.runs, ctx)}
             </Panel>

@@ -49,7 +49,7 @@ export interface AddonListRow {
 
 /** What the main area shows for the selected row. */
 export type AddonListMain
-  = | { kind: 'page'; slots: readonly string[] }
+  = | { kind: 'page'; slots: readonly DisplayText[] }
     | { kind: 'fallback' };
 
 export interface AddonListModel {

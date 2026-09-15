@@ -1,10 +1,9 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Card, FRAME, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, Panel, Screen, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
 import type { ConfigScope } from '../types';
-import { FRAME } from './frame';
 
 /**
  * The scope picker for one addon as a compiled screen: a row per scope the
@@ -12,17 +11,14 @@ import { FRAME } from './frame';
  * the server row resetting in place.
  *
  * Which rows show is only known when the screen is shown, so each row sits
- * behind a carried visibility. The addon's name is a live title sent as its
- * key, which the client resolves like the baked labels and hints. A scope
- * that is not offered is left out rather than greyed.
+ * behind a carried visibility. The trail carries the addon's name, which the
+ * client resolves like the baked labels and hints. A scope that is not offered
+ * is left out rather than greyed.
  */
 
 const { spacing, fontColor } = theme.tokens;
 
 const ICON_RESET = 'textures/ui/config/reset';
-
-/** Characters the live addon name reserves. */
-const NAME_MAX = 16;
 
 /** The reset button's edge: the row's height, so it reads as part of the row. */
 const RESET_SIZE = 28;
@@ -31,8 +27,8 @@ const RESET_SIZE = 28;
 const { key, t } = i18n;
 
 export interface PickerModel {
-  /** The addon's display name: its key, resolved on the client. */
-  addonName: DisplayText;
+  /** The trail the screen is titled with, composed by `trailText`. */
+  trail: DisplayText;
   /** The scopes offered, in the order the rows draw them. */
   scopes: readonly ConfigScope[];
   onScope?: (scope: ConfigScope, event: PressEvent) => unknown;
@@ -45,7 +41,7 @@ export interface ScopePickerProps {
   model?: PickerModel;
 }
 
-const EMPTY_MODEL: PickerModel = { addonName: '', scopes: [] };
+const EMPTY_MODEL: PickerModel = { trail: '', scopes: [] };
 
 export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY_MODEL }: ScopePickerProps): JSX.Element => {
   const exit = useExit();
@@ -57,7 +53,7 @@ export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY
   return (
     <Screen>
       <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-        <Header segments={[{ text: model.addonName, maxLength: NAME_MAX }, key($ => $.config.breadcrumb)]} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} />
+        <Header trail={model.trail} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} />
         {/* A stack, so a scope this addon does not offer leaves no gap where its
             row would have been — the rows after it move up instead. */}
         <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm} stack={true}>

@@ -3,6 +3,7 @@ import type { DisplayText } from '@bedrock-core/i18n';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { configOf, type RemoteConfigAccessor } from '../server';
 import { compiledTitleOf, render } from '@bedrock-core/ui-runtime';
+import { trailText, type TrailBack } from '@bedrock-core/ore-styled';
 import { world, type Player } from '@minecraft/server';
 import {
   buildSectionTree, filterScope, filterScopeGroups, findSection, getScopedGroups, getScopedSchema, isPureSection,
@@ -116,12 +117,16 @@ export function trailOf(core: Runtime, player: Player, place: ConfigPlace): Disp
   return trail;
 }
 
-/** A trail as one string, for the serialized screens that title themselves with text. */
-export function trailText(core: Runtime, player: Player, trail: readonly DisplayText[]): string {
-  const { display } = translationsFor(core.translations.forPlayer(player));
-
-  return trail.map(segment => display(segment)).join(' > ');
-}
+/**
+ * The trail one screen is titled with, as the single message its label carries.
+ *
+ * The segments are resolved in the viewing player's language to decide which of
+ * them fit, and travel as themselves so the client resolves them again in the
+ * language it is set to. A screen whose back control is a labelled cancel
+ * leaves the trail less room than one wearing the icon.
+ */
+const titleTrail = (core: Runtime, player: Player, trail: readonly DisplayText[], back: TrailBack = 'icon'): DisplayText =>
+  trailText(trail, translationsFor(core.translations.forPlayer(player)).resolve, { back });
 
 export function presentScopePicker(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners): void {
   const { t } = translationsFor(core.translations.forPlayer(player));
@@ -136,7 +141,7 @@ export function presentScopePicker(core: Runtime, player: Player, addonId: strin
   const again = (): void => { presentScopePicker(core, player, addonId, openers); };
 
   render(scopePickerElement({
-    addonName,
+    trail: titleTrail(core, player, [addonName, { translate: key($ => $.config.breadcrumb) }]),
     scopes,
     onScope: (scope): unknown => openers.scope(addonId, scope),
     onReset: (): void => {
@@ -174,7 +179,7 @@ export function presentConfirmReset(core: Runtime, player: Player, request: Conf
   const { t } = translationsFor(core.translations.forPlayer(player));
 
   render(confirmResetElement({
-    trail: request.trail,
+    trail: titleTrail(core, player, request.trail),
     question: t($ => $.reset.question, { target: request.target }),
     onConfirm: request.onConfirm,
     onCancel: request.onCancel,
@@ -212,7 +217,7 @@ export function presentEntityRoster(
   const again = (at = shown.page): void => { presentEntityRoster(core, player, target, openers, at); };
 
   render(menuListElement({
-    trail,
+    trail: titleTrail(core, player, trail),
     rows: shown.rows.map((entry): MenuListRow => ({ title: entry.name, action: 'reset' })),
     empty: { translate: scope === 'player' ? key($ => $.roster.noPlayers) : key($ => $.roster.noDimensions) },
     page: shown.page,
@@ -317,7 +322,7 @@ export function presentSectionList(core: Runtime, player: Player, target: Sectio
   };
 
   render(menuListElement({
-    trail: target.trail,
+    trail: titleTrail(core, player, target.trail),
     rows: shown.rows,
     empty: { translate: key($ => $.config.empty) },
     page: shown.page,
@@ -418,7 +423,7 @@ export function presentListEditor(
    * note above about why there is no Save.
    */
   const editAt = (at: number | undefined): void => {
-    presentItemEditor(player, target, at, {
+    presentItemEditor(core, player, target, at, {
       current: at === undefined ? '' : items[at] ?? '',
       options: isEnum ? optionsFor(at) : undefined,
       back: (): void => { presentListEditor(core, player, target, values, openers, page); },
@@ -447,7 +452,7 @@ export function presentListEditor(
   const shown = pageOfItems(items.map((item): ItemsListRow => ({ title: item })), page);
 
   render(itemsListElement({
-    trail: target.trail,
+    trail: titleTrail(core, player, target.trail),
     rows: shown.rows,
     empty: { translate: key($ => $.list.empty) },
     canAdd,
@@ -472,17 +477,16 @@ export function presentListEditor(
       }
     },
     onPage: (at): void => { presentListEditor(core, player, target, values, openers, at); },
-    // The section the list sits IN, not the scope's root: a list is one setting
-    // of a level, and leaving it is leaving that setting rather than the tree.
-    // `key` is the list's dot-path, so its section is the path without the last
-    // segment — the same step a level's own back takes.
-    onBack: (): unknown => {
-      const path = target.key.slice(0, Math.max(0, target.key.lastIndexOf('.')));
-
-      return path === ''
-        ? openers.back(target)
-        : openLevel(core, player, { ...target, path, trail: target.trail.slice(0, -1) }, openers);
-    },
+    // The section the list sits IN: a list is one setting of a level, and
+    // leaving it is leaving that setting rather than the tree. `key` is the
+    // list's dot-path, so its section is the path without the last segment —
+    // the scope's root when the list sits at the top, which is a level like any
+    // other and not the picker above it.
+    onBack: (): unknown => openLevel(core, player, {
+      ...target,
+      path: target.key.slice(0, Math.max(0, target.key.lastIndexOf('.'))),
+      trail: target.trail.slice(0, -1),
+    }, openers),
   }), player);
 }
 
@@ -496,6 +500,7 @@ export function presentListEditor(
  * off the modal row either way.
  */
 function presentItemEditor(
+  core: Runtime,
   player: Player,
   target: SectionTarget & { key: string },
   index: number | undefined,
@@ -515,7 +520,7 @@ function presentItemEditor(
   };
 
   render(shapedElement(screen, {
-    trail: [...target.trail, label],
+    trail: titleTrail(core, player, [...target.trail, label], 'cancel'),
     values: { [ITEM_FIELD]: item.current },
     ...item.options === undefined ? {} : { options: { [ITEM_FIELD]: item.options } },
     onSubmit: (values): void => { item.apply(String(values[ITEM_FIELD] ?? '')); },
@@ -535,6 +540,7 @@ function presentItemEditor(
  * engine reads anyway.
  */
 export function presentShapedEditor(
+  core: Runtime,
   accessor: RemoteConfigAccessor,
   player: Player,
   target: SectionTarget,
@@ -550,7 +556,7 @@ export function presentShapedEditor(
   const schema = filterScope(getScopedSchema(accessor), target.scope);
 
   render(shapedElement(screen, {
-    trail: target.trail,
+    trail: titleTrail(core, player, target.trail, 'cancel'),
     values,
     onSubmit: (submitted: Record<string, unknown>): void => {
       const patch: Record<string, unknown> = {};

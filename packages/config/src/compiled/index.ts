@@ -10,7 +10,6 @@ import { ScopePicker } from './picker.screen';
 import { configScreens, registerConfigScreens } from './shaped';
 
 export * from './confirm.screen';
-export * from './frame';
 export * from './item.screen';
 export * from './items.screen';
 export * from './menu.screen';
