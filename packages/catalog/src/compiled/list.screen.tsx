@@ -1,12 +1,12 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Header, theme } from '@bedrock-core/ore-styled';
+import { Card, Divider, FRAME, HEADER_HEIGHT, Header, PADDING, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import {
   Button, EmbedSlots, Image, List, Panel, Screen, Scroll, Text, useExit,
   type FunctionComponent, type JSX, type PressEvent,
 } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
-import { ADDONS_MAX, FRAME, HEADER_HEIGHT, MAIN, PADDING, PAGE_SLOTS, SIDEBAR_WIDTH } from './frame';
+import { ADDONS_MAX, MAIN, PAGE_SLOTS, SIDEBAR_WIDTH } from '../frame';
 
 /**
  * The addon list as ONE compiled screen, the host's.

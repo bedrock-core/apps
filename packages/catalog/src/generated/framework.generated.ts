@@ -8,7 +8,7 @@
 // pack the client already has.
 
 import type { AddonReference } from '@bedrock-core/ui-runtime';
-import type { AddonPageReference } from '../compiled/page.screen';
+import type { AddonPageReference } from '@bedrock-core/navigation';
 
 /** The namespace the framework's screens are compiled under: what its page's marker names. */
 export const FRAMEWORK_NAMESPACE = "core";

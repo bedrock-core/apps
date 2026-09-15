@@ -1,12 +1,12 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Card, FRAME, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import {
-  compiledSnapshotOf, compiledValuesOf, Embed, Image, Panel, Screen, Scroll, Text,
-  type FunctionComponent, type JSX, type PressEvent,
+  Embed, Image, Panel, Screen, Scroll, Text,
+  type FunctionComponent, type JSX,
 } from '@bedrock-core/ui-runtime';
-import { buildScreenTree } from '@bedrock-core/ui-runtime/compile';
+import { pageTargeted } from '@bedrock-core/navigation';
 import { i18n } from '../i18n';
-import { FRAME, MAIN } from './frame';
+import { MAIN } from '../frame';
 
 /**
  * One addon's page in the addon list, baked in the ADDON's pack.
@@ -54,29 +54,10 @@ export interface AddonPageProps {
   addon: AddonPageInfo;
 }
 
-/** Where a press on the page leads; the host answers it. */
-export type PageTarget = 'config' | 'guide';
-
-/** A press handler that names its target, so the reference can read it off the built tree. */
-interface TargetedPress {
-  (event: PressEvent): void;
-  pageTarget: PageTarget;
-}
-
-const targeted = (pageTarget: PageTarget): TargetedPress => Object.assign((_event: PressEvent): void => {}, { pageTarget });
-
-const pressConfig = targeted('config');
-const pressGuide = targeted('guide');
-
-const targetOf = (handler: unknown): PageTarget | null => {
-  if (typeof handler !== 'function' || !('pageTarget' in handler)) {
-    return null;
-  }
-
-  const { pageTarget } = handler;
-
-  return pageTarget === 'config' || pageTarget === 'guide' ? pageTarget : null;
-};
+// A press names the app the owning realm is asked for; the catalog reads it off the reference
+// and greys it when that addon does not serve it.
+const pressConfig = pageTargeted('config');
+const pressGuide = pageTargeted('guide');
 
 /** The banner's height at the pane's width, from its proportions. */
 const HERO_HEIGHT = Math.round(MAIN.width / THUMBNAIL_RATIO);
@@ -146,43 +127,6 @@ export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon }: AddonPag
     </Embed>
   );
 };
-
-/**
- * A page reduced to what a host needs to draw it: per entry after the
- * marker, the value it is shown with and where a press on it leads. What
- * replicates across addons — the host writes these into its reserved slots
- * and the client draws the page from the addon's pack.
- */
-export interface AddonPageReference {
-  v: 1;
-  /** Slot `i + 1` is shown with `values[i]`. */
-  values: string[];
-  /** Where a press on slot `i + 1` leads; null where it leads nowhere. */
-  targets: (PageTarget | null)[];
-}
-
-/**
- * The reference of a page screen: built once the way the compile built it,
- * its entries read off the tree and each press's target read off its handler.
- */
-export function addonPageReference(Page: FunctionComponent): AddonPageReference {
-  const { entries, values } = compiledValuesOf(buildScreenTree(Page), compiledSnapshotOf(Page));
-
-  return {
-    v: 1,
-    values,
-    targets: entries.map(entry => (entry.role === 'button' ? targetOf(entry.element.props.onPress) : null)),
-  };
-}
-
-/** Narrows a reference that arrived over the wire. */
-export function isAddonPageReference(value: unknown): value is AddonPageReference {
-  if (typeof value !== 'object' || value === null) { return false; }
-
-  const candidate = value as Partial<AddonPageReference>;
-
-  return candidate.v === 1 && Array.isArray(candidate.values) && Array.isArray(candidate.targets);
-}
 
 /**
  * The page as a screen of its own, built from what an addon declared.
