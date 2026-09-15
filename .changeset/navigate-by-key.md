@@ -1,6 +1,6 @@
 ---
-'@bedrock-core/guides': major
-'@bedrock-core/config': major
+'@bedrock-core/guides': minor
+'@bedrock-core/config': minor
 ---
 
 **Breaking.** Screens are navigated by key, and a screen of links can be shown by an addon that

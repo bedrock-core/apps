@@ -1,5 +1,5 @@
 ---
-'@bedrock-core/config': major
+'@bedrock-core/config': minor
 ---
 
 **Breaking.** A screen is drawn from the pack, or not at all.

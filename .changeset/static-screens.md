@@ -1,5 +1,5 @@
 ---
-'@bedrock-core/guides': major
+'@bedrock-core/guides': minor
 ---
 
 A screen that cannot change ships as a table, not as a component.
