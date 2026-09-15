@@ -25,7 +25,7 @@ yarn add @bedrock-core/guides
 regolith install github.com/bedrock-core/regolith-filters/guides
 ```
 
-It also ships inside the umbrella package as `@bedrock-core/ui/guides`. Run the `guides` filter
+Its server half also ships inside the apps umbrella as `@bedrock-core/apps/guides`. Run the `guides` filter
 **before** [`i18n`](https://bedrock-core.drav.dev/docs/ui/i18n/regolith-filter) so the generated
 keys land in the same `.lang` files and runtime bundle.
 

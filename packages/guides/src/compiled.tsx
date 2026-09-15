@@ -4,6 +4,7 @@ import {
   type FunctionComponent, type JSX, type PressEvent,
 } from '@bedrock-core/ui-runtime';
 import { resolveLanding } from './landing';
+import { HOME_BACK_SCREEN, HOME_SCREEN } from './names';
 import type { GuideComponents, GuideManifest, PageId } from './types';
 import { GuideHomeView } from './views/GuideHome';
 import { GuidePageView } from './views/GuidePage';
@@ -39,12 +40,6 @@ export interface CompiledGuideOptions {
 
 const CANVAS = { width: 300, height: 200 };
 
-/** The home index's screen name; no page may fold to it. */
-export const HOME_SCREEN = 'guide_home';
-
-/** The index with a back button — what a host that opened the guide shows in its place. */
-export const HOME_BACK_SCREEN = 'guide_home_back';
-
 /**
  * `getting-started/intro` becomes `guide_getting_started_intro`.
  *
@@ -53,6 +48,8 @@ export const HOME_BACK_SCREEN = 'guide_home_back';
  * own `screens` table is believed over this: the filter is the half that
  * actually named the files.
  */
+export { HOME_BACK_SCREEN, HOME_SCREEN };
+
 export const guideScreenName = (pageId: PageId): string =>
   `guide_${pageId.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`;
 

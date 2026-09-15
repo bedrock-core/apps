@@ -31,6 +31,14 @@
 		"./i18n/*": {
 			"types": "./src/i18n/*.ts",
 			"import": "./src/i18n/*.ts"
+		},
+		"./server": {
+			"types": "./src/server/index.ts",
+			"import": "./src/server/index.ts"
+		},
+		"./compiled": {
+			"types": "./src/compiled.tsx",
+			"import": "./src/compiled.tsx"
 		}
 	},
 	"publishConfig": {
@@ -48,15 +56,21 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/i18n": "*",
+		"@bedrock-core/navigation": "*",
 		"@bedrock-core/ore-styled": "*",
+		"@bedrock-core/server-runtime": "*",
 		"@bedrock-core/ui-runtime": "*",
-		"typescript": "^6.0.3",
-		"vitest": "^4.1.5"
+		"@minecraft/server": "*",
+		"typescript": "*",
+		"vitest": "*"
 	},
 	"peerDependencies": {
 		"@bedrock-core/i18n": "*",
+		"@bedrock-core/navigation": "*",
 		"@bedrock-core/ore-styled": "*",
-		"@bedrock-core/ui-runtime": "*"
+		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/ui-runtime": "*",
+		"@minecraft/server": ">=2.9.0 || >=2.10.0-0"
 	},
 	"bedrockCore": {
 		"i18n": {
