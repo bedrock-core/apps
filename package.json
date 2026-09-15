@@ -28,11 +28,22 @@
 		"build": "yarn workspaces foreach -ptA run build",
 		"lint": "yarn workspaces foreach -ptA run lint",
 		"test": "yarn workspaces foreach -ptA run test",
-		"coverage": "yarn workspaces foreach -ptA run coverage"
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"coverage": "yarn workspaces foreach -ptA run coverage",
+		"changeset": "changeset",
+		"version-packages": "changeset version",
+		"release": "yarn lint && yarn typecheck && yarn test && node scripts/publish-tarballs.mjs && changeset tag"
+	},
+	"dependencies": {
+		"@bedrock-core/catalog": "workspace:*",
+		"@bedrock-core/config": "workspace:*",
+		"@bedrock-core/guides": "workspace:*"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@eslint/json": "^1.2.0",
+		"@changesets/changelog-github": "^0.7.0",
+		"@changesets/cli": "^2.31.0",
 		"@minecraft/server": "*",
 		"@minecraft/server-ui": "*",
 		"@minecraft/vanilla-data": "*",

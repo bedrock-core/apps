@@ -1,0 +1,48 @@
+# Lint, typecheck and unit-test the apps.
+#
+# Nothing is checked out beside this repo: every dependency resolves from the
+# registry. Until the root `resolutions` carry versions instead of `portal:`
+# entries, this cannot install — that swap is the release step.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: apps
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: apps
+
+      # Corepack installs the exact Yarn named in package.json's `packageManager`, so CI and every
+      # developer run the same release without pinning it a second time here.
+      - run: corepack enable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: apps/yarn.lock
+
+      - run: yarn install --immutable
+
+      - run: yarn lint
+
+      - run: yarn typecheck
+
+      - run: yarn test

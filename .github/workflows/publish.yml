@@ -1,0 +1,119 @@
+name: Release
+
+# Changesets flow with a manual publish — the same shape every bedrock-core repo uses.
+#
+# Author changesets during development (`yarn changeset`).
+#
+#   • push to `main` with changesets pending → the action opens/updates a
+#     "Version Packages" PR that bumps the changed apps and writes their
+#     changelogs. Nothing is published from a push, ever.
+#   • Run this workflow by hand (Actions → Release → Run workflow) after that PR
+#     has merged → the changed apps are published to npm and tagged.
+#
+# The three apps are versioned and published independently; the repo root is
+# `private` and never ships.
+#
+# Nothing is checked out beside this repo: every dependency resolves from the
+# registry. Until the root `resolutions` carry versions instead of `portal:`
+# entries, this cannot install — that swap is the release step.
+#
+# NOTE: opening the Version PR needs "Allow GitHub Actions to create and approve
+# pull requests" enabled under Settings → Actions → General. If that is off,
+# pass a PAT via the action's `github-token` input instead.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write        # push the version-bump commit/branch, tags and releases
+  pull-requests: write   # open and update the "Version Packages" PR
+  id-token: write        # OIDC for npm trusted publishing — no npm token anywhere
+
+jobs:
+  version:
+    name: Open or refresh the Version PR
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: apps
+          fetch-depth: 0
+
+      - run: corepack enable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'yarn'
+          cache-dependency-path: apps/yarn.lock
+
+      - run: yarn install --immutable
+
+      # No `publish` input: with changesets pending this opens the PR, and with
+      # none pending it does nothing.
+      - uses: changesets/action@v2
+        with:
+          cwd: apps
+          version-script: yarn version-packages
+          commit-message: 'chore(release): version packages'
+          pr-title: 'chore(release): version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to npm
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: apps
+          fetch-depth: 0
+
+      - run: corepack enable
+
+      # Node 24, not 22: trusted publishing needs the OIDC exchange that shipped in
+      # npm 11.5.1, and the 22 line tops out at npm 10.9.x. 24.5.0+ bundles 11.5.1+.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'yarn'
+          cache-dependency-path: apps/yarn.lock
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@bedrock-core'
+
+      - run: yarn install --immutable
+
+      # Refuse to publish while changesets are still pending: merge the Version PR first.
+      - name: Check that nothing is pending
+        run: |
+          pending=$(ls .changeset/*.md 2>/dev/null | grep -v '/README\.md$' || true)
+          if [ -n "$pending" ]; then
+            echo "Unreleased changesets are pending; merge the Version PR before publishing:"
+            echo "$pending"
+            exit 1
+          fi
+
+      - uses: changesets/action@v2
+        with:
+          cwd: apps
+          publish-script: yarn release
+        env:
+          # No npm token: publishes authenticate via OIDC trusted publishing (the
+          # id-token permission above + a trusted publisher configured per package
+          # on npmjs.com pointing at this repo and workflow file).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
