@@ -2,7 +2,7 @@
 	"name": "@bedrock-core/apps",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Applications built on the bedrock-core stack: the shared addon config UI and the in-game guides",
+	"description": "Applications built on the bedrock-core stack",
 	"keywords": [
 		"minecraft",
 		"bedrock",
@@ -19,16 +19,18 @@
 			"url": "https://drav.dev"
 		}
 	],
+	"repository": "github:bedrock-core/apps",
 	"type": "module",
+	"sideEffects": false,
 	"packageManager": "yarn@4.16.0",
 	"workspaces": [
 		"packages/*"
 	],
 	"scripts": {
 		"build": "yarn workspaces foreach -ptA run build",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"lint": "yarn workspaces foreach -ptA run lint",
 		"test": "yarn workspaces foreach -ptA run test",
-		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"changeset": "changeset",
 		"version-packages": "changeset version",
@@ -40,10 +42,10 @@
 		"@bedrock-core/guides": "workspace:*"
 	},
 	"devDependencies": {
-		"@eslint/js": "^10.0.1",
-		"@eslint/json": "^1.2.0",
 		"@changesets/changelog-github": "^0.7.0",
 		"@changesets/cli": "^2.31.0",
+		"@eslint/js": "^10.0.1",
+		"@eslint/json": "^1.2.0",
 		"@minecraft/server": "*",
 		"@minecraft/server-ui": "*",
 		"@minecraft/vanilla-data": "*",
