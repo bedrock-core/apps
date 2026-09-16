@@ -10,7 +10,7 @@
 import type { ScreenReference } from '@bedrock-core/ui-runtime';
 import { FRAMEWORK_SCREENS } from './generated/framework.generated';
 
-export { FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, FRAMEWORK_SCREENS } from './generated/framework.generated';
+export { FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, FRAMEWORK_SCREENS, FRAMEWORK_VERSION } from './generated/framework.generated';
 
 /** The row and page id for the framework's own entry. Not a namespace — nothing registers it. */
 export const FRAMEWORK_ADDON_ID = 'bedrock-core';

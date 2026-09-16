@@ -2,18 +2,19 @@
 '@bedrock-core/guides': minor
 ---
 
-A page returns to the index it was opened from.
+A guide opens on its home page, and every page is one press from the index.
 
-A guide is a set of compiled screens, so moving between pages replaces rather than stacks: a
-reader who followed six links is one back press from the index, not six. Back and the index button
-both lead there, and the index's own back leads to wherever the guide was opened from.
+`guide_home` is where a guide opens: the page marked `home: true`, the only page of a single-page
+guide, or the index when there is neither. `guide_home_back` is the same entry with a back control,
+what a host that opened the guide shows in its place. `guide_index` is the index itself, compiled
+once, and exported as `guideIndexScreen` with its name `INDEX_SCREEN`.
 
-That "wherever" is why the index is compiled twice. `guide_home` is the index a guide opens on and
-no page may fold to, and `guide_home_back` is the same index with a back button — what a host that
-opened the guide shows in its place. A reader who typed `<ns>:guide` has nothing behind them; a
-reader who arrived from a catalog does, and the screen they are shown says which.
+Moving inside a guide replaces rather than stacks. A page's back and its index button both open
+`guide_index` in the page's place, a row of the index opens its page in the index's place, and the
+index's own back leads to wherever the guide was opened from. A reader who followed six links is
+one press from the index and two from the list they came from. A single-page guide has no index
+button, and its back leaves the guide.
 
-Both names now live in their own module and are exported from the package root as before. The half
-that BUILDS the screens and the half that FINDS them in another addon's pack must agree exactly —
-a key is `<namespace>:<name>`, and the two never meet at runtime — so the names are stated once
-for both.
+The screen names live in their own module, exported from the package root. The half that BUILDS
+the screens and the half that FINDS them in another addon's pack must agree exactly, since a key is
+`<namespace>:<name>` and the two never meet at runtime.

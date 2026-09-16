@@ -3,9 +3,9 @@
 export * from './server';
 
 export {
-  guideHomeBackScreen, guideHomeScreen, guidePageScreen, guideScreenName, openGuide,
+  guideHomeBackScreen, guideHomeScreen, guideIndexScreen, guidePageScreen, guideScreenName, openGuide,
 } from './compiled';
-export { HOME_BACK_SCREEN, HOME_SCREEN } from './names';
+export { HOME_BACK_SCREEN, HOME_SCREEN, INDEX_SCREEN } from './names';
 export type { CompiledGuideOptions } from './compiled';
 
 export { resolveLanding } from './landing';

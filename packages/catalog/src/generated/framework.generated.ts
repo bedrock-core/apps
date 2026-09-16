@@ -18,120 +18,28 @@ export const FRAMEWORK_SCREENS: AddonReference = {
   "v": 1,
   "ns": "core",
   "screens": {
-    "core:guide_commands": {
-      "key": "core:guide_commands",
-      "title": "bcuiv0008core1:core_guide_commands",
-      "values": [
-        "t",
-        "t",
-        "t"
-      ],
-      "targets": [
-        {
-          "back": true
-        },
-        {
-          "back": true
-        },
-        {
-          "to": "core:guide_intro",
-          "replace": true
-        }
-      ]
-    },
-    "core:guide_getting_started_first_screen": {
-      "key": "core:guide_getting_started_first_screen",
-      "title": "bcuiv0008core1:core_guide_getting_started_first_screen",
-      "values": [
-        "t",
-        "t",
-        "t",
-        "t",
-        "t"
-      ],
-      "targets": [
-        {
-          "back": true
-        },
-        {
-          "to": "core:guide_getting_started_installation",
-          "replace": true
-        },
-        {
-          "to": "core:guide_intro",
-          "replace": true
-        },
-        {
-          "to": "core:guide_getting_started_installation",
-          "replace": true
-        },
-        {
-          "back": true
-        }
-      ]
-    },
-    "core:guide_getting_started_installation": {
-      "key": "core:guide_getting_started_installation",
-      "title": "bcuiv0008core1:core_guide_getting_started_installation",
-      "values": [
-        "t",
-        "t",
-        "t",
-        "t",
-        "t"
-      ],
-      "targets": [
-        {
-          "back": true
-        },
-        {
-          "to": "core:guide_getting_started_first_screen",
-          "replace": true
-        },
-        {
-          "to": "core:guide_intro",
-          "replace": true
-        },
-        {
-          "back": true
-        },
-        {
-          "to": "core:guide_getting_started_first_screen",
-          "replace": true
-        }
-      ]
-    },
     "core:guide_home": {
       "key": "core:guide_home",
       "title": "bcuiv0008core1:core_guide_home",
-      "values": [
-        "t",
-        "t",
-        "t",
-        "t"
-      ],
-      "targets": [
-        {
-          "to": "core:guide_commands"
-        },
-        {
-          "to": "core:guide_intro"
-        },
-        {
-          "to": "core:guide_getting_started_installation"
-        },
-        {
-          "to": "core:guide_getting_started_first_screen"
-        }
-      ]
+      "values": [],
+      "targets": []
     },
     "core:guide_home_back": {
       "key": "core:guide_home_back",
       "title": "bcuiv0008core1:core_guide_home_back",
       "values": [
-        "t",
-        "t",
-        "t",
+        "t"
+      ],
+      "targets": [
+        {
+          "back": true
+        }
+      ]
+    },
+    "core:guide_index": {
+      "key": "core:guide_index",
+      "title": "bcuiv0008core1:core_guide_index",
+      "values": [
         "t",
         "t"
       ],
@@ -140,16 +48,8 @@ export const FRAMEWORK_SCREENS: AddonReference = {
           "back": true
         },
         {
-          "to": "core:guide_commands"
-        },
-        {
-          "to": "core:guide_intro"
-        },
-        {
-          "to": "core:guide_getting_started_installation"
-        },
-        {
-          "to": "core:guide_getting_started_first_screen"
+          "to": "core:guide_intro",
+          "replace": true
         }
       ]
     },
@@ -157,30 +57,11 @@ export const FRAMEWORK_SCREENS: AddonReference = {
       "key": "core:guide_intro",
       "title": "bcuiv0008core1:core_guide_intro",
       "values": [
-        "t",
-        "t",
-        "t",
-        "t",
         "t"
       ],
       "targets": [
         {
           "back": true
-        },
-        {
-          "to": "core:guide_getting_started_installation",
-          "replace": true
-        },
-        {
-          "to": "core:guide_commands",
-          "replace": true
-        },
-        {
-          "back": true
-        },
-        {
-          "to": "core:guide_getting_started_installation",
-          "replace": true
         }
       ]
     }
@@ -198,3 +79,6 @@ export const FRAMEWORK_PAGE: AddonPageReference = {
     "guide"
   ]
 };
+
+/** The render pack's version: what the framework's row and page both show. */
+export const FRAMEWORK_VERSION = "1.11.0";

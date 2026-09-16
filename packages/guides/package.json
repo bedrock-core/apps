@@ -72,6 +72,23 @@
 		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0"
 	},
+	"peerDependenciesMeta": {
+		"@bedrock-core/i18n": {
+			"optional": true
+		},
+		"@bedrock-core/navigation": {
+			"optional": true
+		},
+		"@bedrock-core/ore-styled": {
+			"optional": true
+		},
+		"@bedrock-core/server-runtime": {
+			"optional": true
+		},
+		"@bedrock-core/ui-runtime": {
+			"optional": true
+		}
+	},
 	"bedrockCore": {
 		"i18n": {
 			"dir": "./src/i18n",

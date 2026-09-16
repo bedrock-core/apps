@@ -4,7 +4,7 @@ import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, render } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
 import { isAddonPageReference, pages, uiOf, type AddonPageReference } from '@bedrock-core/navigation';
-import { FRAMEWORK_ADDON_ID, FRAMEWORK_APPS, FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE } from '../framework';
+import { FRAMEWORK_ADDON_ID, FRAMEWORK_APPS, FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, FRAMEWORK_VERSION } from '../framework';
 import { i18n } from '../i18n';
 import { PAGE_SLOTS } from '../frame';
 import { AddonList, addonListElement, type AddonListMain, type AddonListModel, type AddonListRow } from './list.screen';
@@ -52,7 +52,6 @@ const { key } = i18n;
 
 const rowsFor = (core: Runtime): AddonListRow[] => {
   const registered: readonly RegisteredAddon[] = core.registry.all();
-  const runtimeVersion = registered.find(addon => addon.self)?.runtimeVersion ?? 'unknown';
   // By id, so every realm lists the same addons in the same order. A registry holds them in the
   // order that realm met them, which is load order and differs per realm — and this list is one
   // screen the player walks between realms.
@@ -65,8 +64,9 @@ const rowsFor = (core: Runtime): AddonListRow[] => {
       version: addon.version,
       ...addon.icon === undefined ? {} : { icon: addon.icon },
     })),
-    // The framework itself, pinned last: nothing registers it, so its row is synthetic.
-    { id: FRAMEWORK_ADDON_ID, name: { translate: key($ => $.framework.name) }, version: runtimeVersion, icon: 'textures/ui/bedrock-core/icon' },
+    // The framework itself, pinned last: nothing registers it, so its row is synthetic. Its version
+    // is the render pack's, the same number its page shows.
+    { id: FRAMEWORK_ADDON_ID, name: { translate: key($ => $.framework.name) }, version: FRAMEWORK_VERSION, icon: 'textures/ui/bedrock-core/icon' },
   ];
 };
 

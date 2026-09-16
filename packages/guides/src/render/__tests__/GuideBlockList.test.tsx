@@ -96,7 +96,7 @@ describe('GuideBlockList block mapping', () => {
     const ulRows = childrenOf(ul);
     const [bullet] = childrenOf(childrenOf(ulRows[0])[0]);
 
-    expect((bullet.props as { children: string }).children).toBe('§7•');
+    expect((bullet.props as { children: string }).children).toBe('§7-');
 
     const olRows = childrenOf(ol);
     const [num] = childrenOf(childrenOf(olRows[0])[0]);

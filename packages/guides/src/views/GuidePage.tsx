@@ -3,6 +3,7 @@ import { Card, Header, Button as OreButton, theme } from '@bedrock-core/ore-styl
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { canSee, paginationFor } from '../access';
+import { INDEX_SCREEN } from '../names';
 import { GuideBlockList } from '../render/GuideBlockList';
 import type { GuideAudience, GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
 
@@ -53,23 +54,20 @@ export interface GuidePageViewProps {
    */
   linkTo: (pageId: PageId) => string;
   /**
-   * The screen the header's back control returns to — the index, when the guide has one. A key
-   * rather than a handler, so the control still works on a realm showing this guide from its
-   * reference. Absent hides the control, for a single-page guide with nowhere to go back to.
+   * The screen the header's back control opens in this page's place: the index, when the guide
+   * has one. A key rather than a handler, so the control still works on a realm showing this guide
+   * from its reference.
    */
   backTo?: string;
   /**
-   * A back control that returns wherever the reader came from, in place of
-   * naming a screen. What a page wants: the index it was opened from may be the
-   * plain one or the one a host opened, and only the reader's own stack knows.
+   * A back control that leaves the guide, back to wherever the reader opened it from. For a guide
+   * with no index. Neither this nor `backTo` hides the control.
    */
   back?: boolean;
 
   /**
-   * Footer index button. Set only when there IS an index: a single-page guide
-   * has no second page to choose between. It returns to the index the reader
-   * came from — the pages replace one another rather than stacking, so the
-   * index is always the screen under the page, whichever page it is.
+   * Footer index button, opening the guide's index in this page's place. Set only when there IS an
+   * index: a single-page guide has no second page to choose between.
    */
   index?: boolean;
   /** Close the whole UI (the header's × button). */
@@ -100,7 +98,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
   return (
     <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
       {/* The trail ends with the page's own title, so the page does not say it again. */}
-      <Header title={title} breadcrumbs={breadcrumbs} backTo={backTo} back={back} onClose={onClose} />
+      <Header title={title} breadcrumbs={breadcrumbs} backTo={backTo} backReplace={backTo !== undefined} back={back} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
@@ -127,7 +125,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
           : <Panel flexGrow={1} />}
         {index === true
           ? (
-              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} back={true}>
+              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} to={INDEX_SCREEN} replace={true}>
                 <Image width={12} height={12} texture={ICON_INDEX} />
               </OreButton>
             )

@@ -99,6 +99,7 @@ export function GuideHomeView({ tree, title, width, height, linkTo, back, onClos
       subtitle={node.descK}
       depth={depth}
       to={linkTo(node.id)}
+      replace={true}
     />
   );
 
