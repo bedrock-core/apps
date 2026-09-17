@@ -7,9 +7,6 @@
  */
 import type { UiTarget } from '@bedrock-core/navigation';
 
-/** The RPC method a realm serves for this app. */
-export const CATALOG_METHOD = 'core:catalog.show';
-
 /** The browser, with one addon selected. */
 export interface CatalogTarget extends UiTarget {
   readonly kind: 'catalog';

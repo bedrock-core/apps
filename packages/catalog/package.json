@@ -63,6 +63,7 @@
 		"@bedrock-core/server-runtime": "*",
 		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/server": "*",
+		"eslint": "*",
 		"typescript": "*",
 		"vitest": "*"
 	},

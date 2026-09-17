@@ -25,25 +25,8 @@
  * - `framework.ts` — the framework's own row, which no realm publishes.
  * - `frame.ts` — the geometry the catalog and a page must agree on.
  */
-export { registerCatalog, CATALOG_APP, CATALOG_COMPILED } from './declaration';
+export { registerCatalog } from './declaration';
 export type { CatalogDeclaration, CatalogOptions } from './declaration';
 
 export { catalogOf } from './slot';
 export type { Catalog } from './slot';
-
-export { catalogTarget, CATALOG_METHOD, isCatalogTarget } from './target';
-export type { CatalogTarget } from './target';
-
-export { FRAMEWORK_ADDON_ID, FRAMEWORK_APPS, frameworkScreen } from './framework';
-
-export { ADDONS_MAX, MAIN, PAGE_SLOTS, SIDEBAR_WIDTH } from './frame';
-
-/**
- * The page an addon's manifest becomes, for the ui-compiler filter: every addon has one, whether
- * or not it installed a catalog, because it is what another addon's catalog draws for its row.
- */
-export { addonPageScreen, AddonPage, type AddonPageInfo, type AddonPageProps } from './compiled/page.screen';
-
-export { canPresentAddonList, presentAddonList, type AddonListOpeners } from './compiled/host';
-export { AddonList, addonListElement } from './compiled/list.screen';
-export type { AddonListMain, AddonListModel, AddonListRow } from './compiled/list.screen';

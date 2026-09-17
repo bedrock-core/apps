@@ -72,7 +72,6 @@ export default {
     empty: 'Nothing in this list yet.',
     full: 'Full — {{max}} items is the maximum.',
     noOptions: 'Every option is already in the list.',
-    item: 'Item',
   },
 
   command: {
@@ -88,7 +87,6 @@ export default {
       count: '({{count}}/{{max}})',
       whichItem: 'Which item? Usage: {{usage}}',
       scalarOnly: '{{verb}} only works on a list setting, and {{key}} is not one.',
-      notAnOption: '\'{{item}}\' is not one of: {{options}}',
       duplicate: '\'{{item}}\' is already in the list.',
       repeated: '\'{{item}}\' is listed twice.',
       absent: '\'{{item}}\' is not in the list.',

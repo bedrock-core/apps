@@ -25,16 +25,6 @@ export function visiblePageIds(manifest: GuideManifest, audience: GuideAudience)
 }
 
 /**
- * Whether this audience has anything to read at all. A guide that is entirely gated is not a
- * guide with an empty index for everyone else — the host should offer no way in.
- */
-export function hasVisiblePages(manifest: GuideManifest, audience: GuideAudience): boolean {
-  if (manifest.gated !== true || audience === 'op') { return Object.keys(manifest.pages).length > 0; }
-
-  return Object.keys(manifest.pages).some(id => canSee(manifest.pages[id]?.a, audience));
-}
-
-/**
  * The sidebar as this audience sees it.
  *
  * A gated category is dropped whole — its children inherited the gate at build time, so

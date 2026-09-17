@@ -1,16 +1,14 @@
 /**
- * The pure shaping layer: a flat replicated schema in, the tree a screen renders out.
+ * The pure shaping layer: a flat schema in, the tree a screen renders out.
  *
  * These matter more than they look. `buildSectionTree` is what decides how deep a config
- * screen can go and whether a level renders as buttons or as a form, and it works on data
- * that crossed a transport — so the fixtures here are shaped the way the runtime actually
- * emits them (flat, dot-pathed, depth-first in declaration order), not the way an addon
- * authors them.
+ * screen can go and whether a level renders as buttons or as a form, so the fixtures here are
+ * shaped the way the runtime actually flattens a definition (flat, dot-pathed, depth-first in
+ * declaration order), not the way an addon authors them.
  */
 import { describe, expect, it } from 'vitest';
 import {
   buildSectionTree,
-  filterScopeGroups,
   findSection,
   formEntries,
   isFormField,
@@ -20,7 +18,7 @@ import {
 import type { EntrySchema, FlatGroupsLike, FlatSchemaLike } from '../../types';
 
 const bool = (label: string): EntrySchema => ({ type: 'boolean', label, default: true });
-const list = (label: string): EntrySchema => ({ type: 'list', itemType: 'string', label, default: '[]' });
+const list = (label: string): EntrySchema => ({ type: 'list', label, default: '[]' });
 const multi = (label: string): EntrySchema =>
   ({ type: 'multiselect', label, default: '[]', options: ['a', 'b'] });
 
@@ -123,18 +121,6 @@ describe('findSection', () => {
   it('returns undefined for a path the schema no longer has', () => {
     expect(findSection(root, 'economy.gone')).toBeUndefined();
     expect(findSection(root, 'nope')).toBeUndefined();
-  });
-});
-
-describe('filterScopeGroups', () => {
-  it('strips the scope prefix and drops the other scopes', () => {
-    const scoped: FlatGroupsLike = {
-      'server.economy': { label: 'Economy' },
-      'player.prefs': { label: 'Preferences' },
-    };
-
-    expect(filterScopeGroups(scoped, 'server')).toEqual({ economy: { label: 'Economy' } });
-    expect(filterScopeGroups(scoped, 'dimension')).toEqual({});
   });
 });
 

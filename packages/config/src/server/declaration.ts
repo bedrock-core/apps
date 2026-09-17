@@ -5,10 +5,9 @@
  * const { config } = core.register({ manifest, config: registerConfig(definition) });
  *
  * config.server.taxRate.get();   // typed by the definition
- * configOf(core).of<ShopConfigDef>('vendor_shop');
  * ```
  *
- * Installing builds the {@link ConfigRegistry} on the runtime's node, namespace and db, fills the
+ * Installing builds the {@link ConfigRegistry} on the runtime's db, fills the
  * `core:config` slot with it, and returns the typed scope accessors. Everything else reads that
  * registry back through `configOf(core)`. Stopping releases its subscriptions.
  */
@@ -34,7 +33,7 @@ export function registerConfig<I extends ConfigDefinition>(definition: I): Confi
   return {
     definition,
     install(core: Runtime): Config<I> {
-      registry = new ConfigRegistry(core.node, core.namespace, core.db);
+      registry = new ConfigRegistry(core.db);
       core.fill('core:config', registry);
 
       return registry.define(definition);

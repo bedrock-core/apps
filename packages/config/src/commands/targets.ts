@@ -5,8 +5,8 @@
  * or a player name — so it is resolved once, into a value discriminated by scope. After that the
  * read and write helpers never have to sniff what they were handed.
  *
- * These reach the addon's OWN config through `configOf(core).local`, not over RPC: the command is
- * registered by the realm that owns the data, so there is nobody to ask.
+ * These reach the addon's own config through `configOf(core).local`: the command is registered by
+ * the realm that owns the data.
  */
 import { Player, world } from '@minecraft/server';
 import type { Dimension } from '@minecraft/server';

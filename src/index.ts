@@ -23,11 +23,11 @@
  * the surface: this file names only what an addon mounts, so the three can be told apart at a
  * glance. Everything else is on its own package.
  */
-export { registerCatalog, CATALOG_APP } from '@bedrock-core/catalog';
+export { registerCatalog } from '@bedrock-core/catalog';
 export type { Catalog, CatalogDeclaration, CatalogOptions } from '@bedrock-core/catalog';
 
-export { registerConfig, CONFIG_APP } from '@bedrock-core/config';
+export { registerConfig } from '@bedrock-core/config';
 export type { ConfigApp, ConfigAppDeclaration, ConfigOptions } from '@bedrock-core/config';
 
-export { registerGuides, GUIDE_APP } from '@bedrock-core/guides';
+export { registerGuides } from '@bedrock-core/guides';
 export type { Guides, GuidesDeclaration, GuidesOptions } from '@bedrock-core/guides';

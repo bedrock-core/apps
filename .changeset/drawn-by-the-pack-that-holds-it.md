@@ -5,11 +5,15 @@
 **Breaking.** A screen is drawn by the addon whose pack holds it, and a crossing carries the way
 back.
 
-Most of the UI is in every pack — the scope pickers, the menus, the list editors are the same
-layouts everywhere — so whichever realm a command is typed into draws those itself. A section
-shaped for one addon's schema is not: it exists in exactly one bundle, because that is the bundle
-whose build compiled it. Reaching it means asking that addon's realm, and from then on its
-settings, its page and its guide are served by it. No realm draws another addon's settings.
+A config target naming another addon is handed to that addon's realm before anything is drawn:
+the screens read and write the addon's own scopes, so its settings, its page and its guide are
+served by it. No realm draws another addon's settings.
+
+Config is local. `configOf(core).of()`, `configOf(core).subscribe()`, `RemoteConfigAccessor`,
+`TypedRemoteConfig`, `ConfigAccessOptions`, the nine `core:config.<scope>.<get|patch|set>` RPC
+methods and the `core-config/schema` and `core-config/groups` announcements are gone, and
+`configOf(core).local` gains `groups`. An addon that wants its settings read or written from
+another realm serves them over its own RPC.
 
 One method does all of it, `core:ui.show(playerId, target, returnTo?)`, and the third argument is
 what makes a crossing survivable. A return address names a PLACE rather than a screen key — a
@@ -22,9 +26,8 @@ A row whose realm does not answer is still drawn here, from the page reference t
 published, exactly as before. Handing off is what happens when the owner is present, not a
 requirement for appearing at all.
 
-The open target is now one type per app rather than one shared union: `ConfigTarget` with
-`isConfigTarget` and `configTargetFrom`, and `CONFIG_METHOD` naming the method a realm serves for
-it. `isOpenTarget`, `OpenTarget` and `OpenCommand` are gone — a target crosses a realm as plain
+The open target is now one per app rather than one shared union, and internal to it.
+`isOpenTarget`, `OpenTarget` and `OpenCommand` are gone — a target crosses a realm as plain
 data, and each app reads its own. A realm running an older copy understands as much of a target as
 it knows and falls back for the rest.
 

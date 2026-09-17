@@ -10,7 +10,7 @@
 /** What a leaf holds: a scalar, or the array a `list` / `multiselect` entry is. */
 export type ConfigValue = boolean | number | string | readonly string[];
 
-/** The three config scopes, named as they appear on the wire and in the announced schema. */
+/** The three config scopes. */
 export type ConfigScopeName = 'server' | 'dimension' | 'player';
 
 // ─── Entry definitions ─────────────────────────────────────────────────────────
@@ -43,44 +43,57 @@ export type StringEntry = {
   description?: string;
 };
 
-/** One of `options`. */
-export type EnumEntry<O extends readonly string[] = readonly string[]> = {
-  type: 'enum';
-  default: O[number];
+/** The choices a `select` or a `multiselect` offers: strings, or a string `enum`. */
+export type EntryOptions = readonly string[] | Readonly<Record<string, string>>;
+
+/** One of the values `O` offers: an array's element, or an enum's member. */
+export type OptionValue<O extends EntryOptions> = O extends readonly string[] ? O[number] : O[keyof O];
+
+/** Exactly one of `options`. */
+export type SelectEntry<O extends EntryOptions = EntryOptions> = {
+  type: 'select';
+  default: OptionValue<O>;
   options: O;
   label: string;
   description?: string;
 };
 
-/** An ordered list of strings, open-ended or drawn from `options`. */
+/**
+ * Any number of `options`.
+ *
+ * Distinct from {@link ListEntry}, the one free-form array: a multiselect's whole option set is
+ * known at declaration, so every choice fits on screen and the modal draws a control per option.
+ * A list's items cannot be enumerated, which is why it has no native control at all and gets a
+ * screen of its own instead.
+ */
+export type MultiselectEntry<O extends EntryOptions = EntryOptions> = {
+  type: 'multiselect';
+  default: readonly OptionValue<O>[];
+  options: O;
+  label: string;
+  description?: string;
+};
+
+/** An ordered list of free strings, capped at `maxItems` when set. */
 export type ListEntry = {
   type: 'list';
-  itemType: 'string' | 'enum';
-  options?: readonly string[];
   maxItems?: number;
   default: readonly string[];
   label: string;
   description?: string;
 };
 
-/**
- * Any number of a fixed option set — a checkbox group.
- *
- * Distinct from {@link ListEntry}, which is an open-ended collection an addon can only cap:
- * a multiselect's whole option set is known at declaration, so every choice fits on screen and
- * the modal can draw it as one checkbox per option. A list cannot, which is why it has no native
- * control at all and gets a screen of its own instead.
- */
-export type MultiselectEntry = {
-  type: 'multiselect';
-  options: readonly string[];
-  default: readonly string[];
-  label: string;
-  description?: string;
-};
-
 /** Any setting. */
-export type ConfigEntry = BooleanEntry | NumberEntry | StringEntry | EnumEntry | ListEntry | MultiselectEntry;
+export type ConfigEntry = BooleanEntry | NumberEntry | StringEntry | SelectEntry | MultiselectEntry | ListEntry;
+
+/** The values `options` offers, in declaration order: the array itself, or the enum's string members. */
+export function optionValues(options: EntryOptions): readonly string[] {
+  return isStringArray(options) ? options : Object.values(options).filter((value): value is string => typeof value === 'string');
+}
+
+function isStringArray(options: EntryOptions): options is readonly string[] {
+  return Array.isArray(options);
+}
 
 // ─── Schema node types ─────────────────────────────────────────────────────────
 
@@ -157,30 +170,31 @@ export type SchemaToValue<S> = {
   [K in ChildKeys<S>]: S[K] extends { type: 'boolean' } ? boolean
     : S[K] extends { type: 'number' } ? number
       : S[K] extends { type: 'string' } ? string
-        : S[K] extends { type: 'enum'; options: readonly (infer O)[] } ? O
-          : S[K] extends { type: 'list' | 'multiselect' } ? string[]
-            : S[K] extends Record<string, unknown> ? SchemaToValue<S[K]>
-              : never
+        : S[K] extends { type: 'select'; options: infer O extends EntryOptions } ? OptionValue<O>
+          : S[K] extends { type: 'multiselect'; options: infer O extends EntryOptions } ? OptionValue<O>[]
+            : S[K] extends { type: 'list' } ? string[]
+              : S[K] extends Record<string, unknown> ? SchemaToValue<S[K]>
+                : never
 };
 
 /** A patch for a scope value: db's deep partial, so a group patch names only what changes. */
 export type { DeepPartial } from '@bedrock-core/db';
 
-// ─── Serialized form (broadcast) ──────────────────────────────────────────────
+// ─── Flat form ─────────────────────────────────────────────────────────────────
 
-/** One setting as it is announced: the entry with its default resolved to a value. */
+/** One setting as it is flattened: the entry with its default resolved to a value. */
 export type SerializedEntry
   = | { type: 'boolean'; default: boolean; label: string; description?: string }
     | { type: 'number'; default: number; min: number; max: number; step?: number; label: string; description?: string }
     | { type: 'string'; default: string; maxLength?: number; label: string; description?: string }
-    | { type: 'enum'; default: string; options: readonly string[]; label: string; description?: string }
-    | { type: 'list'; itemType: 'string' | 'enum'; options?: readonly string[]; maxItems?: number; default: readonly string[]; label: string; description?: string }
-    | { type: 'multiselect'; options: readonly string[]; default: readonly string[]; label: string; description?: string };
+    | { type: 'select'; default: string; options: readonly string[]; label: string; description?: string }
+    | { type: 'multiselect'; default: readonly string[]; options: readonly string[]; label: string; description?: string }
+    | { type: 'list'; maxItems?: number; default: readonly string[]; label: string; description?: string };
 
-/** Every setting of a scope, keyed by dot-path, as announced. */
+/** Every setting of a scope, keyed by dot-path. */
 export type FlatSchema = Record<string, SerializedEntry>;
 
-/** One group's display strings as they travel, keyed by the group's dot-path. */
+/** One group's display strings, keyed by the group's dot-path. */
 export type SerializedGroup = { label?: string; description?: string };
 
 /** Group metadata, dot-path → strings. Groups that declare none are absent, not empty. */
@@ -280,7 +294,7 @@ export function childNode(group: SchemaGroup, key: string): SchemaNode | undefin
   return typeof node === 'object' && node !== null ? node : undefined;
 }
 
-/** Every setting of a group, keyed by dot-path, in the announced form. */
+/** Every setting of a group, keyed by dot-path, in the flat form. */
 export function flattenSchema(schema: SchemaGroup, prefix = ''): FlatSchema {
   const result: FlatSchema = {};
 
@@ -304,7 +318,7 @@ export function flattenSchema(schema: SchemaGroup, prefix = ''): FlatSchema {
  * Kept separate from the entry map rather than folded in as a pseudo-entry, because the two are
  * read by different things — `buildNestedObject` and the accessor tree walk entries and would
  * have to learn to skip a node that is not a value. A group with nothing to say is omitted
- * entirely, so a schema that declares no metadata flattens to `{}` and costs nothing on the wire.
+ * entirely, so a schema that declares no metadata flattens to `{}`.
  */
 export function flattenGroups(schema: SchemaGroup, prefix = ''): FlatGroups {
   const result: FlatGroups = {};
@@ -335,7 +349,7 @@ export function isEntry(node: unknown): node is ConfigEntry {
 
   const t = (node as { type?: unknown }).type;
 
-  return t === 'boolean' || t === 'number' || t === 'string' || t === 'enum' || t === 'list' || t === 'multiselect';
+  return t === 'boolean' || t === 'number' || t === 'string' || t === 'select' || t === 'multiselect' || t === 'list';
 }
 
 function serializeEntry(entry: ConfigEntry): SerializedEntry {
@@ -367,27 +381,25 @@ function serializeEntry(entry: ConfigEntry): SerializedEntry {
         ...(entry.maxLength !== undefined ? { maxLength: entry.maxLength } : {}),
         ...common,
       };
-    case 'enum':
+    case 'select':
       return {
-        type: 'enum',
+        type: 'select',
         default: entry.default,
-        options: entry.options,
-        ...common,
-      };
-    case 'list':
-      return {
-        type: 'list',
-        itemType: entry.itemType,
-        default: entry.default,
-        ...(entry.options ? { options: entry.options } : {}),
-        ...(entry.maxItems !== undefined ? { maxItems: entry.maxItems } : {}),
+        options: optionValues(entry.options),
         ...common,
       };
     case 'multiselect':
       return {
         type: 'multiselect',
-        options: entry.options,
         default: entry.default,
+        options: optionValues(entry.options),
+        ...common,
+      };
+    case 'list':
+      return {
+        type: 'list',
+        default: entry.default,
+        ...(entry.maxItems !== undefined ? { maxItems: entry.maxItems } : {}),
         ...common,
       };
   }

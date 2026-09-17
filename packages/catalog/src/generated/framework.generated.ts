@@ -20,13 +20,13 @@ export const FRAMEWORK_SCREENS: AddonReference = {
   "screens": {
     "core:guide_home": {
       "key": "core:guide_home",
-      "title": "bcuiv0008core1:core_guide_home",
+      "title": "corev0009core1:core_guide_home",
       "values": [],
       "targets": []
     },
     "core:guide_home_back": {
       "key": "core:guide_home_back",
-      "title": "bcuiv0008core1:core_guide_home_back",
+      "title": "corev0009core1:core_guide_home_back",
       "values": [
         "t"
       ],
@@ -38,7 +38,7 @@ export const FRAMEWORK_SCREENS: AddonReference = {
     },
     "core:guide_index": {
       "key": "core:guide_index",
-      "title": "bcuiv0008core1:core_guide_index",
+      "title": "corev0009core1:core_guide_index",
       "values": [
         "t",
         "t"
@@ -55,7 +55,7 @@ export const FRAMEWORK_SCREENS: AddonReference = {
     },
     "core:guide_intro": {
       "key": "core:guide_intro",
-      "title": "bcuiv0008core1:core_guide_intro",
+      "title": "corev0009core1:core_guide_intro",
       "values": [
         "t"
       ],

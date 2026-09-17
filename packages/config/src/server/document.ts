@@ -9,7 +9,7 @@
  * entry allows, drops the ones back at their default, and drops keys the schema does not name.
  */
 import type { ConfigEntry, ConfigValue, SchemaGroup } from './schema';
-import { childEntries, isEntry } from './schema';
+import { childEntries, isEntry, optionValues } from './schema';
 
 /** A scope's document: groups nest, leaves hold their value. */
 export type ConfigDocument = Record<string, unknown>;
@@ -77,20 +77,22 @@ export function coerce(value: unknown, entry: ConfigEntry): ConfigValue {
       return entry.maxLength !== undefined && value.length > entry.maxLength ? value.slice(0, entry.maxLength) : value;
     }
 
-    case 'enum':
-      return typeof value === 'string' && entry.options.includes(value) ? value : entry.default;
+    case 'select':
+      return typeof value === 'string' && optionValues(entry.options).includes(value) ? value : entry.default;
+
+    case 'multiselect': {
+      const options = optionValues(entry.options);
+
+      return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && options.includes(item)) : entry.default;
+    }
 
     case 'list': {
       if (!Array.isArray(value)) { return entry.default; }
 
-      const options = entry.options;
-      const items = value.filter((item): item is string => typeof item === 'string' && (options === undefined || options.includes(item)));
+      const items = value.filter((item): item is string => typeof item === 'string');
 
       return entry.maxItems !== undefined && items.length > entry.maxItems ? items.slice(0, entry.maxItems) : items;
     }
-
-    case 'multiselect':
-      return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && entry.options.includes(item)) : entry.default;
   }
 }
 

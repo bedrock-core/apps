@@ -40,12 +40,12 @@ export type ChangeListener<V = unknown> = {
 }['bivarianceHack'];
 
 /** Structural shape of a schema leaf — the compile-time mirror of the runtime `isEntry` check. */
-type LeafEntry = { type: 'boolean' | 'number' | 'string' | 'enum' | 'list' | 'multiselect' };
+type LeafEntry = { type: 'boolean' | 'number' | 'string' | 'select' | 'multiselect' | 'list' };
 
 /**
  * The value type of **one** schema node. Defers to {@link SchemaToValue} by wrapping the node in
- * a single-key schema, so a leaf narrows exactly as it does inside a group — enums to their
- * literal union, `list` to `string[]` — and a group yields its whole nested shape.
+ * a single-key schema, so a leaf narrows exactly as it does inside a group — a select to its
+ * options' union, `list` to `string[]` — and a group yields its whole nested shape.
  */
 export type NodeValue<N> = SchemaToValue<{ node: N }>['node'];
 

@@ -1,23 +1,19 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { Runtime } from '@bedrock-core/server-runtime';
-import { configOf, type RemoteConfigAccessor } from '../server';
+import { configOf } from '../server';
 import { compiledTitleOf, render } from '@bedrock-core/ui-runtime';
 import { trailText, type TrailBack } from '@bedrock-core/ore-styled';
 import { world, type Player } from '@minecraft/server';
-import {
-  buildSectionTree, filterScope, filterScopeGroups, findSection, getScopedGroups, getScopedSchema, isPureSection,
-  listEntries, schemaDefaultsPatch, type SectionNode,
-} from '../config/schema';
+import { buildSectionTree, findSection, isPureSection, listEntries, schemaDefaultsPatch, type SectionNode } from '../config/schema';
 import { buildNestedPatch, mergeNested, resolveInitialValue, toItems } from '../config/nested';
-import { getRoster, patchScope } from '../config/values';
+import { getRoster, patchScope, scopeGroups, scopeSchema } from '../config/values';
 import { i18n, translationsFor } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import type { ConfigScope, EntrySchema } from '../types';
 import { ConfirmReset, confirmResetElement } from './confirm.screen';
 import { MENU_ROWS, MenuList, menuListElement, pageOf, type MenuListRow } from './menu.screen';
 import { ScopePicker, scopePickerElement } from './picker.screen';
-import { listItemChoice, listItemText } from './item.screen';
 import { itemsListElement, type ItemsListRow, LIST_ROWS, pageOfItems } from './items.screen';
 import { ITEM_FIELD, OPTION_OF, shapedElement, shapedItemScreen, shapedScreen } from './shaped';
 
@@ -78,7 +74,7 @@ export interface ConfigPlace {
  * the scope's keys, the entity's name, and the key of every section down to
  * the level. The client resolves each in the player's language.
  */
-export function trailOf(core: Runtime, player: Player, place: ConfigPlace): DisplayText[] {
+export function trailOf(core: Runtime, place: ConfigPlace): DisplayText[] {
   const { addonId, scope, entityId, path = '' } = place;
   const trail: DisplayText[] = [addonNameOf(core, addonId)];
 
@@ -92,16 +88,11 @@ export function trailOf(core: Runtime, player: Player, place: ConfigPlace): Disp
     trail.push(entityNameOf(scope, entityId));
   }
 
-  const accessor = configOf(core).of(addonId, { actorId: player.id });
-
-  if (accessor === undefined || path === '') {
+  if (path === '') {
     return trail;
   }
 
-  const root = buildSectionTree(
-    filterScope(getScopedSchema(accessor), scope),
-    filterScopeGroups(getScopedGroups(accessor), scope),
-  );
+  const root = buildSectionTree(scopeSchema(core, scope), scopeGroups(core, scope));
 
   // Every prefix of the path names a level; each contributes its label.
   const segments = path.split('.');
@@ -130,13 +121,9 @@ const titleTrail = (core: Runtime, player: Player, trail: readonly DisplayText[]
 
 export function presentScopePicker(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners): void {
   const { t } = translationsFor(core.translations.forPlayer(player));
-  const accessor = configOf(core).of(addonId, { actorId: player.id });
   const addonName = addonNameOf(core, addonId);
   // Declared by the addon AND permitted for this player, in the order the rows draw.
-  const schema = accessor === undefined ? {} : getScopedSchema(accessor);
-  const scopes = accessor === undefined
-    ? []
-    : allowedScopes(player).filter(scope => Object.keys(filterScope(schema, scope)).length > 0);
+  const scopes = allowedScopes(player).filter(scope => Object.keys(scopeSchema(core, scope)).length > 0);
 
   const again = (): void => { presentScopePicker(core, player, addonId, openers); };
 
@@ -145,15 +132,11 @@ export function presentScopePicker(core: Runtime, player: Player, addonId: strin
     scopes,
     onScope: (scope): unknown => openers.scope(addonId, scope),
     onReset: (): void => {
-      if (accessor === undefined) {
-        return;
-      }
-
       presentConfirmReset(core, player, {
         trail: [addonName, scopeLabelOf('server')],
         target: t($ => $.scope.server.label),
         onConfirm: (): void => {
-          patchScope(accessor, 'server', undefined, schemaDefaultsPatch(filterScope(getScopedSchema(accessor), 'server')));
+          patchScope(core, 'server', undefined, schemaDefaultsPatch(scopeSchema(core, 'server')));
           again();
         },
         onCancel: again,
@@ -207,9 +190,8 @@ export function presentEntityRoster(
   page = 1,
 ): void {
   const { addonId, scope } = target;
-  const accessor = configOf(core).of(addonId, { actorId: player.id });
-  const trail = trailOf(core, player, { addonId, scope });
-  const roster = accessor !== undefined && allowedScopes(player).includes(scope)
+  const trail = trailOf(core, { addonId, scope });
+  const roster = configOf(core).local !== undefined && allowedScopes(player).includes(scope)
     ? getRoster(scope).filter(entry => isOperator(player) || entry.id === player.id)
     : [];
   const shown = pageOf(roster, page);
@@ -230,7 +212,7 @@ export function presentEntityRoster(
     onReset: (index): void => {
       const entry = shown.rows[index];
 
-      if (entry === undefined || accessor === undefined) {
+      if (entry === undefined) {
         return;
       }
 
@@ -238,7 +220,7 @@ export function presentEntityRoster(
         trail: [...trail, entry.name],
         target: entry.name,
         onConfirm: (): void => {
-          patchScope(accessor, scope, entry.id, schemaDefaultsPatch(filterScope(getScopedSchema(accessor), scope)));
+          patchScope(core, scope, entry.id, schemaDefaultsPatch(scopeSchema(core, scope)));
           again();
         },
         onCancel: (): void => { again(); },
@@ -271,24 +253,17 @@ export interface SectionListOpeners {
 }
 
 /** The level of the tree `target` names, or undefined when the schema no longer holds it. */
-const sectionAt = (core: Runtime, player: Player, target: SectionTarget): SectionNode | undefined => {
-  const accessor = configOf(core).of(target.addonId, { actorId: player.id });
-
-  if (accessor === undefined) {
+const sectionAt = (core: Runtime, target: SectionTarget): SectionNode | undefined => {
+  if (configOf(core).local === undefined) {
     return undefined;
   }
 
-  const root = buildSectionTree(
-    filterScope(getScopedSchema(accessor), target.scope),
-    filterScopeGroups(getScopedGroups(accessor), target.scope),
-  );
-
-  return findSection(root, target.path);
+  return findSection(buildSectionTree(scopeSchema(core, target.scope), scopeGroups(core, target.scope)), target.path);
 };
 
 /** Whether the level `target` names holds sections and lists but no settings of its own. */
-export const isSectionLevel = (core: Runtime, player: Player, target: SectionTarget): boolean => {
-  const section = sectionAt(core, player, target);
+export const isSectionLevel = (core: Runtime, target: SectionTarget): boolean => {
+  const section = sectionAt(core, target);
 
   return section !== undefined && isPureSection(section);
 };
@@ -300,7 +275,7 @@ export const isSectionLevel = (core: Runtime, player: Player, target: SectionTar
  * another level here. Nothing is fetched: only the editor needs values.
  */
 export function presentSectionList(core: Runtime, player: Player, target: SectionTarget, openers: SectionListOpeners, page = 1): void {
-  const section = sectionAt(core, player, target);
+  const section = sectionAt(core, target);
   const children = section?.children ?? [];
   const lists = section === undefined ? [] : listEntries(section);
   const all: MenuListRow[] = [
@@ -348,7 +323,7 @@ export function presentSectionList(core: Runtime, player: Player, target: Sectio
 
 /** Opens one level of the tree where buttons-or-editor is decided, the way a press decides it. */
 export const openLevel = (core: Runtime, player: Player, target: SectionTarget, openers: SectionListOpeners): unknown => {
-  if (isSectionLevel(core, player, target)) {
+  if (isSectionLevel(core, target)) {
     presentSectionList(core, player, target, openers);
 
     return undefined;
@@ -383,37 +358,22 @@ export function presentListEditor(
   openers: SectionListOpeners,
   page = 1,
 ): void {
-  const accessor = configOf(core).of(target.addonId, { actorId: player.id });
-  const entry = accessor === undefined ? undefined : filterScope(getScopedSchema(accessor), target.scope)[target.key];
+  const entry = scopeSchema(core, target.scope)[target.key];
 
-  if (accessor === undefined || entry === undefined) {
+  if (entry === undefined) {
     void openers.back(target);
 
     return;
   }
 
   const items = toItems(resolveInitialValue(target.key, entry, values));
-  const isEnum = entry.itemType === 'enum' && entry.options !== undefined;
-  const full = entry.maxItems !== undefined && items.length >= entry.maxItems;
-
-  /**
-   * What an enum-item list may still offer. Everything already in is excluded
-   * — except the item being edited, which has to stay in its own dropdown or
-   * that row could not keep its value.
-   */
-  const optionsFor = (index?: number): string[] => {
-    const taken = new Set(index === undefined ? items : items.filter((_: string, at: number) => at !== index));
-
-    return [...entry.options ?? []].filter(option => !taken.has(option));
-  };
-
-  const canAdd = !full && (!isEnum || optionsFor().length > 0);
+  const canAdd = entry.maxItems === undefined || items.length < entry.maxItems;
 
   /** Stage and write in one step — see the note above about why there is no Save. */
   const commit = (next: string[], at = page): void => {
     const patch = buildNestedPatch({ [target.key]: next });
 
-    patchScope(accessor, target.scope, target.entityId, patch);
+    patchScope(core, target.scope, target.entityId, patch);
     presentListEditor(core, player, target, mergeNested(values, patch), openers, at);
   };
 
@@ -425,7 +385,6 @@ export function presentListEditor(
   const editAt = (at: number | undefined): void => {
     presentItemEditor(core, player, target, at, {
       current: at === undefined ? '' : items[at] ?? '',
-      options: isEnum ? optionsFor(at) : undefined,
       back: (): void => { presentListEditor(core, player, target, values, openers, page); },
       apply: (item: string): void => {
         if (item === '') {
@@ -435,8 +394,8 @@ export function presentListEditor(
         }
 
         if (at === undefined) {
-          // A duplicate is dropped rather than reported: the enum path cannot
-          // produce one, so the only way here is retyping a string already in.
+          // A duplicate is dropped rather than reported: retyping a string
+          // already in the list changes nothing.
           commit(items.includes(item) ? items : [...items, item]);
 
           return;
@@ -493,25 +452,24 @@ export function presentListEditor(
 /**
  * One item of a list, on the screen its list was shaped a screen for.
  *
- * A list has no native modal control, so an item is edited on its own: a text
- * field where the items are free strings, a dropdown of what is still available
- * where they come from a set. Which of the set is still free is known only now,
- * so it travels rather than being baked — the engine reads a dropdown's options
- * off the modal row either way.
+ * A list has no native modal control, so an item is edited on its own, in a
+ * text field: a list's items are free strings.
  */
 function presentItemEditor(
   core: Runtime,
   player: Player,
   target: SectionTarget & { key: string },
   index: number | undefined,
-  item: { current: string; options?: string[]; apply: (value: string) => void; back: () => void },
+  item: { current: string; apply: (value: string) => void; back: () => void },
 ): void {
-  // The addon's own screen when this bundle has it, which is the case only on
-  // the realm that owns the list. Everywhere else — and the realm drawing config
-  // is usually somebody else — the item is edited on the generic one, which every
-  // addon bakes. The two differ in the field's label and nothing else.
-  const generic = item.options === undefined ? listItemText : listItemChoice;
-  const screen = shapedItemScreen(target.scope, target.key) ?? generic;
+  const screen = shapedItemScreen(target.scope, target.key);
+
+  if (screen === undefined) {
+    console.error(`[config] no compiled item screen for ${target.scope}.${target.key} — build this pack with the ui-compiler filter`);
+    item.back();
+
+    return;
+  }
 
   // No parameter: the trail already ends with the list's own label, so the
   // segment says which of the two this is and nothing more.
@@ -522,7 +480,6 @@ function presentItemEditor(
   render(shapedElement(screen, {
     trail: titleTrail(core, player, [...target.trail, label], 'cancel'),
     values: { [ITEM_FIELD]: item.current },
-    ...item.options === undefined ? {} : { options: { [ITEM_FIELD]: item.options } },
     onSubmit: (values): void => { item.apply(String(values[ITEM_FIELD] ?? '')); },
     // A modal's dismiss is its only other control, so it is the way back to the
     // list rather than the way out of the UI.
@@ -541,7 +498,6 @@ function presentItemEditor(
  */
 export function presentShapedEditor(
   core: Runtime,
-  accessor: RemoteConfigAccessor,
   player: Player,
   target: SectionTarget,
   values: Record<string, unknown>,
@@ -553,7 +509,7 @@ export function presentShapedEditor(
     return false;
   }
 
-  const schema = filterScope(getScopedSchema(accessor), target.scope);
+  const schema = scopeSchema(core, target.scope);
 
   render(shapedElement(screen, {
     trail: titleTrail(core, player, target.trail, 'cancel'),
@@ -570,7 +526,7 @@ export function presentShapedEditor(
         }
       }
 
-      patchScope(accessor, target.scope, target.entityId, buildNestedPatch(patch));
+      patchScope(core, target.scope, target.entityId, buildNestedPatch(patch));
 
       // Saving leaves the screen: a leaf is one section's settings, and there is
       // nothing further to do on it once they are written. Where it goes is where
@@ -637,7 +593,12 @@ const foldOptions = (submitted: Record<string, unknown>, schema: Record<string, 
 
 const settingValue = (entry: EntrySchema, raw: unknown): unknown => {
   if (entry.type === 'multiselect') {
-    const picked = Array.isArray(raw) ? raw.filter((option): option is string => typeof option === 'string') : [];
+    // Segments answer with the indices that are on; checkboxes, once folded, with the options themselves.
+    const picked = Array.isArray(raw)
+      ? raw
+          .map((option: unknown) => (typeof option === 'number' ? entry.options?.[option] : option))
+          .filter((option): option is string => typeof option === 'string')
+      : [];
 
     return picked.filter(option => entry.options?.includes(option) === true);
   }
@@ -656,8 +617,8 @@ const settingValue = (entry: EntrySchema, raw: unknown): unknown => {
     return Math.min(entry.max ?? Number.POSITIVE_INFINITY, Math.max(entry.min ?? Number.NEGATIVE_INFINITY, parsed));
   }
 
-  if (entry.type === 'enum') {
-    // A dropdown reports the chosen INDEX; a radio reports the value itself.
+  if (entry.type === 'select') {
+    // Segments and a dropdown report the chosen INDEX; a radio reports the value itself.
     const chosen = typeof raw === 'number' ? entry.options?.[raw] : raw;
 
     return typeof chosen === 'string' && entry.options?.includes(chosen) === true ? chosen : undefined;

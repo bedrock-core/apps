@@ -25,27 +25,10 @@
  * - `commands/` — the per-addon commands generated from the schema, with their argument parsing
  *   and scope targeting.
  * - `target.ts` — where the app opens, as data that crosses a realm.
- * - `config/` — the config domain: schema shaping, value transport over RPC, flat/nested paths.
+ * - `config/` — the config domain: schema shaping, reading and writing values, flat/nested paths.
  * - `server/` — the config subsystem itself, at `@bedrock-core/config/server`.
  * - `permissions.ts` — who may reach which scope, the caller-side half of authorization.
  * - `compiled/` — the screens themselves.
  */
-export { registerConfig, CONFIG_APP, CONFIG_COMPILED } from './declaration';
+export { registerConfig } from './declaration';
 export type { ConfigApp, ConfigAppDeclaration, ConfigOptions } from './declaration';
-
-export { registerAddonCommands } from './commands/addon';
-export type { OpenCallback } from './commands/addon';
-
-export { allowedScopes, clampTarget, isOperator } from './permissions';
-
-export { configTargetFrom, CONFIG_METHOD, isConfigTarget } from './target';
-export type { ConfigTarget } from './target';
-
-export { CONFIG_SCOPES } from './types';
-export type { ConfigScope, EntrySchema, FlatSchemaLike } from './types';
-
-/**
- * The config screens an addon's own schema becomes, one per section that holds settings, shaped
- * for it: the parts of `shape` in `@bedrock-core/config/compiled`, which is what the build calls.
- */
-export { configScreens, leafName, registerConfigScreens, type LeafModel, type LeafProps } from './compiled/shaped';

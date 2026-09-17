@@ -13,7 +13,7 @@ const definition = {
       currency: { type: 'string', default: 'coin', label: 'Currency' },
       startingBalance: { type: 'number', default: 100, min: 0, max: 1000, label: 'Starting balance' },
       taxRate: { type: 'number', default: 5, min: 0, max: 20, label: 'Tax rate' },
-      mode: { type: 'enum', default: 'free', options: ['free', 'closed', 'auction', 'barter', 'gift', 'quest', 'raid', 'trade', 'wager'], label: 'Mode' },
+      mode: { type: 'select', default: 'free', options: ['free', 'closed', 'auction', 'barter', 'gift', 'quest', 'raid', 'trade', 'wager'], label: 'Mode' },
       shop: {
         enabled: { type: 'boolean', default: true, label: 'Shop enabled' },
         slots: { type: 'number', default: 9, min: 1, max: 54, label: 'Slots' },

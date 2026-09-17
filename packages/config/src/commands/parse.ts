@@ -60,7 +60,7 @@ export function parseValue(entry: EntrySchema | undefined, raw: string): Parsed 
     return { ok: true, value };
   }
 
-  if (entry.type === 'enum') {
+  if (entry.type === 'select') {
     if (entry.options?.includes(raw)) { return { ok: true, value: raw }; }
 
     return { ok: false, message: `Expected one of: ${(entry.options ?? []).join(', ')}` };

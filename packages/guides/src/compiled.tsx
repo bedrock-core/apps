@@ -4,7 +4,7 @@ import {
   type FunctionComponent, type JSX, type PressEvent,
 } from '@bedrock-core/ui-runtime';
 import { resolveLanding } from './landing';
-import { HOME_BACK_SCREEN, HOME_SCREEN, INDEX_SCREEN } from './names';
+import { HOME_SCREEN, INDEX_SCREEN } from './names';
 import type { GuideComponents, GuideManifest, PageId } from './types';
 import { GuideHomeView } from './views/GuideHome';
 import { GuidePageView } from './views/GuidePage';
@@ -48,9 +48,7 @@ const CANVAS = { width: 300, height: 200 };
  * own `screens` table is believed over this: the filter is the half that
  * actually named the files.
  */
-export { HOME_BACK_SCREEN, HOME_SCREEN, INDEX_SCREEN };
-
-export const guideScreenName = (pageId: PageId): string =>
+const guideScreenName = (pageId: PageId): string =>
   `guide_${pageId.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`;
 
 /** The screen key of one page of `manifest`. */
@@ -122,16 +120,25 @@ const indexView = (manifest: GuideManifest, options: CompiledGuideOptions, back:
   };
 };
 
+export interface GuideHomeOptions extends CompiledGuideOptions {
+  /**
+   * A back control that leaves the guide, for the entry a host opens. A screen's shape is fixed,
+   * so the entry with one is a second compiled screen, not a state of the first.
+   */
+  back?: boolean;
+}
+
 /**
- * Where a guide opens. With a home page — the one it declares with `home: true`, or its only
- * page — that page; otherwise the index. `back` is the entry a host opened, whose back control
- * leaves the guide.
+ * Where a guide opens, as a compiled screen: the one `openGuide` shows, or with `back` the one a
+ * host opens. With a home page — the one it declares with `home: true`, or its only page — that
+ * page; otherwise the index.
  *
  * Moving inside a guide replaces rather than stacks, so a reader is always one press from the
  * index and two from wherever they opened the guide: a page's back and its index button open the
  * index in its place, and the index's back leaves.
  */
-const homeScreen = (manifest: GuideManifest, options: CompiledGuideOptions, back: boolean): FunctionComponent => {
+export function guideHomeScreen(manifest: GuideManifest, options: GuideHomeOptions = {}): FunctionComponent {
+  const back = options.back === true;
   const { landing, hasSidebar } = resolveLanding(manifest, 'op');
 
   if (landing === undefined) {
@@ -141,19 +148,6 @@ const homeScreen = (manifest: GuideManifest, options: CompiledGuideOptions, back
   return hasSidebar
     ? pageView(manifest, landing, options, { back: 'index', index: true })
     : pageView(manifest, landing, options, { back: back ? 'leave' : 'none', index: false });
-};
-
-/** The entry of `manifest` as a compiled screen: the one `openGuide` shows, with no back control. */
-export function guideHomeScreen(manifest: GuideManifest, options: CompiledGuideOptions = {}): FunctionComponent {
-  return homeScreen(manifest, options, false);
-}
-
-/**
- * The entry with a back control, as a compiled screen of its own: a screen's shape is fixed, so
- * the entry a host opens is a second screen, not a state of the first.
- */
-export function guideHomeBackScreen(manifest: GuideManifest, options: CompiledGuideOptions = {}): FunctionComponent {
-  return homeScreen(manifest, options, true);
 }
 
 /** The index of `manifest` as a compiled screen: what every page's back and index button open. */

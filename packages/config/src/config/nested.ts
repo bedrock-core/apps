@@ -82,43 +82,14 @@ export function resolveInitialValue(
 ): unknown {
   const val = getNestedValue(currentValues, flatKey);
 
-  if (val !== undefined) { return val; }
-
-  // A runtime published before list defaults were announced as arrays sends them as the array's
-  // JSON; both parse back the same way.
-  if ((entry.type === 'list' || entry.type === 'multiselect') && typeof entry.default === 'string') {
-    try {
-      const parsed: unknown = JSON.parse(entry.default);
-
-      return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
-  }
-
-  return entry.default;
+  return val !== undefined ? val : entry.default;
 }
 
 /**
- * A list setting's value as the items it holds.
- *
- * Two shapes reach here: the array itself, and the array's JSON from a runtime
- * published before list defaults were announced as arrays. Anything else is an
+ * A list setting's value as the items it holds. Anything but an array is an
  * empty list rather than an error — a schema that changed under a stored value
  * is the addon's to reconcile, not this screen's to refuse.
  */
 export function toItems(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.map(String);
-  }
-
-  if (typeof value === 'string') {
-    try {
-      const parsed: unknown = JSON.parse(value);
-
-      return Array.isArray(parsed) ? parsed.map(String) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
+  return Array.isArray(value) ? value.map(String) : [];
 }

@@ -17,15 +17,14 @@
  * per section. An addon that wants the settings and none of the screens imports the lighter half
  * under the same field name, from `@bedrock-core/config/server`.
  *
- * ## A screen is drawn by the addon whose pack holds it
+ * ## Settings are drawn by the addon that owns them
  *
- * Most of the UI is in every pack — the scope pickers, the menus, the list editors are the same
- * layouts everywhere — so whichever realm a command is typed into draws them itself. What is NOT
- * in every pack is a section shaped for one addon's schema: that exists in exactly one bundle, so
- * reaching it means asking that addon's realm, which is `uiOf(core).ask`. Leaving it again means
- * going back to the realm that asked, which is the way back the request carries.
+ * The screens read and write this addon's own scopes, so a target naming another addon is that
+ * addon's realm to draw: it is handed over with `uiOf(core).ask`, and leaving goes back to the realm
+ * that asked, which is the way back the request carries. Nothing about a scope is served to another
+ * realm; an addon that wants its settings read or written from elsewhere serves that itself.
  */
-import { uiOf, type UiTarget } from '@bedrock-core/navigation';
+import { uiOf } from '@bedrock-core/navigation';
 import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { registerConfig as registerSubsystem, configOf, type Config, type ConfigDefinition } from './server';
@@ -38,7 +37,6 @@ import {
   trailOf, type SectionListOpeners, type SectionTarget,
 } from './compiled/configHost';
 import { i18n } from './i18n';
-import { shapedScreen } from './compiled/shaped';
 import { isConfigTarget, type ConfigTarget } from './target';
 
 /** The name this app announces itself under, and the kind of target it serves. */
@@ -53,9 +51,8 @@ export interface ConfigOptions {
    * Register this addon's `<namespace>:config` and `<namespace>:configat` commands
    * (see `commands/addon.ts`). On by default.
    *
-   * Passing `false` frees those two names, not the app: the settings are still served over RPC
-   * and still reachable through the accessor, so an addon that would rather open its own screen
-   * from an item can.
+   * Passing `false` frees those two names, not the app: `config.open(player)` still opens the
+   * screens, from an item or anything else.
    */
   commands?: boolean;
 }
@@ -73,8 +70,9 @@ export type ConfigApp<I extends ConfigDefinition> = Config<I> & {
    * });
    * ```
    *
-   * The target names where to land: an `addonId` other than this one, a `scope`, and a `scopeId`
-   * to open straight into one entity's settings. Omitted, it opens this addon's own.
+   * The target names where to land: an `addonId` other than this one, whose realm draws it, a
+   * `scope`, and a `scopeId` to open straight into one entity's settings. Omitted, it opens this
+   * addon's own.
    */
   open(player: Player, target?: Partial<Omit<ConfigTarget, 'kind'>>): Promise<void>;
 };
@@ -126,14 +124,21 @@ export function registerConfig<I extends ConfigDefinition>(definition: I, option
 /**
  * Draw one config target.
  *
- * The clamp is here rather than at the entry points because a target also arrives from the wire,
- * where no caller in this realm has applied it: a non-operator cannot reach past their own player
- * scope even if the request says otherwise. Values for a deep-linked scope are fetched before the
- * first render.
+ * Another addon's settings are handed to its realm before anything is shown here, so the return
+ * address that travels with the request is whatever the player was on. The clamp is here rather
+ * than at the entry points because a target also arrives from the wire, where no caller in this
+ * realm has applied it: a non-operator cannot reach past their own player scope even if the
+ * request says otherwise.
  */
 function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void> {
   const realm = uiOf(core);
-  const clamped = clampTarget({ ...target, addonId: target.addonId ?? core.id }, player);
+  const addonId = target.addonId ?? core.id;
+
+  if (addonId !== core.id) {
+    return realm.ask(addonId, player, { ...target, addonId }, realm.returnTo(player)).then(() => undefined);
+  }
+
+  const clamped = clampTarget({ ...target, addonId }, player);
 
   // What this realm is showing, for a return address another realm can use.
   realm.showing(player, clamped);
@@ -169,33 +174,34 @@ function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void
       scope,
       entityId: scopeId,
       path: clamped.path ?? '',
-      trail: clamped.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path: clamped.path }),
+      trail: clamped.trail ?? trailOf(core, { addonId, scope, entityId: scopeId, path: clamped.path }),
     };
 
-    if (isSectionLevel(core, player, level)) {
+    if (isSectionLevel(core, level)) {
       openLevel(core, player, level, levelOpeners(core, player));
 
       return Promise.resolve();
     }
   }
 
-  // Never rejects: prefetchScopeValues catches internally, so floating this is safe.
-  return prefetchScopeValues(core, player, clamped).then((values) => {
-    // A list setting is a screen of its items rather than a form: the native modal has no control
-    // for one. It needs the values, which is why it is reached from here rather than with the
-    // section screens above.
-    if (values !== undefined && presentCompiledList(core, player, clamped, values)) {
-      return;
-    }
+  const values = valuesFor(core, clamped);
 
-    // The screen this addon's build shaped for the section, when it carries one: everything about
-    // the section is baked into it, so only the values travel.
-    if (values !== undefined && presentShaped(core, player, clamped, values)) {
-      return;
-    }
+  // A list setting is a screen of its items rather than a form: the native modal has no control
+  // for one. It needs the values, which is why it is reached from here rather than with the
+  // section screens above.
+  if (values !== undefined && presentCompiledList(core, player, clamped, values)) {
+    return Promise.resolve();
+  }
 
-    missing(player, clamped);
-  });
+  // The screen this addon's build shaped for the section, when it carries one: everything about
+  // the section is baked into it, so only the values travel.
+  if (values !== undefined && presentShaped(core, player, clamped, values)) {
+    return Promise.resolve();
+  }
+
+  missing(player, clamped);
+
+  return Promise.resolve();
 }
 
 /**
@@ -231,25 +237,10 @@ function presentShaped(core: Runtime, player: Player, target: ConfigTarget, valu
 
   const { addonId, scope, scopeId } = target;
   const path = target.path ?? '';
-  const trail = target.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path });
+  const trail = target.trail ?? trailOf(core, { addonId, scope, entityId: scopeId, path });
 
-  const accessor = configOf(core).of(addonId, { actorId: player.id });
   const level: SectionTarget = { addonId, scope, entityId: scopeId, path, trail };
   const openers = levelOpeners(core, player);
-
-  // A section this bundle has no screen for is handed to the addon that has one: the owner draws
-  // it out of its own pack, and every press that leaves it goes back through the same funnel as
-  // any other.
-  if (shapedScreen(scope, path) === undefined && addonId !== core.id) {
-    const realm = uiOf(core);
-    const away: UiTarget = {
-      kind: CONFIG_APP, addonId, scope, ...scopeId === undefined ? {} : { scopeId }, path, trail: [...trail],
-    };
-
-    void realm.ask(addonId, player, away, realm.returnTo(player));
-
-    return true;
-  }
 
   // Up one level: the section this one sits in, or the scope's root when it sits at the top — the
   // same step every level's own back takes.
@@ -257,7 +248,7 @@ function presentShaped(core: Runtime, player: Player, target: ConfigTarget, valu
     ? openers.back(level)
     : openLevel(core, player, { ...level, path: path.slice(0, Math.max(0, path.lastIndexOf('.'))), trail: trail.slice(0, -1) }, openers));
 
-  return accessor !== undefined && presentShapedEditor(core, accessor, player, level, values, up);
+  return presentShapedEditor(core, player, level, values, up);
 }
 
 /**
@@ -270,7 +261,7 @@ function presentCompiledList(core: Runtime, player: Player, target: ConfigTarget
   if (!canPresentMenuList()) { return false; }
 
   const { addonId, scope, scopeId, list } = target;
-  const trail = target.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path: list });
+  const trail = target.trail ?? trailOf(core, { addonId, scope, entityId: scopeId, path: list });
 
   presentListEditor(core, player, { addonId, scope, entityId: scopeId, path: '', key: list, trail }, values, levelOpeners(core, player));
 
@@ -278,36 +269,19 @@ function presentCompiledList(core: Runtime, player: Player, target: ConfigTarget
 }
 
 /**
- * Fetch the values a deep link needs BEFORE the first render.
+ * The values an editor opens with, read before the first render.
  *
- * The editor presents a native modal built from the values it is given, so it cannot fetch its
- * own: arriving empty and re-rendering would present the form twice. Every in-UI path already
- * fetches on the press that navigates — this is the same rule for the path that has no press, and
- * without it a command that names a scope opens showing schema defaults instead of what is
- * actually set. Resolves `undefined` whenever the target does not deep-link that far, and on
- * failure, which leaves the deep link to fall back to the scope pickers.
+ * The editor presents a native modal built from the values it is given, so it cannot read its
+ * own: arriving empty and re-rendering would present the form twice. `undefined` whenever the
+ * target does not name a scope that far, or this addon declared no config.
  */
-async function prefetchScopeValues(
-  core: Runtime,
-  player: Player,
-  target: ConfigTarget,
-): Promise<Record<string, unknown> | undefined> {
-  if (target.addonId === undefined || target.scope === undefined) { return undefined; }
+function valuesFor(core: Runtime, target: ConfigTarget): Record<string, unknown> | undefined {
+  if (target.scope === undefined || configOf(core).local === undefined) { return undefined; }
 
   // Only the server scope identifies itself; the other two need to know which entity.
   if (target.scope !== 'server' && target.scopeId === undefined) { return undefined; }
 
-  const accessor = configOf(core).of(target.addonId, { actorId: player.id });
-
-  if (!accessor) { return undefined; }
-
-  try {
-    return await getScopeValues(accessor, target.scope, target.scopeId);
-  } catch (error: unknown) {
-    console.warn(`[config] prefetching '${target.addonId}' ${target.scope} values failed: ${String(error)}`);
-
-    return undefined;
-  }
+  return getScopeValues(core, target.scope, target.scopeId);
 }
 
 /**

@@ -8,8 +8,7 @@
 `@bedrock-core/config` was the addon list, the config screens and the guide viewer in one mount.
 Those are three different things to want, so they are three packages: `@bedrock-core/catalog`
 browses every addon in the world, `@bedrock-core/config` holds an addon's settings and the screens
-that edit them, and `@bedrock-core/guides` shows its guide. Each installs on its own, and
-`@bedrock-core/apps` is the one install that curates matching versions of all three.
+that edit them, and `@bedrock-core/guides` shows its guide. Each installs on its own.
 
 ```ts
 // before
@@ -53,11 +52,15 @@ Removed from `@bedrock-core/config`, with where each went:
 
 - `ui`, `openUi` and `UiOptions` — `registerConfig()` mounts, and `config.open(player, target?)` on
   the returned accessor is the funnel that `openUi` was. The permission clamp is still behind it.
-- `addonPageScreen` and `AddonPageInfo` — `@bedrock-core/catalog`, along with the addon list, the
-  framework's own row and the page geometry (`ADDONS_MAX`, `MAIN`, `PAGE_SLOTS`, `SIDEBAR_WIDTH`).
-- `guideAudienceFor` — `@bedrock-core/guides/server`.
-- `registerDeclared` and `DeclaredParts` — a build no longer declares on the addon's behalf. What
-  the filters generate is read from the `register()` call that is already there.
+- `addonPageScreen` and `AddonPageInfo` — the page is `AddonPage` and `AddonPageInfo` on
+  `@bedrock-core/catalog/compiled`; the addon list, the framework's own row and the page geometry
+  are internal to the catalog.
+- `guideAudienceFor` — removed.
+- `registerDeclared` and `DeclaredParts` — `@bedrock-core/navigation`.
+- `registerAddonCommands`, `OpenCallback`, `allowedScopes`, `clampTarget`, `isOperator`,
+  `CONFIG_SCOPES`, `ConfigScope`, `EntrySchema` and `FlatSchemaLike` — internal.
+  `registerConfig(definition, { commands: false })` with `config.open(player, target?)` makes your
+  own entry point, and `isOperator` is `@bedrock-core/server`'s.
 
 `@bedrock-core/config/server` renames its field factory `config` to `registerConfig`, matching the
 name the root exports: the two are the same field, one with screens and one without, and an addon
@@ -66,7 +69,9 @@ namespaced slot rather than a fixed property — `configOf(core)` reads what the
 under `core:config`.
 
 `@bedrock-core/guides` gains `@bedrock-core/guides/server`, the guide app's server half:
-`registerGuides`, `GUIDE_APP`, `guidesOf`, `guideKeyFor`, `guideTarget`, `isGuideTarget`,
-`guideAudienceFor` and `registerGuideCommand`. It runs on a bare `Runtime` and draws nothing. The
-package root is unchanged and is still the render half — the compiled screens and the block
-renderer — which a pack showing a guide without mounting the app imports directly.
+`registerGuides`, `guidesOf` and their types. It runs on a bare `Runtime` and draws nothing. The
+package root re-exports it beside the screen factories the guides filter's generated modules call,
+`openGuide` and `GuideComponents`. `GuideBlockList`, `resolveLanding`, `canSee`,
+`hasVisiblePages`, `paginationFor`, `visiblePageIds`, `visibleTree`, `isGuideManifest`,
+`guideScreenName` and the manifest types are internal: a guide renders from what the filter
+compiles.

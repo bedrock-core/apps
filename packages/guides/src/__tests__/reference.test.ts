@@ -1,7 +1,7 @@
 import { analyze, allocateForm, buildScreenTree, linkTarget, visiblesAt } from '@bedrock-core/ui-runtime/compile';
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
-import { guideHomeBackScreen, guideHomeScreen, guideIndexScreen, guidePageScreen } from '../compiled';
+import { guideHomeScreen, guideIndexScreen, guidePageScreen } from '../compiled';
 import type { GuideManifest } from '../types';
 
 // A guide's screens are navigated by link, and the build reads where each press
@@ -69,17 +69,17 @@ describe('a compiled guide is presses that are links', () => {
     };
 
     expect(targetsOf(guideHomeScreen(single))).toEqual([]);
-    expect(targetsOf(guideHomeBackScreen(single))).toEqual([{ back: true }]);
+    expect(targetsOf(guideHomeScreen(single, { back: true }))).toEqual([{ back: true }]);
   });
 
   it('marks the back control of the entry a host opened, and of the index', () => {
-    expect(targetsOf(guideHomeBackScreen(manifest))).toEqual(expect.arrayContaining([{ back: true }]));
+    expect(targetsOf(guideHomeScreen(manifest, { back: true }))).toEqual(expect.arrayContaining([{ back: true }]));
     expect(targetsOf(guideHomeScreen(manifest))).not.toEqual(expect.arrayContaining([{ back: true }]));
     expect(targetsOf(guideIndexScreen(manifest))).toEqual(expect.arrayContaining([{ back: true }]));
   });
 
   it('leaves no entry to a handler: every press is describable', () => {
-    for (const screen of [guideHomeScreen(manifest), guideHomeBackScreen(manifest), guideIndexScreen(manifest), guidePageScreen(manifest, 'usage')]) {
+    for (const screen of [guideHomeScreen(manifest), guideHomeScreen(manifest, { back: true }), guideIndexScreen(manifest), guidePageScreen(manifest, 'usage')]) {
       expect(targetsOf(screen).every(target => target !== undefined)).toBe(true);
     }
   });

@@ -73,7 +73,7 @@ describe('a compiled config screen keeps its shape when shown', () => {
         pricing: {
           enabled: { type: 'boolean', default: true, label: 'Enabled' },
           rate: { type: 'number', default: 3, min: 0, max: 10, label: 'Rate' },
-          mode: { type: 'enum', default: 'y', options: ['w', 'x', 'y', 'z'], label: 'Mode' },
+          mode: { type: 'select', default: 'y', options: ['w', 'x', 'y', 'z'], label: 'Mode' },
           note: { type: 'string', default: '', label: 'Note' },
         },
       },

@@ -1,55 +1,10 @@
 /**
- * Shaping a replicated flat schema into what a screen renders.
+ * Shaping a flat schema into what a screen renders.
  *
- * Everything here is pure and operates on the schema alone — no values, no RPC, no world.
+ * Everything here is pure and operates on the schema alone — no values, no world.
  */
-import type { ConfigScope, EntrySchema, FlatGroupsLike, FlatSchemaLike } from '../types';
-import type { RemoteConfigAccessor } from '../server';
+import type { EntrySchema, FlatGroupsLike, FlatSchemaLike } from '../types';
 import { buildNestedPatch } from './nested';
-
-/** Get the scoped schema from an accessor (has scope prefixes on every key). */
-export function getScopedSchema(accessor: RemoteConfigAccessor): FlatSchemaLike {
-  return accessor.scopedSchema;
-}
-
-/**
- * Group display strings from an accessor, keyed the same way the schema is.
- *
- * Read defensively even though the property is typed: a remote accessor may have been built from
- * a schema announced by an addon shipping an older `@bedrock-core/config`, published before the
- * group key existed, and the getter would simply not be there. `{}` then means what it means for
- * an addon that names no group — fall back to the key-derived titles.
- */
-export function getScopedGroups(accessor: RemoteConfigAccessor): FlatGroupsLike {
-  return accessor.scopedGroups ?? {};
-}
-
-/** {@link filterScope} for the group map — same prefix rule, same result shape. */
-export function filterScopeGroups(groups: FlatGroupsLike, scope: ConfigScope): FlatGroupsLike {
-  const prefix = `${scope}.`;
-  const result: FlatGroupsLike = {};
-
-  for (const [key, meta] of Object.entries(groups)) {
-    if (key.startsWith(prefix)) { result[key.slice(prefix.length)] = meta; }
-  }
-
-  return result;
-}
-
-/** Strip scope prefix from scoped flat schema keys (e.g. 'server.pricing.taxRate' → 'pricing.taxRate'). */
-export function filterScope(
-  schema: FlatSchemaLike,
-  scope: ConfigScope,
-): FlatSchemaLike {
-  const prefix = `${scope}.`;
-  const result: FlatSchemaLike = {};
-
-  for (const [key, entry] of Object.entries(schema)) {
-    if (key.startsWith(prefix)) { result[key.slice(prefix.length)] = entry; }
-  }
-
-  return result;
-}
 
 /** Whether an entry has a native modal control, and so belongs in a form. */
 export function isFormField(entry: EntrySchema): boolean {

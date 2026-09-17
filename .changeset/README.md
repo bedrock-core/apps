@@ -50,9 +50,9 @@ directory, which ships the `workspace:*` ranges verbatim, and every consumer
 install fails. A version already on the registry is skipped, so re-running after
 a partial release is safe.
 
-The apps reach `@bedrock-core/ui` and `@bedrock-core/server` packages through the
-`portal:` entries in the root `resolutions`, so every job checks those two
-repositories out beside this one.
+Nothing is checked out beside this repository: every dependency resolves from the
+registry. The root `resolutions` must carry versions rather than `portal:` entries
+before a release can install; that swap is the release step.
 
 Two repo settings the workflow depends on:
 

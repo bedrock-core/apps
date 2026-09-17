@@ -2,7 +2,7 @@
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { ConfigDefinition, ConfigScopeName } from '../server';
 import { flattenGroups, flattenSchema } from '../server';
-import { BODY, Card, Checkbox, Divider, Dropdown, fieldLabel, Form, FRAME, Header, HEADER_HEIGHT, Input, Slider, theme, Toggle, ToggleButtonGroup, ToggleButtons } from '@bedrock-core/ore-styled';
+import { BODY, Card, Checkbox, Divider, Dropdown, fieldLabel, Form, FRAME, Header, HEADER_HEIGHT, Input, Slider, theme, Toggle, ToggleButtons } from '@bedrock-core/ore-styled';
 import { Panel, Scroll, Text, useTranslationResolver, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
 import { buildSectionTree, formEntries, listEntries, type SectionNode } from '../config/schema';
@@ -36,14 +36,6 @@ export interface LeafModel {
   trail: DisplayText;
   /** The current value per key, as the section's own paths name them. */
   values: Record<string, unknown>;
-  /**
-   * What a field offers, where only the present knows.
-   *
-   * The engine reads a dropdown's options off the modal ROW, not off the bake,
-   * so a field whose choices depend on the moment — the items a list has not
-   * used yet — is baked as a dropdown and filled here.
-   */
-  options?: Record<string, readonly string[]>;
   /** Runs with the submitted values before the screen closes. */
   onSubmit?: (values: SubmitEvent['values']) => void;
   /**
@@ -65,7 +57,7 @@ export interface LeafProps {
  * The field name a setting answers under: its own key.
  *
  * Not its position. The build walks the DEFINITION and the runtime walks the
- * ANNOUNCED schema, and nothing makes those two orders the same forever — a
+ * FLATTENED schema, and nothing makes those two orders the same forever — a
  * screen keyed by position would answer under the wrong setting the first time
  * they diverged, silently and in the player's saved config.
  */
@@ -76,9 +68,10 @@ const SEGMENTS_MAX = 3;
 /**
  * What separates a multiselect's key from the option a checkbox stands for.
  *
- * A modal answers by control NAME, and a multiselect is several controls
- * answering for one setting — so each says which setting it belongs to and
- * which of its options it is, and the host folds them back into the array.
+ * A modal answers by control NAME, and a multiselect drawn as checkboxes is
+ * several controls answering for one setting — so each says which setting it
+ * belongs to and which of its options it is, and the host folds them back into
+ * the array. Segments need none of this: they answer as one field.
  */
 export const OPTION_OF = '#';
 
@@ -131,9 +124,9 @@ const stacked = (parts: JSX.Element[]): JSX.Element => (
  *    under the caption.
  *  - A number is a slider under its caption and note, the live value at the
  *    caption's far end, drawn by the engine's own row.
- *  - A short choice is a row of segments; a long one a dropdown. A set of
- *    choices is the same pair, with each segment answering on its own. The
- *    note follows the control.
+ *  - A short choice is a row of segments; a long one a dropdown. A short set
+ *    of choices is the same segments taking several; a long one a column of
+ *    checkboxes. The note follows the control.
  *  - Text is a box under its caption, the note under the box.
  *
  * Every caption is baked: the screen was built for this entry, so nothing
@@ -147,7 +140,6 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
   // field is named by its flat path — so the value is read down the path rather
   // than looked up whole, and falls back to what the schema declares.
   const current = resolveInitialValue(key, entry, model?.values ?? {});
-  const offered = model?.options?.[key];
 
   if (entry.type === 'boolean') {
     return (
@@ -184,30 +176,29 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
   }
 
   if (entry.type === 'multiselect' && entry.options !== undefined) {
-    const chosen = new Set(Array.isArray(current) ? current.map(String) : []);
-    // Every option answers on its own, under the setting's key and its place
-    // in the set, and the host folds them back into the array.
-    const segments = entry.options.map((option, index) => ({
-      name: `${key}${OPTION_OF}${String(index)}`,
-      label: option,
-      on: chosen.has(option),
-    }));
+    const options = [...entry.options];
+    const chosen = Array.isArray(current) ? current.map(String) : [];
 
     return stacked([
       caption,
-      segments.length <= SEGMENTS_MAX
-        ? <ToggleButtons options={segments} />
+      options.length <= SEGMENTS_MAX
+        // One field for the whole set, answering with the indices that are on.
+        ? <ToggleButtons multiple name={name} options={options.map(option => ({ value: option, label: option }))} defaultValue={chosen} width={'100%'} />
         : (
+            // Every checkbox answers on its own, under the setting's key and its
+            // place in the set, and the host folds them back into the array.
             <Panel flexDirection={'column'} gap={spacing.xs} width={'100%'}>
-              {segments.map(segment => <Checkbox name={segment.name} label={segment.label} defaultValue={segment.on} />)}
+              {options.map((option, index) => (
+                <Checkbox name={`${key}${OPTION_OF}${String(index)}`} label={option} defaultValue={chosen.includes(option)} />
+              ))}
             </Panel>
           ),
       ...note(entry.description),
     ]);
   }
 
-  if (entry.type === 'enum' && entry.options !== undefined) {
-    const options = [...offered ?? entry.options];
+  if (entry.type === 'select' && entry.options !== undefined) {
+    const options = [...entry.options];
     const selected = typeof current === 'string' && options.includes(current) ? current : String(entry.default ?? options[0] ?? '');
 
     // A short list is a segmented control: every choice visible, one press to
@@ -216,7 +207,7 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
     return stacked([
       caption,
       options.length <= SEGMENTS_MAX
-        ? <ToggleButtonGroup name={name} options={options.map(option => ({ value: option, label: option }))} defaultValue={selected} width={'100%'} />
+        ? <ToggleButtons name={name} options={options.map(option => ({ value: option, label: option }))} defaultValue={selected} width={'100%'} />
         : <Dropdown name={name} options={options} defaultValue={selected} width={'100%'} />,
       ...note(entry.description),
     ]);
@@ -300,16 +291,11 @@ export const ITEM_FIELD = 'item';
 /**
  * One item of a list, on a screen shaped for that list.
  *
- * A list has no native modal control, so its items are edited one at a time:
- * a text field where the items are free strings, and a dropdown where they come
- * from a fixed set. Which of the set is still free changes per present, so the
- * options are filled through {@link LeafModel.options} rather than baked.
+ * A list has no native modal control, so its items are edited one at a time,
+ * in a text field: a list's items are free strings.
  */
 const itemScreen = (entry: EntrySchema): FunctionComponent<LeafProps> => {
-  const itemIsEnum = entry.type === 'multiselect' || entry.itemType === 'enum';
-  const row: EntrySchema = itemIsEnum
-    ? { type: 'enum', default: '', options: entry.options ?? [], label: entry.label }
-    : { type: 'string', default: '', label: entry.label };
+  const row: EntrySchema = { type: 'string', default: '', label: entry.label };
 
   return ({ model }: LeafProps): JSX.Element => sheet(model, [[ITEM_FIELD, row]]);
 };

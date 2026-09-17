@@ -70,10 +70,6 @@ export function setList(entry: EntrySchema, raw: string, t: CoreT): ListResult {
     // than a list holding one empty string.
     if (item === '') { continue; }
 
-    const rejected = rejectItem(entry, item, t);
-
-    if (rejected !== undefined) { return { ok: false, message: rejected }; }
-
     // `add` refuses a duplicate, so `set` accepting one would make the same list legal or not
     // depending on how it was typed.
     if (items.includes(item)) { return { ok: false, message: t($ => $.command.list.repeated, { item }) }; }
@@ -91,9 +87,6 @@ export function setList(entry: EntrySchema, raw: string, t: CoreT): ListResult {
 /** `add` — one item appended, refusing a duplicate and refusing to pass `maxItems`. */
 export function addToList(entry: EntrySchema, current: string[], raw: string, t: CoreT): ListResult {
   const item = raw.trim();
-  const rejected = rejectItem(entry, item, t);
-
-  if (rejected !== undefined) { return { ok: false, message: rejected }; }
 
   // Checked before the cap: on a full list holding the item already, "it is in there" is the
   // answer that tells the player what to do next.
@@ -111,8 +104,7 @@ export function addToList(entry: EntrySchema, current: string[], raw: string, t:
  *
  * An item that is not there is refused rather than quietly accepted: a no-op reported as success
  * reads exactly like a typo that landed, and the list is not shown again afterwards to contradict
- * it. Nothing validates the item against `options` here — what matters is whether the list holds
- * it, and a list that somehow holds a value no longer in `options` must still be clearable.
+ * it.
  */
 export function removeFromList(current: string[], raw: string, t: CoreT): ListResult {
   const item = raw.trim();
@@ -121,19 +113,4 @@ export function removeFromList(current: string[], raw: string, t: CoreT): ListRe
   if (items.length === current.length) { return { ok: false, message: t($ => $.command.list.absent, { item }) }; }
 
   return { ok: true, items };
-}
-
-/**
- * Why an item is not allowed in this list, or `undefined` when it is. Only an enum list
- * constrains its items, and the failure names every value that would have worked — the enum
- * autocompletes the SETTING, never the item, so the options are otherwise unreachable from chat.
- */
-function rejectItem(entry: EntrySchema, item: string, t: CoreT): string | undefined {
-  if (entry.itemType !== 'enum') { return undefined; }
-
-  const options = entry.options ?? [];
-
-  if (options.includes(item)) { return undefined; }
-
-  return t($ => $.command.list.notAnOption, { item, options: options.join(`${SEPARATOR} `) });
 }

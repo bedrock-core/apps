@@ -134,27 +134,6 @@ export interface GuideManifest {
 }
 
 /**
- * Narrow a manifest that arrived over the wire — `core.guides.of(addonId)` returns the
- * framework's loose two-field shape, since the runtime never inspects the contents.
- *
- * The check is deliberately shallow: it confirms the envelope (IR version, namespace, tree
- * and page table) rather than walking every block. A manifest is compiled by the filter and
- * replicated verbatim, so a deep validation would cost real ticks to catch a corruption mode
- * that can't occur without the transport already being broken.
- */
-export function isGuideManifest(value: unknown): value is GuideManifest {
-  if (typeof value !== 'object' || value === null) { return false; }
-
-  const candidate = value as Partial<GuideManifest>;
-
-  return candidate.v === 1
-    && typeof candidate.ns === 'string'
-    && Array.isArray(candidate.tree)
-    && typeof candidate.pages === 'object'
-    && candidate.pages !== null;
-}
-
-/**
  * Component registry for MDX `cmp` blocks (`<Panel … />` in a guide).
  * Unregistered names render an "unsupported content" placeholder.
  */

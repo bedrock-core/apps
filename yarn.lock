@@ -87,6 +87,7 @@ __metadata:
     "@bedrock-core/server-runtime": "npm:*"
     "@bedrock-core/ui-runtime": "npm:*"
     "@minecraft/server": "npm:*"
+    eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
@@ -120,9 +121,9 @@ __metadata:
     "@bedrock-core/observable": "npm:*"
     "@bedrock-core/ore-styled": "npm:*"
     "@bedrock-core/server-runtime": "npm:*"
-    "@bedrock-core/sync": "npm:*"
     "@bedrock-core/ui-runtime": "npm:*"
     "@minecraft/server": "npm:*"
+    eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
@@ -132,7 +133,6 @@ __metadata:
     "@bedrock-core/observable": "*"
     "@bedrock-core/ore-styled": "*"
     "@bedrock-core/server-runtime": "*"
-    "@bedrock-core/sync": "*"
     "@bedrock-core/ui-runtime": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
   peerDependenciesMeta:
@@ -147,8 +147,6 @@ __metadata:
     "@bedrock-core/ore-styled":
       optional: true
     "@bedrock-core/server-runtime":
-      optional: true
-    "@bedrock-core/sync":
       optional: true
     "@bedrock-core/ui-runtime":
       optional: true
@@ -181,6 +179,7 @@ __metadata:
     "@bedrock-core/server-runtime": "npm:*"
     "@bedrock-core/ui-runtime": "npm:*"
     "@minecraft/server": "npm:*"
+    eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
@@ -1588,7 +1587,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^10.3.0":
+"eslint@npm:*, eslint@npm:^10.3.0":
   version: 10.10.0
   resolution: "eslint@npm:10.10.0"
   dependencies:

@@ -2,30 +2,10 @@
 // `./server` alone, for a bundle that wants the declaration without the renderer.
 export * from './server';
 
-export {
-  guideHomeBackScreen, guideHomeScreen, guideIndexScreen, guidePageScreen, guideScreenName, openGuide,
-} from './compiled';
-export { HOME_BACK_SCREEN, HOME_SCREEN, INDEX_SCREEN } from './names';
-export type { CompiledGuideOptions } from './compiled';
+// The screen factories the modules the guides filter generates import by name.
+export { guideHomeScreen, guideIndexScreen, guidePageScreen } from './compiled';
 
-export { resolveLanding } from './landing';
+export { openGuide } from './compiled';
 
-export { GuideBlockList } from './render/GuideBlockList';
-
-export { canSee, hasVisiblePages, paginationFor, visiblePageIds, visibleTree } from './access';
-
-export { isGuideManifest } from './types';
-export type {
-  AdmonitionKind,
-  GuideAccess,
-  GuideAudience,
-  GuideBlock,
-  GuideComponents,
-  GuideListItem,
-  GuideManifest,
-  GuidePageData,
-  GuideRun,
-  GuideTreeNode,
-  LangKey,
-  PageId,
-} from './types';
+// The registry type a `componentsModule` default-exports for MDX `cmp` blocks.
+export type { GuideComponents } from './types';

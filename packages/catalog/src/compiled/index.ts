@@ -6,9 +6,8 @@ import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { AddonList } from './list.screen';
 import { addonPageScreen } from './page.screen';
 
-export * from './host';
-export * from './list.screen';
-export * from './page.screen';
+/** The page component, for a pack that bakes a page no manifest describes: the framework's own. */
+export { AddonPage, type AddonPageInfo } from './page.screen';
 
 /** The screens the ui-compiler filter bakes from this package into an addon's pack, by name. */
 const screens: Record<string, FunctionComponent> = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveLanding } from '../landing';
-import { hasVisiblePages, paginationFor, visiblePageIds, visibleTree } from '../access';
+import { paginationFor, visiblePageIds, visibleTree } from '../access';
 import type { GuideAccess, GuideManifest, GuidePageData, GuideTreeNode } from '../types';
 
 /** `[id, access]` — a manifest whose pages and flat tree carry the given effective access. */
@@ -28,14 +28,6 @@ describe('visibility', () => {
   it('shows an operator everything and a player only what is ungated', () => {
     expect(visiblePageIds(manifest, 'op')).toEqual(['intro', 'ops', 'faq']);
     expect(visiblePageIds(manifest, 'player')).toEqual(['intro', 'faq']);
-  });
-
-  it('reports an entirely gated guide as having nothing for a player to read', () => {
-    const allGated = manifestOf([['ops', 'op'], ['keys', 'op']]);
-
-    expect(hasVisiblePages(allGated, 'op')).toBe(true);
-    expect(hasVisiblePages(allGated, 'player')).toBe(false);
-    expect(hasVisiblePages(manifest, 'player')).toBe(true);
   });
 
   it('returns the manifest tree untouched when nothing is gated', () => {

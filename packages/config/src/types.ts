@@ -1,11 +1,9 @@
 /**
  * The config vocabulary this package renders and edits.
  *
- * These mirror `@bedrock-core/server-runtime`'s schema types structurally rather than importing
- * them, because a schema arriving from a peer addon is replicated data, not a compile-time
- * shape: it crossed the transport as an opaque blob and may have been written by a version of
- * the runtime this build has never seen. Describing what the UI actually reads keeps the screens
- * honest about that — an unknown `type` renders as unsupported instead of failing to compile.
+ * Loose structural mirrors of the flat schema types in `./server`: the screens and commands walk a
+ * flat schema generically, one entry at a time, so they read `type` as any string and `default`
+ * as any value rather than narrowing the union at every step.
  */
 
 /** One editable setting, as the UI needs it. Fields beyond `type`/`label`/`default` are per-type. */
@@ -20,10 +18,9 @@ export type EntrySchema = {
   maxLength?: number;
   options?: readonly string[];
   maxItems?: number;
-  itemType?: string;
 };
 
-/** A flat schema: dot-path → entry. Scoped variants keep the `server.`/`player.` prefix. */
+/** A flat schema: dot-path → entry. */
 export type FlatSchemaLike = Record<string, EntrySchema>;
 
 /** One group's display strings, as the UI needs them. Both optional — a group may name neither. */

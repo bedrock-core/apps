@@ -27,18 +27,18 @@ interface ObservableLike<T> extends ReadonlyObservableLike<T> {
 
 type Schema = {
   taxRate: { type: 'number'; default: number };
-  currency: { type: 'enum'; options: ['emerald', 'gold']; default: 'emerald' };
+  currency: { type: 'select'; options: ['emerald', 'gold']; default: 'emerald' };
 };
 
 declare const leaf: ConfigLeafAccessor<Schema['taxRate']>;
-declare const enumLeaf: ConfigLeafAccessor<Schema['currency']>;
+declare const selectLeaf: ConfigLeafAccessor<Schema['currency']>;
 declare const group: ConfigGroupAccessor<Schema>;
 
 // A leaf is an observable of its own value type.
 export const leafIsObservable: ObservableLike<number> = leaf;
 
-// An enum leaf narrows to its literal union rather than widening to string.
-export const enumLeafIsObservable: ObservableLike<'emerald' | 'gold'> = enumLeaf;
+// A select leaf narrows to its literal union rather than widening to string.
+export const selectLeafIsObservable: ObservableLike<'emerald' | 'gold'> = selectLeaf;
 
 // A group is an observable of its whole reconstructed shape.
 export const groupIsObservable: ObservableLike<{ taxRate: number; currency: 'emerald' | 'gold' }> = group;
