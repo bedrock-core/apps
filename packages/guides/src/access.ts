@@ -3,11 +3,11 @@
  *
  * The manifest is compiled for the widest audience and carries the *effective* access on each
  * node (`a`), so everything here is a filter over one shared document rather than a second
- * build of it — a guide is replicated once and rendered per viewer.
+ * build of it — each audience's set of compiled screens is built from the same manifest.
  *
- * Read this as presentation, not protection. A manifest travels to every addon in the world
- * and its prose ships in the resource pack's `.lang`, so gating decides what a player is
- * *shown*, the way `hidden` does. Config authorization (`isOperator` on the host side) is what
+ * Read this as presentation, not protection. The operators' screens are published to every
+ * addon in the world like any other, and their prose ships in the resource pack's `.lang`, so
+ * gating decides what a player is *shown*, the way `hidden` does. Config authorization (`isOperator` on the host side) is what
  * decides what a player may *do*.
  */
 import type { GuideAccess, GuideAudience, GuideManifest, GuidePageData, GuideTreeNode, PageId } from './types';

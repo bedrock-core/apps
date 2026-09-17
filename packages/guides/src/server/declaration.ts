@@ -86,6 +86,9 @@ export function registerGuides(options: GuidesOptions = {}): GuidesDeclaration {
  * nothing of the owning addon's script involved — so any realm can show any addon's guide out of
  * the pack every client already holds. That is why this never hands off.
  *
+ * Which of a gated guide's two sets the reader walks is decided by who they are, here, before the
+ * walk starts: every press inside a set leads within it.
+ *
  * The walk says WHY it ended, which nothing else can: a back press and a reader closing the form
  * both answer the same nothing. A back goes on to the catalog when this realm has one, since that
  * is where the reader came from; without a catalog there is nothing behind the guide, so the UI
@@ -93,7 +96,7 @@ export function registerGuides(options: GuidesOptions = {}): GuidesDeclaration {
  */
 function show(core: Runtime, player: Player, addonId: string): Promise<void> {
   const realm = uiOf(core);
-  const key = guideKeyFor(core, addonId, { back: true });
+  const key = guideKeyFor(core, addonId, { back: true, player });
 
   if (key === undefined) {
     console.error(`[guides] '${addonId}' has published no guide`);

@@ -45,7 +45,8 @@ export const FRAMEWORK_SCREENS: AddonReference = {
       ],
       "targets": [
         {
-          "back": true
+          "to": "core:guide_home_back",
+          "replace": true
         },
         {
           "to": "core:guide_intro",

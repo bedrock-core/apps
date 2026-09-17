@@ -10,9 +10,10 @@ what a host that opened the guide shows in its place. `guide_index` is the index
 once, and exported as `guideIndexScreen`.
 
 Moving inside a guide replaces rather than stacks. A page's back and its index button both open
-`guide_index` in the page's place, a row of the index opens its page in the index's place, and the
-index's own back leads to wherever the guide was opened from. A reader who followed six links is
-one press from the index and two from the list they came from. A single-page guide has no index
+`guide_index` in the page's place, and a row of the index opens its page in the index's place. In a
+guide with a home page the index's back opens `guide_home_back` in its place, and the home page's
+own back leads to wherever the guide was opened from; in a guide with none, the index's back does.
+A reader who followed six links is one press from the index. A single-page guide has no index
 button, and its back leaves the guide.
 
 The screen names live in their own module, exported from the package root. The half that BUILDS

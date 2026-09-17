@@ -47,6 +47,8 @@ export interface GuideHomeViewProps {
    * itself, which has nothing behind it.
    */
   back?: boolean;
+  /** The screen the back control opens in this index's place, in place of `back`: the guide's home page. */
+  backTo?: string;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
   /** How sections fold; see {@link GuideFolding}. Defaults to `'state'`. */
@@ -85,7 +87,7 @@ type Page = Extract<GuideTreeNode, { t: 'page' }>;
  * divider rule; pages render as icon menu rows (thumbnail + title + one-line subtitle + chevron).
  * `icon`/`descK` are optional per node, so an unannotated guide degrades to a clean text list.
  */
-export function GuideHomeView({ tree, title, width, height, linkTo, back, onClose, folding = 'state' }: GuideHomeViewProps): JSX.Element {
+export function GuideHomeView({ tree, title, width, height, linkTo, back, backTo, onClose, folding = 'state' }: GuideHomeViewProps): JSX.Element {
   const [collapsed, setCollapsed] = useState<string[]>(() => folding === 'state' ? initialCollapsed(tree) : []);
 
   const toggle = (id: string): void => {
@@ -153,7 +155,7 @@ export function GuideHomeView({ tree, title, width, height, linkTo, back, onClos
   if (folding === 'client') {
     return (
       <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-        <Header title={title} back={back} onClose={onClose} />
+        <Header title={title} back={back} backTo={backTo} backReplace={backTo !== undefined} onClose={onClose} />
         <Panel flexGrow={1} padding={spacing.sm}>
           <Scroll>
             <Panel flexDirection={'column'} gap={spacing.xs}>
@@ -214,7 +216,7 @@ export function GuideHomeView({ tree, title, width, height, linkTo, back, onClos
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-      <Header title={title} back={back} onClose={onClose} />
+      <Header title={title} back={back} backTo={backTo} backReplace={backTo !== undefined} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.xs}>

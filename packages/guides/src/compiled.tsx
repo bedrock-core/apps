@@ -1,11 +1,14 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
+import { core, isOperator } from '@bedrock-core/server-runtime';
 import {
-  navigate, Screen, useExit,
+  addonReference, navigate, Screen, useExit,
   type FunctionComponent, type JSX, type PressEvent,
 } from '@bedrock-core/ui-runtime';
+import { visibleTree } from './access';
 import { resolveLanding } from './landing';
-import { HOME_SCREEN, INDEX_SCREEN } from './names';
-import type { GuideComponents, GuideManifest, PageId } from './types';
+import { guideScreenNames } from './names';
+import { guideEntry } from './server/keys';
+import type { GuideAudience, GuideComponents, GuideManifest, PageId } from './types';
 import { GuideHomeView } from './views/GuideHome';
 import { GuidePageView } from './views/GuidePage';
 
@@ -21,8 +24,9 @@ import { GuidePageView } from './views/GuidePage';
  * publishes the keys and the values, and any realm walks them.
  *
  * The home index folds its categories on the client (`<Disclosure>`), so nothing
- * reaches script for a fold. Every screen is compiled for the widest audience:
- * access gating is per viewer, which a frozen shape cannot express yet.
+ * reaches script for a fold. A frozen shape cannot change per viewer, so a guide
+ * with anything gated is compiled once per audience: each set is built for its
+ * readers end to end and links only within itself, and the entry picks the set.
  */
 export interface CompiledGuideOptions {
   /** Header title (raw text, colorable). Defaults to `'Guide'`. */
@@ -36,24 +40,29 @@ export interface CompiledGuideOptions {
   height?: number;
   /** Component registry for MDX `cmp` blocks. */
   components?: GuideComponents;
+  /**
+   * Which set the screen belongs to. `'op'` builds the operators' set of a gated guide: every
+   * page, the whole index and the full prev/next chain, under the operators' names. The default
+   * builds what every player is shown, gated pages left out. A guide with nothing gated has one
+   * set, and `'op'` builds that same set.
+   */
+  audience?: GuideAudience;
 }
 
 const CANVAS = { width: 300, height: 200 };
 
-/**
- * `getting-started/intro` becomes `guide_getting_started_intro`.
- *
- * The same fold the guides filter names the generated screen modules with, so a
- * link written here reaches the screen the build wrote. A manifest carrying its
- * own `screens` table is believed over this: the filter is the half that
- * actually named the files.
- */
-const guideScreenName = (pageId: PageId): string =>
-  `guide_${pageId.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`;
+/** The set `options` asks for, which is the ordinary one for a guide with nothing gated. */
+const audienceOf = (manifest: GuideManifest, options: CompiledGuideOptions): GuideAudience =>
+  options.audience === 'op' && manifest.gated === true ? 'op' : 'player';
 
-/** The screen key of one page of `manifest`. */
-const pageScreen = (manifest: GuideManifest, pageId: PageId): string =>
-  manifest.screens?.[pageId] ?? guideScreenName(pageId);
+/**
+ * The screen key of one page of `manifest`, in `audience`'s set.
+ *
+ * A manifest carrying its own table is believed over the names derived here: the filter is the
+ * half that actually named the files.
+ */
+const pageScreen = (manifest: GuideManifest, pageId: PageId, audience: GuideAudience): string =>
+  (audience === 'op' ? manifest.opScreens : manifest.screens)?.[pageId] ?? guideScreenNames(audience).page(pageId);
 
 /**
  * What a page's back control does: open the index in its place, leave the guide, or nothing at
@@ -64,6 +73,9 @@ type PageBack = 'index' | 'leave' | 'none';
 /** One page of `manifest` as a compiled screen, with the controls its place in the guide calls for. */
 const pageView = (manifest: GuideManifest, pageId: PageId, options: CompiledGuideOptions, controls: { back: PageBack; index: boolean }): FunctionComponent => {
   const title = options.title ?? 'Guide';
+  const audience = audienceOf(manifest, options);
+  const names = guideScreenNames(audience);
+  const tree = visibleTree(manifest, audience);
 
   return (): JSX.Element => {
     const close = useExit();
@@ -72,16 +84,16 @@ const pageView = (manifest: GuideManifest, pageId: PageId, options: CompiledGuid
       <Screen static>
         <GuidePageView
           manifest={manifest}
-          tree={manifest.tree}
-          audience={'op'}
+          tree={tree}
+          audience={audience}
           pageId={pageId}
           title={title}
           width={options.width ?? CANVAS.width}
           height={options.height ?? CANVAS.height}
           components={options.components}
-          linkTo={(id): string => pageScreen(manifest, id)}
-          {...controls.back === 'index' ? { backTo: INDEX_SCREEN } : controls.back === 'leave' ? { back: true } : {}}
-          index={controls.index}
+          linkTo={(id): string => pageScreen(manifest, id, audience)}
+          {...controls.back === 'index' ? { backTo: names.index } : controls.back === 'leave' ? { back: true } : {}}
+          {...controls.index ? { indexTo: names.index } : {}}
           onClose={close}
         />
       </Screen>
@@ -89,9 +101,18 @@ const pageView = (manifest: GuideManifest, pageId: PageId, options: CompiledGuid
   };
 };
 
-/** The index of `manifest` as a compiled screen; `back` gives it the control that leaves the guide. */
-const indexView = (manifest: GuideManifest, options: CompiledGuideOptions, back: boolean): FunctionComponent => {
+/**
+ * What the index's back control does: open the guide's home page in its place, leave the guide,
+ * or nothing, for the index a player opened themselves.
+ */
+type IndexBack = 'home' | 'leave' | 'none';
+
+/** The index of `manifest` as a compiled screen, with the back control its place in the guide calls for. */
+const indexView = (manifest: GuideManifest, options: CompiledGuideOptions, back: IndexBack): FunctionComponent => {
   const title = options.title ?? 'Guide';
+  const audience = audienceOf(manifest, options);
+  const names = guideScreenNames(audience);
+  const tree = visibleTree(manifest, audience);
 
   return (): JSX.Element => {
     const close = useExit();
@@ -103,16 +124,17 @@ const indexView = (manifest: GuideManifest, options: CompiledGuideOptions, back:
       // manifest out of the addon — the page ships as the table it amounts to.
       <Screen static>
         <GuideHomeView
-          tree={manifest.tree}
+          tree={tree}
           title={title}
           width={options.width ?? CANVAS.width}
           height={options.height ?? CANVAS.height}
           folding={'client'}
-          linkTo={(id): string => pageScreen(manifest, id)}
+          linkTo={(id): string => pageScreen(manifest, id, audience)}
           // A back control is a press the player's stack answers, and — when another addon is
           // showing this guide from its reference — the one thing that tells a back apart from
-          // the player simply closing the form.
-          {...back ? { back: true } : {}}
+          // the player simply closing the form. A guide with a home page returns there instead,
+          // with the back control that leaves.
+          {...back === 'home' ? { backTo: names.homeBack } : back === 'leave' ? { back: true } : {}}
           onClose={close}
         />
       </Screen>
@@ -131,45 +153,65 @@ export interface GuideHomeOptions extends CompiledGuideOptions {
 /**
  * Where a guide opens, as a compiled screen: the one `openGuide` shows, or with `back` the one a
  * host opens. With a home page — the one it declares with `home: true`, or its only page — that
- * page; otherwise the index.
+ * page; otherwise the index. Both are decided for the set's own readers: a player whose only
+ * readable page is one opens on it, and a gated home is no home to them.
  *
- * Moving inside a guide replaces rather than stacks, so a reader is always one press from the
- * index and two from wherever they opened the guide: a page's back and its index button open the
- * index in its place, and the index's back leaves.
+ * Moving inside a guide replaces rather than stacks: a page's back and its index button open the
+ * index in its place. With a home page the index's back returns to it and the home page's back
+ * leaves, so a reader walks page, index, home, out; without one the index's back leaves.
  */
 export function guideHomeScreen(manifest: GuideManifest, options: GuideHomeOptions = {}): FunctionComponent {
   const back = options.back === true;
-  const { landing, hasSidebar } = resolveLanding(manifest, 'op');
+  const { landing, hasSidebar } = resolveLanding(manifest, audienceOf(manifest, options));
 
   if (landing === undefined) {
-    return indexView(manifest, options, back);
+    return indexView(manifest, options, back ? 'leave' : 'none');
   }
 
-  return hasSidebar
-    ? pageView(manifest, landing, options, { back: 'index', index: true })
-    : pageView(manifest, landing, options, { back: back ? 'leave' : 'none', index: false });
+  // The home page sits above the index, so its back leaves the guide and its index button opens
+  // the index in its place.
+  return pageView(manifest, landing, options, { back: back ? 'leave' : 'none', index: hasSidebar });
 }
 
-/** The index of `manifest` as a compiled screen: what every page's back and index button open. */
+/**
+ * The index of `manifest` as a compiled screen: what every page's back and index button open. Its
+ * back returns to the guide's home page when it has one, and leaves the guide when it has none.
+ */
 export function guideIndexScreen(manifest: GuideManifest, options: CompiledGuideOptions = {}): FunctionComponent {
-  return indexView(manifest, options, true);
+  const { landing } = resolveLanding(manifest, audienceOf(manifest, options));
+
+  return indexView(manifest, options, landing === undefined ? 'leave' : 'home');
 }
 
 /** Page `pageId` of `manifest` as a compiled screen. */
 export function guidePageScreen(manifest: GuideManifest, pageId: PageId, options: CompiledGuideOptions = {}): FunctionComponent {
-  const { hasSidebar } = resolveLanding(manifest, 'op');
+  const { hasSidebar } = resolveLanding(manifest, audienceOf(manifest, options));
 
   return pageView(manifest, pageId, options, hasSidebar ? { back: 'index', index: true } : { back: 'leave', index: false });
 }
 
 /**
- * Opens guide `ns` at its entry: its home page, or its index when it has none.
+ * Opens guide `ns` at its entry: its home page, or its index when it has none. An operator opens
+ * the operators' set when the guide has one. With `back`, the entry carries a back control that
+ * returns to the screen the player opened it from.
  *
  * A plain `navigate()`, which is what makes it work in either direction: the
  * owning addon opens its own guide out of the table its build baked, and any
  * other realm opens it from the table that addon published. Neither needs the
  * manifest, which is why none of it ships.
+ *
+ * Only a gated guide compiles the operators' set, and a key nothing can draw would be handed to
+ * the owning realm to fail there, so that entry is taken only once something answers for it:
+ * this bundle's own screens, or the references the realm's UI holds.
  */
-export function openGuide(ns: string, player: PressEvent['player'], options: { debug?: boolean } = {}): boolean {
-  return navigate(`${ns}:${HOME_SCREEN}`, player, options.debug === true ? { debug: true } : {});
+export function openGuide(ns: string, player: PressEvent['player'], options: { back?: boolean; debug?: boolean } = {}): boolean {
+  const realm = core.slot('core:ui');
+  const own = addonReference(ns).screens;
+  const key = guideEntry(
+    name => `${ns}:${name}`,
+    candidate => own[candidate] !== undefined || realm?.reference(candidate) !== undefined,
+    { back: options.back === true, operator: isOperator(player) },
+  ) ?? `${ns}:${guideScreenNames('player').home}`;
+
+  return navigate(key, player, options.debug === true ? { debug: true } : {});
 }

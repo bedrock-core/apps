@@ -3,7 +3,6 @@ import { Card, Header, Button as OreButton, theme } from '@bedrock-core/ore-styl
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { canSee, paginationFor } from '../access';
-import { INDEX_SCREEN } from '../names';
 import { GuideBlockList } from '../render/GuideBlockList';
 import type { GuideAudience, GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
 
@@ -66,16 +65,17 @@ export interface GuidePageViewProps {
   back?: boolean;
 
   /**
-   * Footer index button, opening the guide's index in this page's place. Set only when there IS an
-   * index: a single-page guide has no second page to choose between.
+   * The screen the footer's index button opens in this page's place: the index of the set this
+   * page belongs to. Set only when there IS an index: a single-page guide has no second page to
+   * choose between.
    */
-  index?: boolean;
+  indexTo?: string;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
 }
 
 /** One guide page: title, rendered blocks, prev/home/next footer. */
-export function GuidePageView({ manifest, tree, audience, pageId, title, width, height, components, linkTo, backTo, back, index, onClose }: GuidePageViewProps): JSX.Element {
+export function GuidePageView({ manifest, tree, audience, pageId, title, width, height, components, linkTo, backTo, back, indexTo, onClose }: GuidePageViewProps): JSX.Element {
   const page = manifest.pages[pageId];
 
   if (!page) {
@@ -123,9 +123,9 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
               </OreButton>
             )
           : <Panel flexGrow={1} />}
-        {index === true
+        {indexTo !== undefined
           ? (
-              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} to={INDEX_SCREEN} replace={true}>
+              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} to={indexTo} replace={true}>
                 <Image width={12} height={12} texture={ICON_INDEX} />
               </OreButton>
             )

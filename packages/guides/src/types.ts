@@ -31,31 +31,28 @@ export type AdmonitionKind = 'note' | 'tip' | 'info' | 'warning' | 'danger';
 export type GuideAccess = 'op';
 
 /**
- * Which audience a guide is being rendered for. `'op'` sees everything; `'player'` sees only
- * ungated content. The host decides which — this package deliberately never reads
- * `@minecraft/server` to work it out for itself.
+ * Which audience a guide is built for. `'op'` sees everything; `'player'` sees only ungated
+ * content. A gated guide compiles one set of screens for each, and the entry decides which one a
+ * reader walks, as they enter.
  */
 export type GuideAudience = 'op' | 'player';
 
 /**
- * One run of a paragraph/list-item's inline content, in document order. A run with `to` is an
- * internal link — rendered as its own pressable element woven inline with the surrounding
- * text — everything else is plain (§-styled) prose.
+ * A paragraph or list item's inline content. Without links it is one localized, §-styled key the
+ * client wraps whole. With links it is a tagged string in every language, by locale — `See
+ * <0>the page</0>.` — and the page each numbered tag opens: the build breaks it into lines per
+ * language, and each link is pressable exactly where it is drawn.
  */
-export interface GuideRun {
-  k: LangKey;
-  to?: PageId;
-}
+export type GuideInline = { k: LangKey } | { text: Record<string, string>; links: PageId[] };
 
-export interface GuideListItem {
-  runs: GuideRun[];
+export type GuideListItem = GuideInline & {
   /** One nesting level renders indented; deeper levels flatten. */
   items?: GuideListItem[];
-}
+};
 
 export type GuideBlock
   = | { t: 'h'; l: 1 | 2 | 3; k: LangKey }
-    | { t: 'p'; runs: GuideRun[] }
+    | ({ t: 'p' } & GuideInline)
     | { t: 'ul'; items: GuideListItem[] }
     | { t: 'ol'; items: GuideListItem[]; start?: number }
     | { t: 'img'; src: string; alt?: string; w?: number; h?: number }
@@ -125,12 +122,18 @@ export interface GuideManifest {
   home?: PageId;
 
   /**
-   * Each page's compiled screen name, as the guides filter named the module it
-   * generated: `getting-started/intro` -> `guide_getting_started_intro`. The
-   * filter is the half that names the files, so a link follows this rather than
-   * re-deriving the fold.
+   * Each page's compiled screen name in the set every player reads, as the guides filter named
+   * the module it generated: `getting-started/intro` -> `guide_getting_started_intro`. The filter
+   * is the half that names the files, so a link follows this rather than re-deriving the fold. A
+   * gated page has no screen in this set.
    */
   screens?: Record<PageId, string>;
+
+  /**
+   * The same for the operators' set, which only a gated guide compiles: every page, under names
+   * of its own (`guideop_getting_started_intro`).
+   */
+  opScreens?: Record<PageId, string>;
 }
 
 /**

@@ -1,8 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Image, Panel, Text, type JSX } from '@bedrock-core/ui-runtime';
+import { Fragment, Image, Panel, Text, Trans, type JSX } from '@bedrock-core/ui-runtime';
 import { defaultAdmonitionTitleKey } from '../admonitions';
-import type { GuideBlock, GuideComponents, GuideListItem, GuideRun, PageId } from '../types';
+import type { GuideBlock, GuideComponents, GuideInline, GuideListItem, PageId } from '../types';
 
 const { spacing } = theme.tokens;
 
@@ -64,7 +64,7 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
         : <Text font={'mojangles'} scale={block.l === 2 ? 1.5 : 1.25} shadow={true} wordBreak={'break-word'} marginTop={spacing.sm}>{block.k}</Text>;
 
     case 'p':
-      return renderRuns(block.runs, ctx);
+      return renderInline(block, ctx);
 
     case 'ul':
       return renderList(block.items, undefined, ctx);
@@ -84,7 +84,7 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
       return (
         <Card variant={'dark'} flexDirection={'column'} gap={spacing.sm}>
           <Text shadow={true}>{block.titleK ?? defaultAdmonitionTitleKey(block.kind)}</Text>
-          <GuideBlockList blocks={block.blocks} ns={ctx.ns} linkTo={ctx.linkTo} components={ctx.components} />
+          <GuideBlockList blocks={block.blocks} ns={ctx.ns} linkTo={ctx.linkTo} canOpen={ctx.canOpen} components={ctx.components} />
         </Card>
       );
 
@@ -112,7 +112,7 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
       return (
         <Component {...block.props}>
           {block.blocks
-            ? <GuideBlockList blocks={block.blocks} ns={ctx.ns} linkTo={ctx.linkTo} components={ctx.components} />
+            ? <GuideBlockList blocks={block.blocks} ns={ctx.ns} linkTo={ctx.linkTo} canOpen={ctx.canOpen} components={ctx.components} />
             : undefined}
         </Component>
       );
@@ -135,44 +135,24 @@ function imageBlock(src: string, w: number, h: number): JSX.Element {
 }
 
 /**
- * A paragraph/list-item's runs as one flowing, wrapping row: plain runs are
- * inline text, a run with `to` is a transparent (invisible-until-hovered)
- * button positioned right where the link text sits — an inline pressable
- * link, not decorative text plus a detached button underneath. A link `canOpen` refuses
- * degrades back to prose, so the sentence still reads without offering a door.
+ * A paragraph or list item. Without links it is one localized text the client wraps whole. With
+ * links it is a `Trans`: the build breaks it into lines in every language, and each link is a
+ * transparent button hugging exactly its own text. A link `canOpen` refuses is drawn as text.
  */
-function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
-  return (
-    <Panel flexDirection={'row'} wrap={'wrap'} alignItems={'center'}>
-      {runs.map((run) => {
-        const { to } = run;
-        const prose = <Text shadow={true} wordBreak={'break-word'}>{run.k}</Text>;
+function renderInline(inline: GuideInline, ctx: RenderCtx): JSX.Element {
+  if ('k' in inline) {
+    return <Text shadow={true} wordBreak={'break-word'} width={'100%'}>{inline.k}</Text>;
+  }
 
-        if (to === undefined || !(ctx.canOpen?.(to) ?? true)) { return prose; }
+  const components = inline.links.map((pageId) => {
+    const to = (ctx.canOpen?.(pageId) ?? true) ? ctx.linkTo?.(pageId) : undefined;
 
-        const target = ctx.linkTo?.(to);
+    return to === undefined
+      ? <Text />
+      : <OreButton variant={'transparent'} paddingTop={0} paddingBottom={0} paddingLeft={0} paddingRight={0} to={to} replace={true} />;
+  });
 
-        if (target === undefined) { return prose; }
-
-        return (
-          <OreButton
-            variant={'transparent'}
-            paddingTop={0}
-            paddingBottom={0}
-            paddingLeft={0}
-            paddingRight={0}
-            // The run before ends in a space, and its box is measured a shade
-            // wider than the client draws it: the link sits into that slack.
-            marginLeft={-2}
-            to={target}
-            replace={true}
-          >
-            {prose}
-          </OreButton>
-        );
-      })}
-    </Panel>
-  );
+  return <Trans shadow={true} width={'100%'} translations={inline.text} components={components} />;
 }
 
 function renderList(items: GuideListItem[], start: number | undefined, ctx: RenderCtx, depth = 0): JSX.Element {
@@ -183,7 +163,7 @@ function renderList(items: GuideListItem[], start: number | undefined, ctx: Rend
           <Panel flexDirection={'row'} gap={spacing.xs} alignItems={'flex-start'}>
             <Text>{start === undefined ? '§7-' : `§7${start + i}.`}</Text>
             <Panel flexGrow={1} flexShrink={1}>
-              {renderRuns(item.runs, ctx)}
+              {renderInline(item, ctx)}
             </Panel>
           </Panel>
           {item.items && item.items.length > 0

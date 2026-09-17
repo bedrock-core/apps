@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Button as OreButton } from '@bedrock-core/ore-styled';
-import { Image, Panel, Text, type JSX } from '@bedrock-core/ui-runtime';
+import { Image, Panel, Text, Trans, type JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import type { GuideBlock } from '../../types';
 import { GuideBlockList } from '../GuideBlockList';
@@ -47,51 +47,43 @@ describe('GuideBlockList block mapping', () => {
     expect(h3.props.scale).toBe(1.25);
   });
 
-  it('renders a single-run paragraph as a wrapping row of one localized Text', () => {
-    const [p] = renderBlocks([{ t: 'p', runs: [{ k: 'body' }] }]);
+  it('renders a paragraph as one localized Text that wraps', () => {
+    const [p] = renderBlocks([{ t: 'p', k: 'body' }]);
 
-    expect(p.type).toBe(Panel);
-    const [text] = childrenOf(p);
-
-    expect(text.type).toBe(Text);
-    expect(text.props.children).toBe('body');
-    expect(text.props.wordBreak).toBe('break-word');
+    expect(p.type).toBe(Text);
+    expect(p.props.children).toBe('body');
+    expect(p.props.wordBreak).toBe('break-word');
   });
 
-  it('renders a link run as a transparent button positioned inline with the text', () => {
-    const [p] = renderBlocks(
-      [{ t: 'p', runs: [{ k: 'lead' }, { k: 'label', to: 'other/page' }] }],
-      { linkTo: (id): string => `guide_${id.replace('/', '_')}` },
-    );
-    const [lead, button] = childrenOf(p);
+  it('renders a paragraph with links as a Trans in every language, each numbered tag a press to its page', () => {
+    const text = { en_US: 'see §9<0>the page</0>§r', es_ES: 'mira §9<0>la pagina</0>§r' };
+    const [p] = renderBlocks([{ t: 'p', text, links: ['other/page'] }], { linkTo: (id): string => `guide_${id.replace('/', '_')}` });
 
-    expect(lead.type).toBe(Text);
-    expect(lead.props.children).toBe('lead');
-    expect(button.type).toBe(OreButton);
-    expect(button.props.variant).toBe('transparent');
-    expect(button.props.to).toBe('guide_other_page');
-    const [label] = childrenOf(button);
+    expect(p.type).toBe(Trans);
+    expect(p.props.shadow).toBe(true);
+    expect(p.props.translations).toEqual(text);
 
-    expect(label.type).toBe(Text);
-    expect(label.props.children).toBe('label');
+    const [press] = p.props.components as LazyElement[];
+
+    expect(press?.type).toBe(OreButton);
+    expect([press?.props.variant, press?.props.to, press?.props.replace, press?.props.paddingLeft, press?.props.paddingTop]).toEqual(['transparent', 'guide_other_page', true, 0, 0]);
   });
 
-  it('renders a link the reader cannot open as plain prose, keeping the sentence intact', () => {
+  it('draws a link the reader cannot open as text', () => {
     const [p] = renderBlocks(
-      [{ t: 'p', runs: [{ k: 'lead' }, { k: 'label', to: 'admin/keys' }] }],
+      [{ t: 'p', text: { en_US: 'see the §9<0>keys</0>§r' }, links: ['admin/keys'] }],
       { linkTo: (id): string => `guide_${id}`, canOpen: (id): boolean => id !== 'admin/keys' },
     );
-    const [lead, gated] = childrenOf(p);
+    const [component] = p.props.components as LazyElement[];
 
-    expect(lead.type).toBe(Text);
-    expect(gated.type).toBe(Text);
-    expect(gated.props.children).toBe('label');
+    expect(component?.type).toBe(Text);
+    expect(component?.props).toEqual({});
   });
 
   it('renders unordered and ordered lists with bullets and numbering', () => {
     const [ul, ol] = renderBlocks([
-      { t: 'ul', items: [{ runs: [{ k: 'a' }] }, { runs: [{ k: 'b' }], items: [{ runs: [{ k: 'b1' }] }] }] },
-      { t: 'ol', items: [{ runs: [{ k: 'c' }] }], start: 3 },
+      { t: 'ul', items: [{ k: 'a' }, { k: 'b', items: [{ k: 'b1' }] }] },
+      { t: 'ol', items: [{ k: 'c' }], start: 3 },
     ]);
     const ulRows = childrenOf(ul);
     const [bullet] = childrenOf(childrenOf(ulRows[0])[0]);
@@ -133,7 +125,7 @@ describe('GuideBlockList block mapping', () => {
   });
 
   it('renders admonitions in a dark card with the default kind title key', () => {
-    const [adm] = renderBlocks([{ t: 'adm', kind: 'tip', blocks: [{ t: 'p', runs: [{ k: 'inner' }] }] }]);
+    const [adm] = renderBlocks([{ t: 'adm', kind: 'tip', blocks: [{ t: 'p', k: 'inner' }] }]);
 
     expect(adm.type).toBe(Card);
     expect(adm.props.variant).toBe('dark');
@@ -141,6 +133,14 @@ describe('GuideBlockList block mapping', () => {
 
     expect(title.props.children).toBe('core.guides.adm.tip');
     expect(body.type).toBe(GuideBlockList);
+  });
+
+  it('hands what the reader may open down into an admonition', () => {
+    const canOpen = (id: string): boolean => id !== 'admin/keys';
+    const [adm] = renderBlocks([{ t: 'adm', kind: 'note', blocks: [{ t: 'p', k: 'inner' }] }], { canOpen });
+    const [, body] = childrenOf(adm);
+
+    expect(body.props.canOpen).toBe(canOpen);
   });
 
   it('prefers a custom admonition title key', () => {
