@@ -221,6 +221,9 @@ const RESERVED = new Set<string>(RESERVED_KEYS);
  * declaration, matching how the schema is addressed everywhere else it is published.
  */
 export function validateConfigSchema(scope: string, schema: SchemaGroup, prefix = ''): void {
+  let hasFormField = false;
+  let hasDestination = false;
+
   for (const [key, node] of Object.entries(schema)) {
     const path = prefix ? `${prefix}.${key}` : key;
 
@@ -250,7 +253,26 @@ export function validateConfigSchema(scope: string, schema: SchemaGroup, prefix 
       throw new Error(`config schema: "${scope}.${path}" is neither an entry nor a group`);
     }
 
-    if (!isEntry(node)) { validateConfigSchema(scope, node, path); }
+    if (isEntry(node)) {
+      if (node.type === 'list') {
+        hasDestination = true;
+      } else {
+        hasFormField = true;
+      }
+
+      continue;
+    }
+
+    hasDestination = true;
+    validateConfigSchema(scope, node, path);
+  }
+
+  if (hasFormField && hasDestination) {
+    const location = prefix === '' ? scope : `${scope}.${prefix}`;
+
+    throw new Error(
+      `config schema: "${location}" mixes form fields with child groups or list settings; move the form fields into their own child group`,
+    );
   }
 }
 

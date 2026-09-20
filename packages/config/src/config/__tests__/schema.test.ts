@@ -16,6 +16,7 @@ import {
   listEntries,
 } from '../schema';
 import type { EntrySchema, FlatGroupsLike, FlatSchemaLike } from '../../types';
+import { validateConfigSchema } from '../../server/schema';
 
 const bool = (label: string): EntrySchema => ({ type: 'boolean', label, default: true });
 const list = (label: string): EntrySchema => ({ type: 'list', label, default: '[]' });
@@ -91,7 +92,6 @@ describe('buildSectionTree', () => {
 
 describe('isPureSection', () => {
   it('is true only when a level holds sections and no settings of its own', () => {
-    // Every top-level key nests — the level has nothing to put in a form.
     const pure = buildSectionTree({ 'a.one': bool('One'), 'b.two': bool('Two') });
 
     expect(isPureSection(pure)).toBe(true);
@@ -104,11 +104,10 @@ describe('isPureSection', () => {
     expect(isPureSection(mixed)).toBe(false);
   });
 
-  it('is false for a leaf-only level — there is nothing to navigate to', () => {
+  it('is false for a leaf-only level', () => {
     expect(isPureSection(buildSectionTree({ only: bool('Only') }))).toBe(false);
   });
 });
-
 describe('findSection', () => {
   const root = buildSectionTree(SCHEMA, GROUPS);
 
@@ -203,7 +202,6 @@ describe('lists vs form fields', () => {
     const node = buildSectionTree({ bans: list('Bans'), motd: bool('MOTD') });
 
     expect(isPureSection(node)).toBe(false);
-    // The list is still there — on a form level it renders read-only, with its command.
     expect(listEntries(node).map(([k]) => k)).toEqual(['bans']);
     expect(formEntries(node).map(([k]) => k)).toEqual(['motd']);
   });
@@ -214,5 +212,27 @@ describe('lists vs form fields', () => {
 
   it('is not a button screen when there is nothing at all to press', () => {
     expect(isPureSection(buildSectionTree({}))).toBe(false);
+  });
+});
+
+describe('schema level kinds', () => {
+  const entry = { type: 'boolean' as const, default: true, label: 'Enabled' };
+  const freeList = { type: 'list' as const, default: [] as const, label: 'Blocked' };
+
+  it('allows a navigation group containing child forms and lists', () => {
+    expect(() => validateConfigSchema('server', {
+      settings: { general: { enabled: entry }, blocked: freeList },
+    })).not.toThrow();
+  });
+
+  it('rejects a level that mixes form fields with a child group', () => {
+    expect(() => validateConfigSchema('server', {
+      display: { enabled: entry, advanced: { enabled: entry } },
+    })).toThrow('config schema: "server.display" mixes form fields with child groups or list settings; move the form fields into their own child group');
+  });
+
+  it('rejects a level that mixes form fields with a list', () => {
+    expect(() => validateConfigSchema('dimension', { enabled: entry, blocked: freeList }))
+      .toThrow('config schema: "dimension" mixes form fields with child groups or list settings; move the form fields into their own child group');
   });
 });

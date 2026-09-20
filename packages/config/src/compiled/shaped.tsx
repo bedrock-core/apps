@@ -2,6 +2,7 @@
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { ConfigDefinition, ConfigScopeName } from '../server';
 import { flattenGroups, flattenSchema } from '../server';
+import { validateConfigSchema } from '../server/schema';
 import { BODY, Card, Checkbox, Divider, Dropdown, fieldLabel, Form, FRAME, Header, HEADER_HEIGHT, Input, Slider, theme, Toggle, ToggleButtons } from '@bedrock-core/ore-styled';
 import { Panel, Scroll, Text, useTranslationResolver, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
@@ -352,6 +353,7 @@ export function configScreens(definition: ConfigDefinition): Record<string, Func
       continue;
     }
 
+    validateConfigSchema(scope, declared);
     const tree = buildSectionTree(flattenSchema(declared), flattenGroups(declared));
 
     for (const [path, entries] of sectionsOf(tree, new Map())) {

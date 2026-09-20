@@ -116,19 +116,7 @@ export function listEntries(node: SectionNode): [string, EntrySchema][] {
   return node.entries.filter(([, entry]) => !isFormField(entry));
 }
 
-/**
- * Whether a section renders as a screen of buttons rather than as a form.
- *
- * A native modal has exactly two controls — its submit and its dismiss — so there is no third
- * one to navigate with; a level holding settings therefore HAS to be the form, and can only show
- * its sub-sections inline. A level holding none is free to be a screen of buttons, which is the
- * only way a deep tree stays navigable.
- *
- * Lists do not count against it. A list has no native modal control either, so it never needed
- * the form in the first place — on a button screen it becomes a row and gets a real editor, and
- * only when it is stranded on a form level does it fall back to naming the command that edits
- * it. That is the whole rule: where a button can be offered, it is.
- */
+/** Whether a section renders as a screen of buttons rather than as a form. */
 export function isPureSection(node: SectionNode): boolean {
   return formEntries(node).length === 0 && (node.children.length > 0 || listEntries(node).length > 0);
 }

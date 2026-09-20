@@ -23,6 +23,7 @@ export default defineConfig([
       "**/*.test.ts",
       "**/*.test.tsx",
       "**/vitest.config.ts",
+      "test/**",
     ],
   },
 

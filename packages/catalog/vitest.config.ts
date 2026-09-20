@@ -1,6 +1,6 @@
 import path from 'path';
 import { defineConfig } from 'vitest/config';
-import { desugarJsxConditionals } from '../../../regolith-filters/ui-compiler/lib/sugar.ts';
+import { desugarJsxConditionals } from '../../test/sugar.ts';
 
 export default defineConfig({
   plugins: [
@@ -18,10 +18,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/__tests__/**/*.{ts,tsx}'],
     alias: {
-      // Reuse ui-runtime's game-module mocks — the runtime imports them at
-      // module scope, but nothing here exercises engine behavior.
-      '@minecraft/server': path.resolve(__dirname, '../../../ui/packages/ui-runtime/src/__mocks__/@minecraft/server.ts'),
-      '@minecraft/server-ui': path.resolve(__dirname, '../../../ui/packages/ui-runtime/src/__mocks__/@minecraft/server-ui.ts'),
+      // Public test helpers keep this package runnable without sibling checkouts.
+      '@minecraft/server': path.resolve(__dirname, '../../test/minecraft-server.ts'),
+      '@minecraft/server-ui': path.resolve(__dirname, '../../test/minecraft-server-ui.ts'),
     },
   },
 });
