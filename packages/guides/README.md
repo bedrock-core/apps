@@ -7,7 +7,7 @@ Docusaurus-style **in-game guides** localized and written in MDX.
 ## Install
 
 ```bash
-yarn add @bedrock-core/guides
+yarn add @bedrock-core/server @bedrock-core/ui @bedrock-core/guides
 regolith install github.com/bedrock-core/regolith-filters/guides
 ```
 

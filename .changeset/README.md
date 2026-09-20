@@ -51,8 +51,8 @@ install fails. A version already on the registry is skipped, so re-running after
 a partial release is safe.
 
 Nothing is checked out beside this repository: every dependency resolves from the
-registry. The root `resolutions` must carry versions rather than `portal:` entries
-before a release can install; that swap is the release step.
+registry. The root `resolutions` carry the exact public Server and UI versions used for release, so
+a clean checkout never depends on sibling source trees.
 
 Two repo settings the workflow depends on:
 

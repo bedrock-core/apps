@@ -7,7 +7,7 @@ An addon's **settings** and the screens that edit them.
 ## Install
 
 ```bash
-yarn add @bedrock-core/config
+yarn add @bedrock-core/server @bedrock-core/ui @bedrock-core/config
 ```
 
 ## Usage

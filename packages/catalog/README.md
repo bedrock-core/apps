@@ -7,7 +7,7 @@ The **addons browser** for every bedrock-core addon in the world.
 ## Install
 
 ```bash
-yarn add @bedrock-core/catalog
+yarn add @bedrock-core/server @bedrock-core/ui @bedrock-core/catalog
 ```
 
 ## Usage

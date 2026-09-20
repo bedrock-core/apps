@@ -13,9 +13,8 @@ name: Release
 # The three apps are versioned and published independently; the repo root is
 # `private` and never ships.
 #
-# Nothing is checked out beside this repo: every dependency resolves from the
-# registry. Until the root `resolutions` carry versions instead of `portal:`
-# entries, this cannot install — that swap is the release step.
+# Nothing is checked out beside this repo: every dependency resolves from exact public
+# registry versions, and the immutable install proves no sibling checkout is required.
 #
 # NOTE: opening the Version PR needs "Allow GitHub Actions to create and approve
 # pull requests" enabled under Settings → Actions → General. If that is off,

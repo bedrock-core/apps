@@ -2,7 +2,15 @@
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 
-Applications built on the bedrock-core stack. 
+Applications built on the bedrock-core stack.
+
+## Install
+
+Install the Server and UI families with the apps used by the addon. For all three:
+
+```bash
+yarn add @bedrock-core/server @bedrock-core/ui @bedrock-core/catalog @bedrock-core/config @bedrock-core/guides
+```
 
 ## Usage
 

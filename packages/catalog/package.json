@@ -62,7 +62,10 @@
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "*",
 		"@bedrock-core/ui-runtime": "*",
+		"@minecraft/common": "*",
 		"@minecraft/server": "*",
+		"@minecraft/server-ui": "*",
+		"@minecraft/vanilla-data": "*",
 		"eslint": "*",
 		"typescript": "*",
 		"vitest": "*"
