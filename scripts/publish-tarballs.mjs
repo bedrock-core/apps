@@ -20,7 +20,7 @@
 //
 // Usage: node scripts/publish-tarballs.mjs [excluded-package-name ...]
 //        node scripts/publish-tarballs.mjs --only <package-name>
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -91,7 +91,25 @@ for (const row of ordered) {
 
 	const tarball = join(outDir, `${name.replace(/[@/]/g, '_')}.tgz`);
 	run('yarn', ['workspace', name, 'pack', '--out', tarball], { stdio: 'inherit' });
-	run('npm', ['publish', tarball], { stdio: 'inherit' });
+	const result = spawnSync('npm', ['publish', tarball], { encoding: 'utf-8', shell });
+	if (result.stdout) process.stdout.write(result.stdout);
+	if (result.stderr) process.stderr.write(result.stderr);
+
+	if (result.status !== 0) {
+		const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+
+		// npm can accept a first publication before its metadata is visible to
+		// `npm view`. Treat the exact-version conflict as the successful partial
+		// release that it is, then continue with the remaining workspaces.
+		if (/cannot publish over the previously published versions/i.test(output)) {
+			console.log(`skip    ${name}@${version} — already accepted; registry metadata is still processing`);
+			continue;
+		}
+
+		if (result.error) throw result.error;
+		throw new Error(`npm publish exited with code ${result.status ?? 'unknown'}`);
+	}
+
 	console.log(`publish ${name}@${version}`);
 	published++;
 }
