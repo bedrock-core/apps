@@ -34,7 +34,7 @@
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"changeset": "changeset",
 		"version-packages": "changeset version",
-		"release": "yarn lint && yarn typecheck && yarn test && node scripts/publish-tarballs.mjs && changeset tag"
+		"release": "yarn lint && yarn typecheck && yarn test && node scripts/publish-tarballs.mjs && node scripts/tag-packages.mjs"
 	},
 	"dependencies": {
 		"@bedrock-core/catalog": "workspace:*",
