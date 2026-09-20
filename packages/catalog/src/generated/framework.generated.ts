@@ -82,4 +82,4 @@ export const FRAMEWORK_PAGE: AddonPageReference = {
 };
 
 /** The render pack's version: what the framework's row and page both show. */
-export const FRAMEWORK_VERSION = "1.11.0";
+export const FRAMEWORK_VERSION = "1.12.0";
