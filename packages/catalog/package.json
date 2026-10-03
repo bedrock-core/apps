@@ -56,6 +56,9 @@
 		"test": "vitest run",
 		"lint": "eslint ."
 	},
+	"dependencies": {
+		"@bedrock-core/guides": "workspace:*"
+	},
 	"devDependencies": {
 		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "*",

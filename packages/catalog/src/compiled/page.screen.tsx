@@ -52,6 +52,8 @@ export interface AddonPageInfo {
 
 export interface AddonPageProps {
   addon: AddonPageInfo;
+  /** Named page within the compiling addon; absent for its public addon page. */
+  embedName?: string;
 }
 
 // A press names the app the owning realm is asked for; the catalog reads it off the reference
@@ -77,11 +79,11 @@ const banner = (addon: AddonPageInfo): JSX.Element => (
   <Panel position={'absolute'} left={0} top={0} width={MAIN.width} height={HERO_HEIGHT} zIndex={0} background={addon.thumbnail ?? ''} />
 );
 
-export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon }: AddonPageProps): JSX.Element => {
+export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon, embedName }: AddonPageProps): JSX.Element => {
   const hasBanner = (addon.thumbnail ?? '') !== '';
 
   return (
-    <Embed frame={FRAME} area={MAIN}>
+    <Embed name={embedName} frame={FRAME} area={MAIN}>
       {hasBanner && banner(addon)}
       {/* Over the banner, from the top of the pane: the page reads against it.
           Short of the area on the right, so the track clears the card's border. */}

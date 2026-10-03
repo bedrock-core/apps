@@ -75,6 +75,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/catalog@workspace:packages/catalog"
   dependencies:
+    "@bedrock-core/guides": "workspace:*"
     "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/navigation": "npm:*"
     "@bedrock-core/ore-styled": "npm:*"

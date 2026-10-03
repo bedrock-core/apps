@@ -8,6 +8,7 @@ import { createI18n, createResourceBundle, overlay } from '@bedrock-core/i18n';
 import type { BoundI18n, TranslationResolver } from '@bedrock-core/i18n';
 import { TranslationContext, useContext, useTranslation as useBoundTranslation } from '@bedrock-core/ui-runtime';
 import en_US from './en_US';
+import es_ES from './es_ES';
 
 export type CatalogResources = typeof en_US;
 
@@ -24,7 +25,7 @@ export type CatalogT = BoundI18n<CatalogResources>['t'];
  * folds `bedrockCore.i18n` libraries in), so `core.translations.forPlayer(player)` is the whole
  * world.
  */
-export const i18n = createI18n(createResourceBundle('core', { en_US }), { asDefault: false });
+export const i18n = createI18n(createResourceBundle('core', { en_US, es_ES }), { asDefault: false });
 
 /**
  * The verbs bound to the viewing player, with the world's published bundle laid over them: an

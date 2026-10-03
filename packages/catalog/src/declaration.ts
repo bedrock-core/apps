@@ -15,15 +15,15 @@
  * It takes no arguments: the roster is `core.registry`, every row's page is what that addon
  * published, and both sit below this app — so there is nothing about a catalog the build does not
  * already know. Installing registers `<namespace>:catalog`, serves `core:catalog.show`, announces
- * that this addon browses, and hands the framework's own screens to the realm as a reference
- * source.
+ * that this addon browses. Its build includes the framework's page and guide.
  */
 import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import { isUiReturn, pathThrough, uiOf, type UiReturn } from '@bedrock-core/navigation';
 import type { Player } from '@minecraft/server';
+import { addonReference, presentReference } from '@bedrock-core/ui-runtime';
 import { canPresentAddonList, presentAddonList, type AddonListOpeners } from './compiled/host';
 import { registerCatalogCommand } from './command';
-import { FRAMEWORK_ADDON_ID, FRAMEWORK_NAMESPACE, frameworkScreen } from './framework';
+import { FRAMEWORK_ADDON_ID, FRAMEWORK_GUIDE } from './framework';
 import { catalogTarget, isCatalogTarget } from './target';
 import type { Catalog } from './slot';
 // Type-only, and erased: it pulls in the `core:catalog` slot declaration `fill` is keyed by.
@@ -69,13 +69,6 @@ export function registerCatalog(options: CatalogOptions = {}): CatalogDeclaratio
 
       realm.serve(CATALOG_APP, (player, target) => (isCatalogTarget(target) ? open(player, target.addonId) : undefined));
       realm.offers(CATALOG_APP);
-      // The framework's screens are baked into the render pack and nothing registers a realm for
-      // them, so no addon publishes a reference. The catalog is what puts the framework in front
-      // of a player, so it is what teaches the realm to resolve its keys — the table they are
-      // read from, and the namespace they were compiled under, which an addon would have
-      // published and the framework cannot.
-      realm.resolve(frameworkScreen);
-      realm.alias(FRAMEWORK_ADDON_ID, FRAMEWORK_NAMESPACE);
 
       if (options.commands !== false) {
         registerCatalogCommand(core, (player) => { void open(player); });
@@ -117,7 +110,16 @@ function show(core: Runtime, player: Player, addonId?: string, from?: string): P
     }
 
     const openers: AddonListOpeners = {
-      app: (selected, app): Promise<void> => realm.show(player, { kind: app, addonId: selected }),
+      app: (selected, app): Promise<void> => {
+        if (selected === FRAMEWORK_ADDON_ID && app === 'guide') {
+          const key = `${core.id}:${FRAMEWORK_GUIDE}`;
+
+          return presentReference(candidate => addonReference(core.id).screens[candidate] ?? realm.reference(candidate), key, player)
+            .then(ended => (ended === 'back' ? show(core, player, FRAMEWORK_ADDON_ID) : undefined));
+        }
+
+        return realm.show(player, { kind: app, addonId: selected });
+      },
       select: (next, current): Promise<void> => show(core, player, next, current),
     };
 

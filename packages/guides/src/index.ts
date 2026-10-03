@@ -8,4 +8,4 @@ export { guideHomeScreen, guideIndexScreen, guidePageScreen } from './compiled';
 export { openGuide } from './compiled';
 
 // The registry type a `componentsModule` default-exports for MDX `cmp` blocks.
-export type { GuideComponents } from './types';
+export type { GuideComponents, GuideManifest } from './types';

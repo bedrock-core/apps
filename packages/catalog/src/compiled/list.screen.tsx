@@ -18,7 +18,7 @@ import { ADDONS_MAX, MAIN, PAGE_SLOTS, SIDEBAR_WIDTH } from '../frame';
  * page, baked in that addon's pack against {@link MAIN} and drawn into this
  * frame while the first entry carries the addon's marker (`<EmbedSlots>`).
  * An addon that published no page gets the generic panel. The framework's
- * own page is the render pack's, shown the same way from its reference.
+ * own page is compiled beside this catalog, under a named embed marker.
  */
 
 const { spacing } = theme.tokens;

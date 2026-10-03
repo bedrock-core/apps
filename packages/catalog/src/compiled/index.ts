@@ -5,6 +5,8 @@ import type { AddonManifest } from '@bedrock-core/server-runtime';
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { AddonList } from './list.screen';
 import { addonPageScreen } from './page.screen';
+import { FrameworkPage } from './framework.screen';
+import { FrameworkGuide } from './framework-guide';
 
 /** The page component, for a pack that bakes a page no manifest describes: the framework's own. */
 export { AddonPage, type AddonPageInfo } from './page.screen';
@@ -13,6 +15,8 @@ export { AddonPage, type AddonPageInfo } from './page.screen';
 const screens: Record<string, FunctionComponent> = {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the model prop has a default, so the compile can build the screen with no props
   addon_list: AddonList as FunctionComponent,
+  framework_page: FrameworkPage,
+  framework_guide: FrameworkGuide,
 };
 
 export default screens;

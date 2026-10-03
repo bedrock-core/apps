@@ -4,7 +4,7 @@ import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, render } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
 import { isAddonPageReference, pages, uiOf, type AddonPageReference } from '@bedrock-core/navigation';
-import { FRAMEWORK_ADDON_ID, FRAMEWORK_APPS, FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, FRAMEWORK_VERSION } from '../framework';
+import { FRAMEWORK_ADDON_ID, FRAMEWORK_APPS, FRAMEWORK_EMBED, FRAMEWORK_VERSION, frameworkPageReference } from '../framework';
 import { i18n } from '../i18n';
 import { PAGE_SLOTS } from '../frame';
 import { AddonList, addonListElement, type AddonListMain, type AddonListModel, type AddonListRow } from './list.screen';
@@ -64,8 +64,7 @@ const rowsFor = (core: Runtime): AddonListRow[] => {
       version: addon.version,
       ...addon.icon === undefined ? {} : { icon: addon.icon },
     })),
-    // The framework itself, pinned last: nothing registers it, so its row is synthetic. Its version
-    // is the render pack's, the same number its page shows.
+    // The framework itself is pinned last and shows the UI library this catalog compiled with.
     { id: FRAMEWORK_ADDON_ID, name: { translate: key($ => $.framework.name) }, version: FRAMEWORK_VERSION, icon: 'textures/ui/bedrock-core/icon' },
   ];
 };
@@ -75,14 +74,14 @@ const rowsFor = (core: Runtime): AddonListRow[] => {
  * except a press that names an app, whose enabled state is what that addon announced rather than
  * anything the page can know.
  */
-const pageSlots = (namespace: string, reference: AddonPageReference, apps: readonly string[]): DisplayText[] => {
+const pageSlots = (namespace: string, reference: AddonPageReference, apps: readonly string[], name?: string): DisplayText[] => {
   const values = reference.values.map((value, index) => {
     const target = reference.targets[index] ?? null;
 
     return target === null ? value : (apps.includes(target) ? FLAG_ON : FLAG_OFF);
   });
 
-  return [embedMarker(namespace), ...values].slice(0, PAGE_SLOTS);
+  return [embedMarker(namespace, name), ...values].slice(0, PAGE_SLOTS);
 };
 
 export function presentAddonList(core: Runtime, player: Player, openers: AddonListOpeners, selectedId?: string): void {
@@ -96,9 +95,8 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
   let reference: AddonPageReference | undefined;
 
   if (current !== undefined && current.id === FRAMEWORK_ADDON_ID) {
-    // The framework's page and guide are the render pack's own; it has no config and no realm.
-    reference = FRAMEWORK_PAGE;
-    main = { kind: 'page', slots: pageSlots(FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, FRAMEWORK_APPS) };
+    reference = frameworkPageReference();
+    main = { kind: 'page', slots: pageSlots(core.id, reference, FRAMEWORK_APPS, FRAMEWORK_EMBED) };
   } else if (current !== undefined) {
     // The page of the addon selected, from what it published — every addon publishes one, so
     // this is the row's page whether or not that addon browses anything itself.

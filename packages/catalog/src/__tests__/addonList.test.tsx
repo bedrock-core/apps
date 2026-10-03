@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AddonListModel } from '../compiled/list.screen';
 
 const render = vi.fn();
+const presentReference = vi.fn();
 
 vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@bedrock-core/ui-runtime')>();
@@ -23,6 +24,7 @@ vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => {
     // one records the model instead of presenting a form.
     compiledTitleOf: (): string => 'test:screen',
     render,
+    presentReference,
   };
 });
 
@@ -114,6 +116,7 @@ const pressRow = async (core: unknown, id: string): Promise<void> => {
 
 beforeEach(() => {
   render.mockClear();
+  presentReference.mockReset();
 });
 
 describe('a press on a row of the catalog', () => {
@@ -134,6 +137,30 @@ describe('a press on a row of the catalog', () => {
 
     expect(sent).toEqual([]);
     expect(shownModel().rows[shownModel().selected]?.id).toBe('bedrock-core');
+    expect(shownModel().main).toEqual({ kind: 'page', slots: ['core_addon:me:framework', 'f', 't'] });
+  });
+
+  it('opens the local framework guide without a Guides app and returns to its selected row', async () => {
+    const { core, sent } = realm(() => Promise.resolve(true));
+    presentReference.mockResolvedValue('back');
+
+    await pressRow(core, 'bedrock-core');
+    await shownModel().onSlot?.(2, press);
+
+    expect(presentReference).toHaveBeenCalledWith(expect.any(Function), 'me:framework_guide', player);
+    expect(sent).toEqual([]);
+    expect(shownModel().rows[shownModel().selected]?.id).toBe('bedrock-core');
+    expect(render).toHaveBeenCalledTimes(3);
+  });
+
+  it('leaves the catalog closed when the framework guide is dismissed', async () => {
+    const { core } = realm(() => Promise.resolve(true));
+    presentReference.mockResolvedValue('closed');
+
+    await pressRow(core, 'bedrock-core');
+    await shownModel().onSlot?.(2, press);
+
+    expect(render).toHaveBeenCalledTimes(2);
   });
 
   it('hands another addon to its own realm, at its own catalog, with the way back', async () => {
