@@ -102,15 +102,6 @@ const NOTE_GAP = spacing.sm;
 /** Space a slider's track keeps below the lines above it, which the thumb overhangs. */
 const TRACK_GAP = spacing.sm;
 
-/**
- * Room the engine's live value takes at the end of a slider's caption row.
- *
- * The value is the engine's own text, drawn by the slider cell at its top-right
- * corner — so the cell spans the whole block, caption to track, and the caption
- * row leaves this much clear beside it. Wide enough for a five-digit number.
- */
-const VALUE_WIDTH = 40;
-
 /** One setting's rows, stacked: caption, then what follows it. */
 const stacked = (parts: JSX.Element[]): JSX.Element => (
   <Panel flexDirection={'column'} gap={NOTE_GAP} width={'100%'}>{parts}</Panel>
@@ -123,8 +114,8 @@ const stacked = (parts: JSX.Element[]): JSX.Element => (
  *
  *  - A boolean is a switch pinned to the right of its caption, the note
  *    under the caption.
- *  - A number is a slider under its caption and note, the live value at the
- *    caption's far end, drawn by the engine's own row.
+ *  - A number is a slider under its caption and note, with the live value
+ *    drawn inside the slider's own row.
  *  - A short choice is a row of segments; a long one a dropdown. A short set
  *    of choices is the same segments taking several; a long one a column of
  *    checkboxes. The note follows the control.
@@ -158,20 +149,12 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
     const max = entry.max ?? 100;
     const value = typeof current === 'number' ? current : Number(current ?? entry.default ?? 0);
 
-    // The slider covers the whole block, so the engine's value lands beside
-    // the caption; the flow below only reserves the track's room at the bottom,
-    // where the cell draws it.
     return (
       <Panel flexDirection={'column'} gap={TRACK_GAP} width={'100%'}>
-        <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.sm} width={'100%'}>
-          <Panel flexDirection={'column'} gap={NOTE_GAP} width={0} flexGrow={1} flexShrink={1}>
-            {[caption, ...note(entry.description)]}
-          </Panel>
-          <Panel width={VALUE_WIDTH} />
+        <Panel flexDirection={'column'} gap={NOTE_GAP} width={'100%'}>
+          {[caption, ...note(entry.description)]}
         </Panel>
-        {/* The track's room is the thumb's height: the cell draws the track centred on it. */}
-        <Panel width={'100%'} height={theme.components.slider.thumb.height} />
-        <Slider name={name} min={min} max={max} step={entry.step} defaultValue={value} position={'absolute'} left={0} top={0} width={'100%'} height={'100%'} />
+        <Slider name={name} min={min} max={max} step={entry.step} defaultValue={value} width={'100%'} />
       </Panel>
     );
   }

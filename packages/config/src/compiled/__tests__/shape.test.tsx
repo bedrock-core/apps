@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { analyze, buildScreenTree, probeLiveness, shapeOf, visiblesAt } from '@bedrock-core/ui-runtime/compile';
+import { analyze, buildScreenTree, childElements, MODAL_SLIDER_SLOT_TYPE, probeLiveness, shapeOf, visiblesAt } from '@bedrock-core/ui-runtime/compile';
 import { trailText } from '@bedrock-core/ore-styled';
 import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
@@ -34,6 +34,8 @@ const shapeAgainstBake = <P,>(Screen: FunctionComponent<P>, shown: JSX.Element):
     shown: shapeOf(present, analyze(present, visiblesAt(present, probe.liveVisibles))),
   };
 };
+
+const elementsOf = (element: JSX.Element): JSX.Element[] => [element, ...childElements(element.props.children).flatMap(elementsOf)];
 
 describe('a compiled config screen keeps its shape when shown', () => {
   it('scope picker', () => {
@@ -93,5 +95,34 @@ describe('a compiled config screen keeps its shape when shown', () => {
     const { baked, shown } = shapeAgainstBake(Screen, <Screen model={model} />);
 
     expect(shown).toBe(baked);
+  });
+
+  it('keeps a number slider below its wrapped description', () => {
+    const screens = configScreens({ server: { pricing: {
+      rate: { type: 'number', default: 3, min: 0, max: 10, label: 'Rate',
+        description: 'Tax applied to purchases with additional fees listed in this description. '.repeat(5) },
+    } } } as ConfigDefinition);
+    const Screen = screens['config_server_pricing'] as FunctionComponent<LeafProps> | undefined;
+
+    expect(Screen).toBeDefined();
+    if (Screen === undefined) { throw new Error('Pricing screen missing'); }
+
+    const elements = elementsOf(buildScreenTree(<Screen />));
+    const slider = elements.find(element => element.type === MODAL_SLIDER_SLOT_TYPE);
+    const descriptions = elements.filter(element => {
+      const value = element.props.value;
+
+      return typeof value === 'object' && value !== null && 'tail' in value
+        && typeof value.tail === 'string' && value.tail.includes('Tax applied');
+    });
+
+    expect(slider).toBeDefined();
+    expect(descriptions.length).toBeGreaterThan(0);
+    if (slider === undefined) { throw new Error('Number slider missing'); }
+
+    const sliderTop = Number(slider.props.jsonUIy);
+    const descriptionBottom = Math.max(...descriptions.map(element => Number(element.props.jsonUIy) + Number(element.props.jsonUIHeight)));
+
+    expect(sliderTop - descriptionBottom).toBeGreaterThanOrEqual(4);
   });
 });
