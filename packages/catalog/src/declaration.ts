@@ -124,7 +124,7 @@ function show(core: Runtime, player: Player, addonId?: string, from?: string): P
     };
 
     realm.showing(player, catalogTarget(id));
-    presentAddonList(core, player, openers, id);
+    presentAddonList(core, player, openers, id ?? core.id);
   };
 
   if (addonId === undefined || drawnHere(core, addonId)) {

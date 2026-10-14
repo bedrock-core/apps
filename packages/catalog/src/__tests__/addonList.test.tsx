@@ -43,7 +43,7 @@ const addon = (id: string, self: boolean): Record<string, unknown> =>
   ({ id, self, packName: `${id}.name`, version: '1.0.0', runtimeVersion: '0.1.0' });
 
 /** A realm running as `me`, with `other` registered beside it and a page published for it. */
-const realm = (answer: () => Promise<unknown>): { core: unknown; sent: Sent[] } => {
+const realm = (answer: () => Promise<unknown>, earlierAddon = false): { core: unknown; sent: Sent[] } => {
   const sent: Sent[] = [];
   const values = new Map<string, unknown>([['other|core-addon/page', PAGE]]);
   const state = {
@@ -53,7 +53,7 @@ const realm = (answer: () => Promise<unknown>): { core: unknown; sent: Sent[] } 
     subscribe: (): (() => void) => (): void => {},
   };
 
-  const rows = [addon('me', true), addon('other', false)];
+  const rows = [...earlierAddon ? [addon('aaa', false)] : [], addon('me', true), addon('other', false)];
   // Every slot is filled by whatever installs it, exactly as on a real runtime.
   const slots = new Map<string, unknown>();
 
@@ -120,6 +120,20 @@ beforeEach(() => {
 });
 
 describe('a press on a row of the catalog', () => {
+  it('selects its own addon by default even when another addon sorts first', async () => {
+    const { core } = realm(() => Promise.resolve(true), true);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the stub implements the catalog's Runtime dependencies
+    const runtime = core as Parameters<ReturnType<typeof registerCatalog>['install']>[0];
+    const app = registerCatalog({ commands: false }).install(runtime);
+
+    await app.open(player);
+
+    const model = shownModel();
+
+    expect(model.rows[0]?.id).toBe('aaa');
+    expect(model.rows[model.selected]?.id).toBe('me');
+  });
+
   it('draws this addon\'s own row here, asking nobody', async () => {
     const { core, sent } = realm(() => Promise.resolve(true));
 
