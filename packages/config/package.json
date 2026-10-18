@@ -64,10 +64,10 @@
 	"devDependencies": {
 		"@bedrock-core/db": "*",
 		"@bedrock-core/i18n": "*",
-		"@bedrock-core/navigation": "*",
 		"@bedrock-core/observable": "*",
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/ui": "*",
 		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/common": "*",
 		"@minecraft/server": "*",
@@ -84,6 +84,7 @@
 		"@bedrock-core/observable": "*",
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/ui": "*",
 		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0"
 	},
@@ -104,6 +105,9 @@
 			"optional": true
 		},
 		"@bedrock-core/server-runtime": {
+			"optional": true
+		},
+		"@bedrock-core/ui": {
 			"optional": true
 		},
 		"@bedrock-core/ui-runtime": {

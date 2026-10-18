@@ -1,16 +1,13 @@
 /**
- * Where the config app opens, as data that crosses a realm.
- *
- * A screen is drawn by the addon whose pack holds it, so a target for another addon's settings
- * crosses to its owner over RPC and is read there. What travels is plain data: a realm running an
- * older copy understands as much of a target as it knows and falls back for the rest.
+ * Public config route inputs. Navigation validates their portable contract;
+ * the owning realm applies player permissions and rebuilds private models.
  */
 import type { DisplayText } from '@bedrock-core/i18n';
-import type { UiTarget } from '@bedrock-core/navigation';
+import type { ScreenParameters } from '@bedrock-core/ui-runtime';
 import type { ConfigScope } from './types';
 
 /** A place in one addon's settings. */
-export interface ConfigTarget extends UiTarget {
+export interface ConfigTarget {
   readonly kind: 'config';
   readonly addonId?: string;
   readonly scope?: ConfigScope;
@@ -26,7 +23,11 @@ export interface ConfigTarget extends UiTarget {
   readonly trail?: readonly DisplayText[];
 }
 
-/** Whether a target off the wire is this app's. */
-export function isConfigTarget(target: UiTarget): target is ConfigTarget {
-  return target.kind === 'config';
-}
+/** Serializable route inputs; the owning realm checks player permissions independently. */
+export const configParameters = {
+  scope: { type: 'string', enum: ['server', 'dimension', 'player'], optional: true },
+  scopeId: { type: 'string', optional: true },
+  path: { type: 'string', optional: true },
+  list: { type: 'string', optional: true },
+  trail: { type: 'array', items: { type: 'data' }, optional: true },
+} as const satisfies ScreenParameters;

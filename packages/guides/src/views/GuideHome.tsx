@@ -1,28 +1,16 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
-import { Button, Disclosure, Image, Panel, Scroll, Text, useState, type JSX } from '@bedrock-core/ui-runtime';
-import type { GuideTreeNode, PageId } from '../types';
+import { Card, Divider, theme } from '@bedrock-core/ore-styled';
+import { Disclosure, Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
+import { GuideHeader, GuideMenuRow } from '../navigation/controls';
+import type { GuideTreeNode } from '../types';
 
 const { spacing } = theme.tokens;
-const transparentTextures = theme.components.button.variants.transparent.textures;
 
 /** Row/section thumbnail edge (px) for authored `icon` textures. */
 const ICON_SIZE = 16;
 
 /** The header box of a client-folded section: a row of text with its padding. */
 const SECTION_HEADER_HEIGHT = 20;
-
-/**
- * How a section folds.
- *
- * - `'state'`: pressing the header re-renders with the section collapsed — a
- *   serialized screen's way, where every render is a present anyway.
- * - `'client'`: the header is a client-side toggle and the rows fold with no
- *   press reaching script — what a compiled screen needs, where a re-render
- *   cannot change the shape.
- * - `'none'`: every row renders expanded and the headers are plain.
- */
-export type GuideFolding = 'state' | 'client' | 'none';
 
 export interface GuideHomeViewProps {
   /**
@@ -36,42 +24,8 @@ export interface GuideHomeViewProps {
   /** The index's box. Unset, it takes the space its host gives it. */
   width?: number;
   height?: number;
-  /**
-   * The screen key a page row opens. Every page is a compiled screen of its own,
-   * so a row is a link and where it leads is data the build can read.
-   */
-  linkTo: (pageId: PageId) => string;
-  /**
-   * Show a back control that returns wherever the player came from — the addon
-   * list, a menu, whatever opened the guide. Omit on the index an addon opens
-   * itself, which has nothing behind it.
-   */
-  back?: boolean;
-  /** The screen the back control opens in this index's place, in place of `back`: the guide's home page. */
-  backTo?: string;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
-  /** How sections fold; see {@link GuideFolding}. Defaults to `'state'`. */
-  folding?: GuideFolding;
-}
-
-/** Category ids marked `collapsed: true` in the manifest start collapsed. */
-function initialCollapsed(tree: GuideTreeNode[]): string[] {
-  const ids: string[] = [];
-
-  const walk = (nodes: GuideTreeNode[]): void => {
-    for (const node of nodes) {
-      if (node.t === 'cat') {
-        if (node.collapsed === true) { ids.push(node.id); }
-
-        walk(node.children);
-      }
-    }
-  };
-
-  walk(tree);
-
-  return ids;
 }
 
 /** A leading thumbnail for a row/section, or nothing when the node has no `icon`. */
@@ -87,21 +41,14 @@ type Page = Extract<GuideTreeNode, { t: 'page' }>;
  * divider rule; pages render as icon menu rows (thumbnail + title + one-line subtitle + chevron).
  * `icon`/`descK` are optional per node, so an unannotated guide degrades to a clean text list.
  */
-export function GuideHomeView({ tree, title, width, height, linkTo, back, backTo, onClose, folding = 'state' }: GuideHomeViewProps): JSX.Element {
-  const [collapsed, setCollapsed] = useState<string[]>(() => folding === 'state' ? initialCollapsed(tree) : []);
-
-  const toggle = (id: string): void => {
-    setCollapsed(collapsed.includes(id) ? collapsed.filter(c => c !== id) : [...collapsed, id]);
-  };
-
+export function GuideHomeView({ tree, title, width, height, onClose }: GuideHomeViewProps): JSX.Element {
   const pageRow = (node: Page, depth: number): JSX.Element => (
-    <MenuRow
+    <GuideMenuRow
+      pageId={node.id}
       icon={node.icon}
       title={node.titleK}
       subtitle={node.descK}
       depth={depth}
-      to={linkTo(node.id)}
-      replace={true}
     />
   );
 
@@ -112,7 +59,7 @@ export function GuideHomeView({ tree, title, width, height, linkTo, back, backTo
     ...glyph ? [<Text>{isCollapsed ? '§7+' : '§7-'}</Text>] : [],
   ];
 
-  /** A header that is not a control of its own: for `'none'`, and for the faces of a client fold. */
+  /** The two faces of a native category disclosure. */
   const plainHeader = (node: Category, depth: number, isCollapsed: boolean, glyph: boolean, marginTop: number): JSX.Element => (
     <Panel
       flexDirection={'row'}
@@ -131,7 +78,6 @@ export function GuideHomeView({ tree, title, width, height, linkTo, back, backTo
 
   const rule = (): JSX.Element => <Divider variant={'dark'} marginLeft={spacing.sm} marginRight={spacing.sm} marginBottom={spacing.xs} />;
 
-  // ── 'client': each category is a Disclosure; the fold never reaches script ──
   const clientRows = (nodes: GuideTreeNode[], depth: number): JSX.Element[] =>
     nodes.flatMap((node, index): JSX.Element[] => {
       if (node.t === 'page') {
@@ -152,75 +98,13 @@ export function GuideHomeView({ tree, title, width, height, linkTo, back, backTo
       ];
     });
 
-  if (folding === 'client') {
-    return (
-      <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-        <Header title={title} back={back} backTo={backTo} backReplace={backTo !== undefined} onClose={onClose} />
-        <Panel flexGrow={1} padding={spacing.sm}>
-          <Scroll>
-            <Panel flexDirection={'column'} gap={spacing.xs}>
-              {clientRows(tree, 0)}
-            </Panel>
-          </Scroll>
-        </Panel>
-      </Card>
-    );
-  }
-
-  // ── 'state' and 'none': one flat list of rows ──
-  const rows: JSX.Element[] = [];
-
-  const sectionHeader = (node: Category, depth: number, isCollapsed: boolean): JSX.Element => {
-    if (folding === 'none') {
-      return plainHeader(node, depth, isCollapsed, false, rows.length > 0 ? spacing.sm : 0);
-    }
-
-    return (
-      <Button
-        background={transparentTextures.default}
-        backgroundHover={transparentTextures.hover}
-        backgroundPressed={transparentTextures.pressed}
-        paddingTop={spacing.sm}
-        paddingBottom={spacing.xs}
-        paddingLeft={spacing.sm}
-        paddingRight={spacing.sm}
-        marginTop={rows.length > 0 ? spacing.sm : 0}
-        width={'100%'}
-        justifyContent={'flex-start'}
-        onPress={(): void => toggle(node.id)}
-      >
-        <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm} width={'100%'} paddingLeft={depth * spacing.md}>
-          {headerContent(node, isCollapsed, true)}
-        </Panel>
-      </Button>
-    );
-  };
-
-  const walk = (nodes: GuideTreeNode[], depth: number): void => {
-    for (const node of nodes) {
-      if (node.t === 'page') {
-        rows.push(pageRow(node, depth));
-        continue;
-      }
-
-      const isCollapsed = collapsed.includes(node.id);
-
-      rows.push(sectionHeader(node, depth, isCollapsed));
-      rows.push(rule());
-
-      if (!isCollapsed) { walk(node.children, depth + 1); }
-    }
-  };
-
-  walk(tree, 0);
-
   return (
     <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-      <Header title={title} back={back} backTo={backTo} backReplace={backTo !== undefined} onClose={onClose} />
+      <GuideHeader title={title} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.xs}>
-            {rows}
+            {clientRows(tree, 0)}
           </Panel>
         </Scroll>
       </Panel>

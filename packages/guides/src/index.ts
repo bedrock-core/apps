@@ -2,8 +2,9 @@
 // `./server` alone, for a bundle that wants the declaration without the renderer.
 export * from './server';
 
-// The screen factories the modules the guides filter generates import by name.
-export { guideHomeScreen, guideIndexScreen, guidePageScreen } from './compiled';
+// Generated guide entries share the navigation package stack.
+export { guideNavigationScreen } from './navigation/screen';
+export type { GuideNavigationOptions } from './navigation/screen';
 
 export { openGuide } from './compiled';
 

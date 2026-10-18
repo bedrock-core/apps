@@ -3,7 +3,8 @@ import type { DisplayText } from '@bedrock-core/i18n';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, render } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
-import { isAddonPageReference, pages, uiOf, type AddonPageReference } from '@bedrock-core/navigation';
+import { navigation } from '@bedrock-core/navigation/core';
+import { isAddonPageReference, pages, type AddonPageReference } from '../integration/pages';
 import { FRAMEWORK_ADDON_ID, FRAMEWORK_APPS, FRAMEWORK_EMBED, FRAMEWORK_VERSION, frameworkPageReference } from '../framework';
 import { i18n } from '../i18n';
 import { PAGE_SLOTS } from '../frame';
@@ -17,18 +18,12 @@ import { AddonList, addonListElement, type AddonListMain, type AddonListModel, t
  * the values its reserved entries are shown with and where each press leads, with the marker
  * written first so the page is drawn from the pack it was baked in.
  *
- * The catalog is where you BROWSE, never what makes an addon visible. A row exists because that
- * addon called `core.register()`, and its page is drawn from the reference it published — both
- * of which sit below this app, so an addon that installed no catalog of its own is still listed
- * and still has a page here. What its entries do depends on the apps it announced: an entry for
- * an app it does not serve is drawn greyed rather than leading the player at a request that
- * would be refused.
+ * Rows come from Core registration. A published page supplies the main area;
+ * otherwise the browser shows its fallback. Page buttons are enabled when the
+ * selected owner has a matching entry in the navigation registry.
  *
- * A selection for another addon is a handoff rather than a re-render, when that addon runs a
- * catalog of its own: it shows this same list out of its own pack with itself selected, and
- * everything reached from there is local to it. Where a selection is drawn is decided by whoever
- * wired {@link AddonListOpeners.select}; a press on the page is answered here, since the page's
- * own script is never run.
+ * A row can open the owner's catalog through a realm handoff or be selected in
+ * this browser. Page presses are resolved here from their published targets.
  */
 
 /** Where the catalog sends a press it does not answer itself. */
@@ -71,8 +66,8 @@ const rowsFor = (core: Runtime): AddonListRow[] => {
 
 /**
  * The slot values for one addon's page: the marker, then each entry as the page published it —
- * except a press that names an app, whose enabled state is what that addon announced rather than
- * anything the page can know.
+ * except a press that names an app, whose enabled state comes from that owner's
+ * navigation registry.
  */
 const pageSlots = (namespace: string, reference: AddonPageReference, apps: readonly string[], name?: string): DisplayText[] => {
   const values = reference.values.map((value, index) => {
@@ -85,7 +80,7 @@ const pageSlots = (namespace: string, reference: AddonPageReference, apps: reado
 };
 
 export function presentAddonList(core: Runtime, player: Player, openers: AddonListOpeners, selectedId?: string): void {
-  const realm = uiOf(core);
+  const { screens } = navigation(core);
   const rows = rowsFor(core);
   const found = rows.findIndex(row => row.id === selectedId);
   const selected = found < 0 ? 0 : found;
@@ -98,14 +93,18 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
     reference = frameworkPageReference();
     main = { kind: 'page', slots: pageSlots(core.id, reference, FRAMEWORK_APPS, FRAMEWORK_EMBED) };
   } else if (current !== undefined) {
-    // The page of the addon selected, from what it published — every addon publishes one, so
-    // this is the row's page whether or not that addon browses anything itself.
+    // A page is optional; rows without one retain the fallback area.
     const published = pages(core).of(current.id);
 
     if (isAddonPageReference(published)) {
       reference = published;
-      // An addon's page is compiled under its id, which is its pack's namespace.
-      main = { kind: 'page', slots: pageSlots(current.id, published, realm.offered(current.id)) };
+      // Button availability follows registered entry points; embedding uses the published UI key.
+      const apps = published.targets.filter((target): target is string => target !== null && screens.find(current.id, target) !== undefined);
+
+      const page = screens.find(current.id, 'addon_page');
+      const namespace = page === undefined ? current.id : page.key.slice(0, page.key.lastIndexOf(':'));
+
+      main = { kind: 'page', slots: pageSlots(namespace, published, apps) };
     }
   }
 

@@ -34,7 +34,7 @@ export const i18n = createI18n(createResourceBundle('core', { en_US, es_ES }), {
  * which is what a catalog showing every addon's display fields needs.
  */
 export function useTranslation(): BoundI18n<CatalogResources> {
-  return overlay(useBoundTranslation(i18n), useContext(TranslationContext), i18n.bundle);
+  return overlay(useBoundTranslation<CatalogResources>(i18n), useContext(TranslationContext), i18n.bundle);
 }
 
 /**

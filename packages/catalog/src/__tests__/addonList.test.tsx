@@ -3,9 +3,8 @@
  * Which realm answers a press on a row of the catalog.
  *
  * The roster is every registered addon, so most rows are about an addon whose page this realm
- * cannot answer a press on. Those rows hand the player to that addon's realm instead of drawing
- * its page here, and the handoff is one `core:catalog.show` request carrying the way back — which
- * is what these pin, since nothing about it is visible in the model the catalog renders.
+ * cannot answer a press on. Those rows use the owner's registered navigation entry,
+ * carrying the player's destination and history across the realm boundary.
  */
 import type { Player } from '@minecraft/server';
 import type { PressEvent } from '@bedrock-core/ui-runtime';
@@ -13,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AddonListModel } from '../compiled/list.screen';
 
 const render = vi.fn();
-const presentReference = vi.fn();
+const showCompiledTitle = vi.fn();
 
 vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@bedrock-core/ui-runtime')>();
@@ -24,11 +23,13 @@ vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => {
     // one records the model instead of presenting a form.
     compiledTitleOf: (): string => 'test:screen',
     render,
-    presentReference,
+    showCompiledTitle,
   };
 });
 
 const { registerCatalog } = await import('../declaration');
+const { registerStaticScreens } = await import('@bedrock-core/ui-runtime');
+const { clearPlayerNavigation } = await import('../../../../../ui/packages/navigation/src/runtime/navigate');
 
 /** One show request this realm sent. */
 interface Sent {
@@ -45,7 +46,10 @@ const addon = (id: string, self: boolean): Record<string, unknown> =>
 /** A realm running as `me`, with `other` registered beside it and a page published for it. */
 const realm = (answer: () => Promise<unknown>, earlierAddon = false): { core: unknown; sent: Sent[] } => {
   const sent: Sent[] = [];
-  const values = new Map<string, unknown>([['other|core-addon/page', PAGE]]);
+  const values = new Map<string, unknown>([
+    ['other|core-addon/page', PAGE],
+    ['other|core-navigation/screens', { v: 1, references: {}, screens: [{ key: 'other:catalog', kind: 'custom', parameters: { addonId: { type: 'string', optional: true } } }] }],
+  ]);
   const state = {
     get: (namespace: string, key: string): unknown => values.get(`${namespace}|${key}`),
     set: (namespace: string, key: string, value: unknown): void => { values.set(`${namespace}|${key}`, value); },
@@ -67,7 +71,7 @@ const realm = (answer: () => Promise<unknown>, earlierAddon = false): { core: un
     slot: (key: string): unknown => slots.get(key),
     fill: (key: string, value: unknown): void => { slots.set(key, value); },
     rpc: {
-      serve: (): void => {},
+      onRequest: (): (() => void) => (): void => {},
       request: (owner: string, method: string, params: unknown): Promise<unknown> => {
         sent.push({ owner, method, params });
 
@@ -115,8 +119,10 @@ const pressRow = async (core: unknown, id: string): Promise<void> => {
 };
 
 beforeEach(() => {
+  clearPlayerNavigation(player.id);
+  registerStaticScreens([{ key: 'me:framework_guide', title: 'framework', values: ['t'], actions: [{ back: true }] }]);
   render.mockClear();
-  presentReference.mockReset();
+  showCompiledTitle.mockReset().mockResolvedValue(undefined);
 });
 
 describe('a press on a row of the catalog', () => {
@@ -156,12 +162,13 @@ describe('a press on a row of the catalog', () => {
 
   it('opens the local framework guide without a Guides app and returns to its selected row', async () => {
     const { core, sent } = realm(() => Promise.resolve(true));
-    presentReference.mockResolvedValue('back');
+    showCompiledTitle.mockResolvedValue(0);
 
     await pressRow(core, 'bedrock-core');
     await shownModel().onSlot?.(2, press);
 
-    expect(presentReference).toHaveBeenCalledWith(expect.any(Function), 'me:framework_guide', player);
+    await vi.waitFor(() => { expect(render).toHaveBeenCalledTimes(3); });
+    expect(showCompiledTitle).toHaveBeenCalledWith(player, 'framework', ['t']);
     expect(sent).toEqual([]);
     expect(shownModel().rows[shownModel().selected]?.id).toBe('bedrock-core');
     expect(render).toHaveBeenCalledTimes(3);
@@ -169,7 +176,7 @@ describe('a press on a row of the catalog', () => {
 
   it('leaves the catalog closed when the framework guide is dismissed', async () => {
     const { core } = realm(() => Promise.resolve(true));
-    presentReference.mockResolvedValue('closed');
+    showCompiledTitle.mockResolvedValue(undefined);
 
     await pressRow(core, 'bedrock-core');
     await shownModel().onSlot?.(2, press);
@@ -184,12 +191,13 @@ describe('a press on a row of the catalog', () => {
 
     expect(sent).toEqual([{
       owner: 'other',
-      method: 'core:catalog.show',
+      method: 'core:navigation.open',
       params: {
         playerId: 'p1',
-        target: { kind: 'catalog', addonId: 'other' },
-        // The way back is a PATH: this realm appended to whatever the player already crossed.
-        returnTo: [{ realm: 'me', target: { kind: 'catalog', addonId: 'me' } }],
+        snapshot: {
+          current: { key: 'other:catalog', params: { addonId: 'other' } },
+          history: [{ key: 'me:catalog', params: { addonId: 'me' } }],
+        },
       },
     }]);
     // Nothing more was drawn here: that realm has the player, and its page is its own to show.
@@ -198,7 +206,7 @@ describe('a press on a row of the catalog', () => {
 
   it('draws the row here when that realm does not answer', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { core, sent } = realm(() => Promise.reject(new Error("unknown method 'core:catalog.show'")));
+    const { core, sent } = realm(() => Promise.reject(new Error("unknown method 'core:navigation.open'")));
 
     await pressRow(core, 'other');
 

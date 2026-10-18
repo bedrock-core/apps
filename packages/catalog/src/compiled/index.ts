@@ -1,6 +1,6 @@
 // The screens live in `.screen.tsx` files: that suffix is what the build's
 // conditional sugar rewrites, and their variants are shown by conditionals.
-import { registerDeclared } from '@bedrock-core/navigation';
+import { registerCatalogPage } from '../integration';
 import type { AddonManifest } from '@bedrock-core/server-runtime';
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { AddonList } from './list.screen';
@@ -42,7 +42,7 @@ export function shape(_declared: unknown, manifest: Partial<AddonManifest>): Rec
     ...thumbnail === undefined ? {} : { thumbnail },
   });
 
-  registerDeclared({ page });
+  registerCatalogPage(page);
 
   return { addon_page: page };
 }

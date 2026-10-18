@@ -1,14 +1,13 @@
 /**
  * Finding an addon's guide, from any realm.
  *
- * A guide is compiled screens whose every press is a link, so the realm showing one needs no
- * script from the addon that wrote it — only the references that addon published. What it does
- * need is the KEY, and the addon half of a key is the namespace its screens were compiled under,
- * which an addon may set apart from the namespace it syncs under. So the key is read off what the
- * addon published rather than assumed from its id, which is what `uiOf(core).screenKey` does.
+ * Entries can be local compiled components or published static references. Their keys use the
+ * screens' compiled namespace, which can differ from the owner's runtime id, so discovery reads
+ * the owning realm's registered screen metadata rather than deriving keys from that id.
  */
-import { uiOf } from '@bedrock-core/navigation';
+import { navigation } from '@bedrock-core/navigation/core';
 import { isOperator, type Runtime } from '@bedrock-core/server-runtime';
+import { screenForKey } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
 import { guideScreenNames, type GuideScreenNames } from '../names';
 
@@ -29,8 +28,8 @@ export interface GuideEntryOptions {
  * it, which it does only for a guide with something gated; everyone else, and an operator of a
  * guide with nothing gated, enters the set every player reads.
  *
- * The back variant is used only if the guide was built with one — an addon that compiled its
- * guide before the variant existed still opens, without the control.
+ * The back variant is used only when registered. An entry with only a home variant opens
+ * without the control.
  */
 export function guideEntry(
   keyOf: (name: string) => string | undefined,
@@ -56,11 +55,11 @@ export function guideEntry(
  * every player reads, which is enough to tell whether the addon has a guide at all.
  */
 export function guideKeyFor(core: Runtime, addonId: string, options: { back?: boolean; player?: Player } = {}): string | undefined {
-  const realm = uiOf(core);
+  const { screens } = navigation(core);
 
   return guideEntry(
-    name => realm.screenKey(addonId, name),
-    key => realm.reference(key) !== undefined,
+    name => screens.find(addonId, name)?.key,
+    key => screenForKey(key) !== undefined || screens.reference(key) !== undefined,
     { back: options.back === true, operator: options.player !== undefined && isOperator(options.player) },
   );
 }

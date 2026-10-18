@@ -1,11 +1,9 @@
 /**
- * What a player is allowed to reach in the config UI.
+ * Config scope authorization in the owning realm.
  *
- * This is the **caller-side** half of config authorization. It decides what a player is shown and
- * where a command drops them; the owning addon independently refuses requests it should not serve
- * (`authorization.ts` in `@bedrock-core/server-runtime`). Neither half is redundant: an old realm
- * falling back to its own frozen copy of this UI would skip the checks below, and the runtime
- * check is what stops it. Keeping the rule in both places is deliberate.
+ * Every config opener clamps public route parameters before rendering. A
+ * non-operator can reach only their own player scope, including when another
+ * realm requests a server scope or a different player's settings.
  */
 import { isOperator } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';

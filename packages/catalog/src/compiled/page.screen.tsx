@@ -4,7 +4,7 @@ import {
   Embed, Image, Panel, Screen, Scroll, Text,
   type FunctionComponent, type JSX,
 } from '@bedrock-core/ui-runtime';
-import { pageTargeted } from '@bedrock-core/navigation';
+import { pageTargeted } from '../integration/pages';
 import { i18n } from '../i18n';
 import { MAIN } from '../frame';
 

@@ -1,5 +1,5 @@
 import type { Runtime } from '@bedrock-core/server-runtime';
-import { registerStaticScreens } from '@bedrock-core/ui-runtime';
+import { registerCompiledScreen, registerStaticScreens } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { openGuide } from '../compiled';
@@ -18,7 +18,7 @@ vi.mock('@bedrock-core/server-runtime', async (importOriginal) => ({
   isOperator: (player: { op?: boolean }): boolean => player.op === true,
 }));
 
-vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => ({
+vi.mock('@bedrock-core/navigation', async (importOriginal) => ({
   ...await importOriginal<Record<string, unknown>>(),
   navigate: (key: string): boolean => {
     navigated.push(key);
@@ -31,7 +31,7 @@ vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => ({
 const playerOf = (op: boolean): Player => ({ id: op ? 'op' : 'player', op }) as unknown as Player;
 
 /** A static screen with nothing on it: all the entry asks is whether a key is there. */
-const screen = (key: string): { key: string; title: string; values: []; targets: [] } => ({ key, title: key, values: [], targets: [] });
+const screen = (key: string): { key: string; title: string; values: []; actions: [] } => ({ key, title: key, values: [], actions: [] });
 
 describe('guideScreenNames', () => {
   it('names the set every player reads guide_ and the operators\' set guideop_', () => {
@@ -75,8 +75,10 @@ describe('guideEntry', () => {
 describe('guideKeyFor', () => {
   const published = new Set(['shop:guide_home', 'shop:guide_home_back', 'shop:guideop_home', 'shop:guideop_home_back']);
   const realm = {
-    screenKey: (addonId: string, name: string): string => `${addonId}:${name}`,
-    reference: (key: string): object | undefined => (published.has(key) ? screen(key) : undefined),
+    screens: {
+      find: (addonId: string, name: string): { key: string } => ({ key: `${addonId}:${name}` }),
+      reference: (key: string): object | undefined => (published.has(key) ? screen(key) : undefined),
+    },
   };
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the realm's UI is all a key lookup reads
   const core = { slot: (): typeof realm => realm } as unknown as Runtime;
@@ -89,6 +91,14 @@ describe('guideKeyFor', () => {
   it('answers whether a guide exists at all without a player', () => {
     expect(guideKeyFor(core, 'shop')).toBe('shop:guide_home');
     expect(guideKeyFor(core, 'bank')).toBeUndefined();
+  });
+
+  it('discovers component-backed entries without a static reference', () => {
+    registerCompiledScreen(() => ({ type: 'screen', props: {} }), { key: 'component:guide_home', title: 'component home' });
+    registerCompiledScreen(() => ({ type: 'screen', props: {} }), { key: 'component:guideop_home_back', title: 'component op home back' });
+
+    expect(guideKeyFor(core, 'component')).toBe('component:guide_home');
+    expect(guideKeyFor(core, 'component', { back: true, player: playerOf(true) })).toBe('component:guideop_home_back');
   });
 });
 
@@ -123,5 +133,15 @@ describe('openGuide', () => {
     openGuide('open', playerOf(true), { back: true });
 
     expect(navigated).toEqual(['gated:guideop_home_back', 'gated:guide_home_back', 'open:guide_home']);
+  });
+
+  it('finds local resident entries before choosing the audience and back variant', () => {
+    registerCompiledScreen(() => ({ type: 'screen', props: {} }), { key: 'resident-entry:guide_home_back', title: 'resident home back' });
+    registerCompiledScreen(() => ({ type: 'screen', props: {} }), { key: 'resident-entry:guideop_home_back', title: 'resident op home back' });
+
+    openGuide('resident-entry', playerOf(false), { back: true });
+    openGuide('resident-entry', playerOf(true), { back: true });
+
+    expect(navigated).toEqual(['resident-entry:guide_home_back', 'resident-entry:guideop_home_back']);
   });
 });

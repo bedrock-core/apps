@@ -35,7 +35,7 @@ export const i18n = createI18n(createResourceBundle('core', { en_US }), { asDefa
  * becomes the world's, so a key from ANY addon's bundle resolves here.
  */
 export function useTranslation(): BoundI18n<CoreResources> {
-  return overlay(useBoundTranslation(i18n), useContext(TranslationContext), i18n.bundle);
+  return overlay(useBoundTranslation<CoreResources>(i18n), useContext(TranslationContext), i18n.bundle);
 }
 
 /**

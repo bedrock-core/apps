@@ -1,7 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Card, Divider, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Image, Panel, Text, Trans, type JSX } from '@bedrock-core/ui-runtime';
 import { defaultAdmonitionTitleKey } from '../admonitions';
+import { GuideButton, guidePageRoute } from '../navigation/controls';
 import type { GuideBlock, GuideComponents, GuideInline, GuideListItem, PageId } from '../types';
 
 const { spacing } = theme.tokens;
@@ -149,7 +150,7 @@ function renderInline(inline: GuideInline, ctx: RenderCtx): JSX.Element {
 
     return to === undefined
       ? <Text />
-      : <OreButton variant={'transparent'} paddingTop={0} paddingBottom={0} paddingLeft={0} paddingRight={0} to={to} replace={true} />;
+      : <GuideButton edge={guidePageRoute(pageId)} variant={'transparent'} paddingTop={0} paddingBottom={0} paddingLeft={0} paddingRight={0} />;
   });
 
   return <Trans shadow={true} width={'100%'} translations={inline.text} components={components} />;

@@ -19,12 +19,13 @@
  *
  * ## Settings are drawn by the addon that owns them
  *
- * The screens read and write this addon's own scopes, so a target naming another addon is that
- * addon's realm to draw: it is handed over with `uiOf(core).ask`, and leaving goes back to the realm
- * that asked, which is the way back the request carries. Nothing about a scope is served to another
- * realm; an addon that wants its settings read or written from elsewhere serves that itself.
+ * The screens read and write the owning realm's scopes. A registered config entry
+ * accepts serializable route parameters, rebuilds its private models and applies
+ * player permissions before rendering. Navigation carries the destination history
+ * when another realm opens that entry.
  */
-import { uiOf } from '@bedrock-core/navigation';
+import { back, closeUi, navigateAsync } from '@bedrock-core/navigation';
+import { navigation } from '@bedrock-core/navigation/core';
 import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { registerConfig as registerSubsystem, configOf, type Config, type ConfigDefinition } from './server';
@@ -37,7 +38,7 @@ import {
   trailOf, type SectionListOpeners, type SectionTarget,
 } from './compiled/configHost';
 import { i18n } from './i18n';
-import { isConfigTarget, type ConfigTarget } from './target';
+import { configParameters, type ConfigTarget } from './target';
 
 /** The name this app announces itself under, and the kind of target it serves. */
 export const CONFIG_APP = 'config';
@@ -103,13 +104,14 @@ export function registerConfig<I extends ConfigDefinition>(definition: I, option
     compiled: CONFIG_COMPILED,
     install(core: Runtime): ConfigApp<I> {
       const scopes = base.install(core);
-      const realm = uiOf(core);
+      const realm = navigation(core);
 
       const open = (player: Player, target: Partial<Omit<ConfigTarget, 'kind'>> = {}): Promise<void> =>
-        draw(core, player, { kind: CONFIG_APP, addonId: core.id, ...target });
+        draw(core, player, { kind: CONFIG_APP, addonId: core.id, ...target }, false);
 
-      realm.serve(CONFIG_APP, (player, target) => (isConfigTarget(target) ? draw(core, player, target) : undefined));
-      realm.offers(CONFIG_APP);
+      realm.register({ key: `${core.id}:${CONFIG_APP}`, kind: 'custom', parameters: configParameters }, (player, { params }) =>
+        drawHere(core, player, { ...params, kind: CONFIG_APP, addonId: core.id }),
+      );
 
       if (options.commands !== false) {
         registerAddonCommands(core, (player, args) => { void draw(core, player, { kind: CONFIG_APP, ...args }); });
@@ -121,27 +123,26 @@ export function registerConfig<I extends ConfigDefinition>(definition: I, option
   };
 }
 
-/**
- * Draw one config target.
- *
- * Another addon's settings are handed to its realm before anything is shown here, so the return
- * address that travels with the request is whatever the player was on. The clamp is here rather
- * than at the entry points because a target also arrives from the wire, where no caller in this
- * realm has applied it: a non-operator cannot reach past their own player scope even if the
- * request says otherwise.
- */
-function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void> {
-  const realm = uiOf(core);
+/** Resolves the selected owner's config entry before rebuilding its private models. */
+function draw(core: Runtime, player: Player, target: ConfigTarget, replace = true): Promise<void> {
+  const realm = navigation(core);
   const addonId = target.addonId ?? core.id;
+  const entry = realm.screens.find(addonId, CONFIG_APP);
 
-  if (addonId !== core.id) {
-    return realm.ask(addonId, player, { ...target, addonId }, realm.returnTo(player)).then(() => undefined);
+  if (entry === undefined) {
+    console.warn(`[config] '${addonId}' has no registered config screen.`);
+
+    return Promise.resolve();
   }
 
-  const clamped = clampTarget({ ...target, addonId }, player);
+  const params = Object.fromEntries(Object.entries(target).filter(([name, value]) => name !== 'kind' && name !== 'addonId' && value !== undefined));
 
-  // What this realm is showing, for a return address another realm can use.
-  realm.showing(player, clamped);
+  return navigateAsync(entry.key, player, { params, replace }).then(() => undefined);
+}
+
+function drawHere(core: Runtime, player: Player, target: ConfigTarget): boolean {
+  const addonId = core.id;
+  const clamped = clampTarget({ ...target, addonId }, player);
 
   // The compiled scope picker when this build carries it. Its rows come back here with the scope
   // chosen, so the roster, the sections and the editor are reached the way a command reaches them.
@@ -151,7 +152,7 @@ function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void
       back: (addonId): Promise<void> => leave(core, player, addonId),
     });
 
-    return Promise.resolve();
+    return true;
   }
 
   // The compiled roster and section screens when this build carries them: a roster scope with no
@@ -166,7 +167,7 @@ function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void
         back: (id): Promise<void> => draw(core, player, { kind: CONFIG_APP, addonId: id }),
       });
 
-      return Promise.resolve();
+      return true;
     }
 
     const level: SectionTarget = {
@@ -180,7 +181,7 @@ function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void
     if (isSectionLevel(core, level)) {
       openLevel(core, player, level, levelOpeners(core, player));
 
-      return Promise.resolve();
+      return true;
     }
   }
 
@@ -190,18 +191,18 @@ function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void
   // for one. It needs the values, which is why it is reached from here rather than with the
   // section screens above.
   if (values !== undefined && presentCompiledList(core, player, clamped, values)) {
-    return Promise.resolve();
+    return true;
   }
 
   // The screen this addon's build shaped for the section, when it carries one: everything about
   // the section is baked into it, so only the values travel.
   if (values !== undefined && presentShaped(core, player, clamped, values)) {
-    return Promise.resolve();
+    return true;
   }
 
   missing(player, clamped);
 
-  return Promise.resolve();
+  return false;
 }
 
 /**
@@ -211,9 +212,15 @@ function draw(core: Runtime, player: Player, target: ConfigTarget): Promise<void
  * settings are the whole of the UI here and leaving them leaves it.
  */
 function leave(core: Runtime, player: Player, addonId: string): Promise<void> {
-  const realm = uiOf(core);
+  if (back(player)) { return Promise.resolve(); }
 
-  return realm.serves('catalog') ? realm.show(player, { kind: 'catalog', addonId }) : Promise.resolve();
+  const catalog = navigation(core).screens.find(core.id, 'catalog');
+
+  if (catalog !== undefined) { return navigateAsync(catalog.key, player, { params: { addonId }, replace: true }).then(() => undefined); }
+
+  closeUi(player);
+
+  return Promise.resolve();
 }
 
 /** Where a level of the tree sends its presses: every one comes back through {@link draw}. */
@@ -253,7 +260,7 @@ function presentShaped(core: Runtime, player: Player, target: ConfigTarget, valu
 
 /**
  * Shows the compiled list editor when this build carries it and the target names a list. False
- * when the serialized app has to draw it instead.
+ * when this build has no compiled menu host.
  */
 function presentCompiledList(core: Runtime, player: Player, target: ConfigTarget, values: Record<string, unknown>): boolean {
   if (target.addonId === undefined || target.scope === undefined || target.list === undefined) { return false; }

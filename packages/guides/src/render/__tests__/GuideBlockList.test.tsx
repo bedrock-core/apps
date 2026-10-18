@@ -1,5 +1,6 @@
+import { GuideButton } from '../../navigation/controls';
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Button as OreButton } from '@bedrock-core/ore-styled';
+import { Card, Divider } from '@bedrock-core/ore-styled';
 import { Image, Panel, Text, Trans, type JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import type { GuideBlock } from '../../types';
@@ -65,8 +66,8 @@ describe('GuideBlockList block mapping', () => {
 
     const [press] = p.props.components as LazyElement[];
 
-    expect(press?.type).toBe(OreButton);
-    expect([press?.props.variant, press?.props.to, press?.props.replace, press?.props.paddingLeft, press?.props.paddingTop]).toEqual(['transparent', 'guide_other_page', true, 0, 0]);
+    expect(press?.type).toBe(GuideButton);
+    expect([press?.props.variant, press?.props.edge, press?.props.paddingLeft, press?.props.paddingTop]).toEqual(['transparent', 'page:other/page', 0, 0]);
   });
 
   it('draws a link the reader cannot open as text', () => {

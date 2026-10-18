@@ -1,5 +1,5 @@
 /**
- * `@bedrock-core/guides/server` — the guide app: the declaration, its command, its show method.
+ * `@bedrock-core/guides/server` — the guide app: the declaration, its command and its navigation entry point.
  *
  * Everything here runs on a bare `Runtime`. The package root exports all of it beside the screen
  * factories the guides filter's generated modules call; this subpath is for a bundle that wants
@@ -10,7 +10,6 @@
  * - `declaration.ts` — `registerGuides()`, the field `register()` takes. Start there.
  * - `slot.ts` — `guidesOf(core)`, how anything else reaches what the declaration installed.
  * - `keys.ts` — finding an addon's guide entry by key, from any realm, in the set its reader may walk.
- * - `target.ts` — where a guide opens, as data that crosses a realm.
  */
 export { registerGuides } from './declaration';
 export type { GuidesDeclaration, GuidesOptions } from './declaration';

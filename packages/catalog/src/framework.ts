@@ -1,4 +1,4 @@
-import { addonPageReference } from '@bedrock-core/navigation';
+import { addonPageReference } from './integration/pages';
 import { FrameworkPage } from './compiled/framework.screen';
 
 export { UI_VERSION as FRAMEWORK_VERSION } from '@bedrock-core/ui-runtime';

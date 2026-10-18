@@ -10,7 +10,7 @@
  *
  * The addon declares; the build does the rest. The ui-compiler filter reads that register call
  * and bakes this package's screens into the addon's pack, and the install registers the command,
- * serves `core:catalog.show`, and announces that this addon browses.
+ * registers a catalog navigation entry point.
  *
  * Browsing is all it is. An addon appears in every catalog in the world because it called
  * `core.register()`, and its page is drawn from the reference it published — both below this app,

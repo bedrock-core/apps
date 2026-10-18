@@ -1,4 +1,4 @@
-import { guideHomeScreen, type GuideManifest } from '@bedrock-core/guides';
+import { guideNavigationScreen, type GuideManifest } from '@bedrock-core/guides';
 import { i18n } from '../i18n';
 
 const { key } = i18n;
@@ -33,4 +33,4 @@ const manifest: GuideManifest = {
 };
 
 /** One page with a back control; no index is needed for a single-page guide. */
-export const FrameworkGuide = guideHomeScreen(manifest, { title, back: true });
+export const FrameworkGuide = guideNavigationScreen(manifest, { title, back: true });
