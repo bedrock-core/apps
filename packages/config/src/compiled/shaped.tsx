@@ -37,6 +37,8 @@ export interface LeafModel {
   trail: DisplayText;
   /** The current value per key, as the section's own paths name them. */
   values: Record<string, unknown>;
+  /** Messages displayed beside fields that rejected the submitted form. */
+  errors?: Readonly<Record<string, DisplayText>>;
   /** Runs with the submitted values before the screen closes. */
   onSubmit?: (values: SubmitEvent['values']) => void;
   /**
@@ -247,10 +249,11 @@ export const sheet = (model: LeafModel | undefined, rows: readonly [string, Entr
                 width beside it only when the content actually scrolls. */}
             <Panel flexDirection={'column'} width={'100%'}>
               {rows.map(([key, entry]): JSX.Element => (
-                <Panel flexDirection={'column'} gap={ROW_PADDING_Y} paddingTop={ROW_PADDING_Y}>
+                <Panel flexDirection={'column'} gap={ROW_PADDING_Y} paddingTop={ROW_PADDING_Y} stack={true}>
                   <Panel width={'100%'} paddingLeft={ROW_PADDING_X} paddingRight={ROW_PADDING_X}>
                     {rowFor(key, entry, model)}
                   </Panel>
+                  <Text testId={`error:${key}`} visible={model?.errors?.[key] !== undefined} liveVisible={true} width={'100%'} height={18} paddingLeft={ROW_PADDING_X} paddingRight={ROW_PADDING_X} color={[1, 0.35, 0.35]} wordBreak={'break-word'} maxLength={128}>{model?.errors?.[key] ?? ''}</Text>
                   <Divider />
                 </Panel>
               ))}

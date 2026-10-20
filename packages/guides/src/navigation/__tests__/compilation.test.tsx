@@ -36,6 +36,18 @@ function planOf(result: ReturnType<typeof compile>): NativePlan {
 afterEach(() => setBuildLocales(undefined));
 
 describe('Guide static stack integration', { timeout: 30000 }, () => {
+  it('renders the index as text links while retaining local page destinations', () => {
+    const result = compile();
+    const serialized = JSON.stringify([result.document, result.faces]);
+
+    expect(serialized).not.toContain('/dropdown/option/');
+    expect(serialized).toContain('/button/transparent/background');
+    expect(serialized).toContain('0.3333333333333333,0.6666666666666666,1');
+    expect(result.testMetadata?.controls.some(control => JSON.stringify(control.name ?? null).includes('Guide index: usage')
+      && control.interaction === 'local-toggle')).toBe(true);
+    expect(planOf(result).bodies.some(body => body.name === 'page:usage')).toBe(true);
+  });
+
   it('shares page bodies across a bounded native history and keeps custom MDX links local', () => {
     const result = compile();
     const plan = planOf(result);

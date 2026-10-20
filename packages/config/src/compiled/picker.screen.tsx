@@ -4,6 +4,7 @@ import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, Panel, Screen, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
 import type { ConfigScope } from '../types';
+import { ConfigBody, CONFIG_ROW_HEIGHT } from './layout';
 
 /**
  * The scope picker for one addon as a compiled screen: a row per scope the
@@ -21,7 +22,7 @@ const { spacing, fontColor } = theme.tokens;
 const ICON_RESET = 'textures/ui/config/reset';
 
 /** The reset button's edge: the row's height, so it reads as part of the row. */
-const RESET_SIZE = 28;
+const RESET_SIZE = CONFIG_ROW_HEIGHT;
 
 // Keys localize on the client; a string that takes a colour code bakes in the package's default locale.
 const { key, t } = i18n;
@@ -32,6 +33,8 @@ export interface PickerModel {
   /** The scopes offered, in the order the rows draw them. */
   scopes: readonly ConfigScope[];
   onScope?: (scope: ConfigScope, event: PressEvent) => unknown;
+  scopePresses?: Partial<Record<ConfigScope, (event: PressEvent) => unknown>>;
+  canReset?: boolean;
   /** Resets the server scope; only asked, never done, from here. */
   onReset?: (event: PressEvent) => unknown;
   onBack?: (event: PressEvent) => unknown;
@@ -43,7 +46,7 @@ export interface ScopePickerProps {
 
 const EMPTY_MODEL: PickerModel = { trail: '', scopes: [] };
 
-export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY_MODEL }: ScopePickerProps): JSX.Element => {
+export const ScopePickerView: FunctionComponent<ScopePickerProps> = ({ model = EMPTY_MODEL }: ScopePickerProps): JSX.Element => {
   const exit = useExit();
   const hasServer = model.scopes.includes('server');
   const hasDimension = model.scopes.includes('dimension');
@@ -51,27 +54,27 @@ export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY
   const isEmpty = model.scopes.length === 0;
 
   return (
-    <Screen>
-      <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-        <Header trail={model.trail} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} />
-        {/* A stack, so a scope this addon does not offer leaves no gap where its
+    <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
+      <Header trail={model.trail} onBack={model.onBack ?? ((): void => {})} onClose={exit} />
+      {/* A stack, so a scope this addon does not offer leaves no gap where its
             row would have been — the rows after it move up instead. */}
-        <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm} stack={true}>
+      <ConfigBody>
+        <Panel flexDirection={'column'} gap={spacing.xs} stack={true}>
           {hasServer && (
             <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>
               <Panel flexGrow={1}>
-                <MenuRow title={key($ => $.scope.server.label)} subtitle={key($ => $.scope.server.hint)} onPress={(event): unknown => model.onScope?.('server', event)} />
+                <MenuRow height={CONFIG_ROW_HEIGHT} title={key($ => $.scope.server.label)} subtitle={key($ => $.scope.server.hint)} onPress={model.scopePresses?.server ?? ((event): unknown => model.onScope?.('server', event))} />
               </Panel>
-              <OreButton variant={'secondary'} width={RESET_SIZE} height={RESET_SIZE} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} onPress={model.onReset}>
+              <OreButton variant={'secondary'} width={RESET_SIZE} height={RESET_SIZE} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} enabled={model.canReset === true} onPress={model.onReset}>
                 <Image width={10} height={10} texture={ICON_RESET} />
               </OreButton>
             </Panel>
           )}
           {hasDimension && (
-            <MenuRow title={key($ => $.scope.dimension.label)} subtitle={key($ => $.scope.dimension.hint)} onPress={(event): unknown => model.onScope?.('dimension', event)} />
+            <MenuRow height={CONFIG_ROW_HEIGHT} title={key($ => $.scope.dimension.label)} subtitle={key($ => $.scope.dimension.hint)} onPress={model.scopePresses?.dimension ?? ((event): unknown => model.onScope?.('dimension', event))} />
           )}
           {hasPlayer && (
-            <MenuRow title={key($ => $.scope.player.label)} subtitle={key($ => $.scope.player.hint)} onPress={(event): unknown => model.onScope?.('player', event)} />
+            <MenuRow height={CONFIG_ROW_HEIGHT} title={key($ => $.scope.player.label)} subtitle={key($ => $.scope.player.hint)} onPress={model.scopePresses?.player ?? ((event): unknown => model.onScope?.('player', event))} />
           )}
           {isEmpty && (
             <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
@@ -79,10 +82,13 @@ export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY
             </Panel>
           )}
         </Panel>
-      </Card>
-    </Screen>
+      </ConfigBody>
+    </Card>
   );
 };
+
+/** Standalone host for packs that use the scope picker directly. */
+export const ScopePicker: FunctionComponent<ScopePickerProps> = (props): JSX.Element => <Screen><ScopePickerView {...props} /></Screen>;
 
 /** The picker filled with one present's model, for `render()`. */
 export const scopePickerElement = (model: PickerModel): JSX.Element => <ScopePicker model={model} />;

@@ -17,6 +17,11 @@ export function allowedScopes(player: Player): readonly ConfigScope[] {
   return isOperator(player) ? CONFIG_SCOPES : ['player'];
 }
 
+/** Recheck authorization when a menu action or native editor response reaches the server. */
+export function canEditScope(player: Player, scope: ConfigScope, entityId?: string): boolean {
+  return isOperator(player) || (scope === 'player' && entityId === player.id);
+}
+
 /**
  * Narrow a requested target to what the player may actually open.
  *

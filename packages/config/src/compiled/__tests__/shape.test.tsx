@@ -39,7 +39,7 @@ const elementsOf = (element: JSX.Element): JSX.Element[] => [element, ...childEl
 
 describe('a compiled config screen keeps its shape when shown', () => {
   it('scope picker', () => {
-    const model: PickerModel = { trail: trail(['drav0011_economy.meta.name', 'core.config.breadcrumb']), scopes: ['server', 'dimension', 'player'], onScope: press, onReset: press, onBack: press };
+    const model: PickerModel = { trail: trail(['drav0011_economy.meta.name', 'core.config.breadcrumb']), scopes: ['server', 'dimension', 'player'], canReset: true, onScope: press, onReset: press, onBack: press };
     const { baked, shown } = shapeAgainstBake(ScopePicker, <ScopePicker model={model} />);
 
     expect(shown).toBe(baked);
@@ -90,6 +90,7 @@ describe('a compiled config screen keeps its shape when shown', () => {
     const model: LeafModel = {
       trail: trail(['drav0011_economy.meta.name', 'core.scope.server.label', 'drav0011_economy.config.pricing'], 'cancel'),
       values: { 'pricing.enabled': false, 'pricing.rate': 7, 'pricing.mode': 'x', 'pricing.note': 'hello' },
+      errors: { 'pricing.note': 'Use at most 3 characters.' },
       onSubmit: press,
     };
     const { baked, shown } = shapeAgainstBake(Screen, <Screen model={model} />);

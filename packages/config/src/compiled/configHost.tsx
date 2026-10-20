@@ -7,9 +7,14 @@ import { trailText, type TrailBack } from '@bedrock-core/ore-styled';
 import { world, type Player } from '@minecraft/server';
 import { buildSectionTree, findSection, isPureSection, listEntries, schemaDefaultsPatch, type SectionNode } from '../config/schema';
 import { buildNestedPatch, mergeNested, resolveInitialValue, toItems } from '../config/nested';
-import { getRoster, patchScope, scopeGroups, scopeSchema } from '../config/values';
+import { getRoster, getScopeValues, hasResetValues, patchScope, scopeGroups, scopeSchema } from '../config/values';
 import { i18n, translationsFor } from '../i18n';
-import { allowedScopes, isOperator } from '../permissions';
+import { allowedScopes, canEditScope, isOperator } from '../permissions';
+import { currentLocation, renderDestination, type ScreenLocation } from '@bedrock-core/navigation/runtime';
+import type { ConfigTarget } from '../target';
+import { configNavigation, sectionRoute } from './navigation.screen';
+import { validateField, type FieldError } from '../config/validation';
+import type { PickerModel } from './picker.screen';
 import type { ConfigScope, EntrySchema } from '../types';
 import { ConfirmReset, confirmResetElement } from './confirm.screen';
 import { MENU_ROWS, MenuList, menuListElement, pageOf, type MenuListRow } from './menu.screen';
@@ -17,13 +22,7 @@ import { ScopePicker, scopePickerElement } from './picker.screen';
 import { itemsListElement, type ItemsListRow, LIST_ROWS, pageOfItems } from './items.screen';
 import { ITEM_FIELD, OPTION_OF, shapedElement, shapedItemScreen, shapedScreen } from './shaped';
 
-/**
- * Showing the compiled config screens that lead up to the editor.
- *
- * Each is a screen of its own with no stack beneath it: what a press opens
- * and where Back leads are decided here, and going back is showing the
- * previous screen again. The editor itself is presented by `openConfig`.
- */
+/** Owner-side models and server boundaries for schema menus, live rosters and native editors. */
 
 /** Whether this build carries the compiled scope picker. */
 export const canPresentScopePicker = (): boolean => compiledTitleOf(ScopePicker) !== undefined;
@@ -65,7 +64,7 @@ export interface ConfigPlace {
   addonId: string;
   scope?: ConfigScope;
   entityId?: string;
-  /** Dot-path of the level within the scope; `''` or absent is the scope root. */
+  /** Dot-path of a level or list setting; `''` or absent is the scope root. */
   path?: string;
 }
 
@@ -105,6 +104,10 @@ export function trailOf(core: Runtime, place: ConfigPlace): DisplayText[] {
     }
   }
 
+  const entry = scopeSchema(core, scope)[path];
+
+  if (entry?.type === 'list') { trail.push({ translate: entry.label }); }
+
   return trail;
 }
 
@@ -119,31 +122,106 @@ export function trailOf(core: Runtime, place: ConfigPlace): DisplayText[] {
 const titleTrail = (core: Runtime, player: Player, trail: readonly DisplayText[], back: TrailBack = 'icon'): DisplayText =>
   trailText(trail, translationsFor(core.translations.forPlayer(player)).resolve, { back });
 
-export function presentScopePicker(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners): void {
+/** Reset is available only to an authorized viewer with current non-default values. */
+const canReset = (core: Runtime, player: Player, scope: ConfigScope, entityId?: string): boolean =>
+  canEditScope(player, scope, entityId) && hasResetValues(scopeSchema(core, scope), getScopeValues(core, scope, entityId));
+
+/** Every write rechecks the viewer after the native form has returned. */
+function patchForPlayer(core: Runtime, player: Player, scope: ConfigScope, entityId: string | undefined, patch: Record<string, unknown>): void {
+  if (canEditScope(player, scope, entityId)) { patchScope(core, scope, entityId, patch); }
+}
+
+function pickerModel(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners, again: (location?: ScreenLocation) => void): PickerModel {
   const { t } = translationsFor(core.translations.forPlayer(player));
   const addonName = addonNameOf(core, addonId);
-  // Declared by the addon AND permitted for this player, in the order the rows draw.
   const scopes = allowedScopes(player).filter(scope => Object.keys(scopeSchema(core, scope)).length > 0);
 
-  const again = (): void => { presentScopePicker(core, player, addonId, openers); };
-
-  render(scopePickerElement({
+  return {
     trail: titleTrail(core, player, [addonName, { translate: key($ => $.config.breadcrumb) }]),
-    scopes,
+    scopes, canReset: canReset(core, player, 'server'),
     onScope: (scope): unknown => openers.scope(addonId, scope),
     onReset: (): void => {
+      if (!canReset(core, player, 'server')) {
+        again();
+
+        return;
+      }
+
+      const returnLocation = currentLocation(player);
+
       presentConfirmReset(core, player, {
-        trail: [addonName, scopeLabelOf('server')],
-        target: t($ => $.scope.server.label),
+        trail: [addonName, scopeLabelOf('server')], target: t($ => $.scope.server.label),
         onConfirm: (): void => {
-          patchScope(core, 'server', undefined, schemaDefaultsPatch(scopeSchema(core, 'server')));
-          again();
+          if (canReset(core, player, 'server')) { patchForPlayer(core, player, 'server', undefined, schemaDefaultsPatch(scopeSchema(core, 'server'))); }
+
+          again(returnLocation);
         },
-        onCancel: again,
+        onCancel: (): void => { again(returnLocation); },
       });
     },
     onBack: (): unknown => openers.back(addonId),
-  }), player);
+  };
+}
+
+/** Presents the compiled schema menu stack, retaining the owner's logical destination. */
+export function presentConfigNavigation(
+  core: Runtime, player: Player, target: ConfigTarget,
+  open: (target: ConfigTarget) => unknown, leave: () => unknown, location?: ScreenLocation,
+): boolean {
+  const Navigation = configNavigation();
+  const { scope, scopeId, path = '' } = target;
+
+  if (Navigation === undefined || compiledTitleOf(Navigation) === undefined || target.list !== undefined) { return false; }
+
+  if (scope !== undefined && ((scope !== 'server' && scopeId === undefined)
+    || !isSectionLevel(core, { addonId: core.id, scope, entityId: scopeId, path, trail: [] }))) { return false; }
+
+  const routes: string[] = ['picker'];
+
+  if (scope !== undefined) {
+    for (let depth = 0; depth <= path.split('.').length; depth++) {
+      const prefix = path.split('.').slice(0, depth).join('.');
+
+      if (depth > 0 && prefix === '') { continue; }
+
+      if (isSectionLevel(core, { addonId: core.id, scope, entityId: scopeId, path: prefix, trail: [] })) {
+        routes.push(sectionRoute(scope, prefix));
+      }
+    }
+  }
+
+  const again = (confirmed = location): void => { presentConfigNavigation(core, player, target, open, leave, confirmed); };
+
+  const picker = pickerModel(core, player, core.id, {
+    scope: (_addonId, at): unknown => open({ kind: 'config', addonId: core.id, scope: at }),
+    back: leave,
+  }, again);
+  const element = (
+    <Navigation
+      model={{
+        picker,
+        scopes: allowedScopes(player).filter(at => at === 'server' || (at === scope && scopeId !== undefined)),
+        trail: (at, prefix): DisplayText => titleTrail(core, player, trailOf(core, { addonId: core.id, scope: at, entityId: at === scope ? scopeId : undefined, path: prefix })),
+        onOpen: (at, prefix, list): unknown => open({
+          kind: 'config', addonId: core.id, scope: at,
+          ...at === scope && scopeId !== undefined ? { scopeId } : {},
+          ...prefix === undefined ? {} : { path: prefix }, ...list === undefined ? {} : { list },
+        }),
+        onScopeBack: (at): unknown => isOperator(player) ? open({ kind: 'config', addonId: core.id, scope: at }) : leave(),
+      }}
+      routes={routes}
+    />
+  );
+
+  if (location === undefined) { render(element, player); } else { renderDestination(element, player, location); }
+
+  return true;
+}
+
+export function presentScopePicker(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners): void {
+  const again = (): void => { presentScopePicker(core, player, addonId, openers); };
+
+  render(scopePickerElement(pickerModel(core, player, addonId, openers, again)), player);
 }
 
 /** What a reset asks about, and where each answer leads. */
@@ -200,7 +278,7 @@ export function presentEntityRoster(
 
   render(menuListElement({
     trail: titleTrail(core, player, trail),
-    rows: shown.rows.map((entry): MenuListRow => ({ title: entry.name, action: 'reset' })),
+    rows: shown.rows.map((entry): MenuListRow => ({ title: entry.name, action: canReset(core, player, scope, entry.id) ? 'reset' : undefined })),
     empty: { translate: scope === 'player' ? key($ => $.roster.noPlayers) : key($ => $.roster.noDimensions) },
     page: shown.page,
     pages: shown.pages,
@@ -212,7 +290,7 @@ export function presentEntityRoster(
     onReset: (index): void => {
       const entry = shown.rows[index];
 
-      if (entry === undefined) {
+      if (entry === undefined || !canReset(core, player, scope, entry.id)) {
         return;
       }
 
@@ -220,7 +298,8 @@ export function presentEntityRoster(
         trail: [...trail, entry.name],
         target: entry.name,
         onConfirm: (): void => {
-          patchScope(core, scope, entry.id, schemaDefaultsPatch(scopeSchema(core, scope)));
+          if (canReset(core, player, scope, entry.id)) { patchForPlayer(core, player, scope, entry.id, schemaDefaultsPatch(scopeSchema(core, scope))); }
+
           again();
         },
         onCancel: (): void => { again(); },
@@ -371,9 +450,15 @@ export function presentListEditor(
 
   /** Stage and write in one step — see the note above about why there is no Save. */
   const commit = (next: string[], at = page): void => {
+    if (!canEditScope(player, target.scope, target.entityId)) {
+      void openers.back(target);
+
+      return;
+    }
+
     const patch = buildNestedPatch({ [target.key]: next });
 
-    patchScope(core, target.scope, target.entityId, patch);
+    patchForPlayer(core, player, target.scope, target.entityId, patch);
     presentListEditor(core, player, target, mergeNested(values, patch), openers, at);
   };
 
@@ -502,6 +587,7 @@ export function presentShapedEditor(
   target: SectionTarget,
   values: Record<string, unknown>,
   back?: () => unknown,
+  errors: Readonly<Record<string, DisplayText>> = {},
 ): boolean {
   const screen = shapedScreen(target.scope, target.path);
 
@@ -513,20 +599,37 @@ export function presentShapedEditor(
 
   render(shapedElement(screen, {
     trail: titleTrail(core, player, target.trail, 'cancel'),
-    values,
+    values, errors,
     onSubmit: (submitted: Record<string, unknown>): void => {
+      if (!canEditScope(player, target.scope, target.entityId)) {
+        void back?.();
+
+        return;
+      }
+
       const patch: Record<string, unknown> = {};
+      const rejected: Record<string, DisplayText> = {};
+      const staged: Record<string, unknown> = {};
 
       for (const [key, raw] of Object.entries(foldOptions(submitted, schema))) {
         const entry = schema[key];
-        const value = entry === undefined ? undefined : settingValue(entry, raw);
 
-        if (value !== undefined) {
-          patch[key] = value;
-        }
+        if (entry === undefined) { continue; }
+
+        const result = validateField(entry, raw);
+
+        staged[key] = result.error === undefined ? result.value : raw;
+
+        if (result.error === undefined) { patch[key] = result.value; } else { rejected[key] = fieldErrorText(core, player, result.error); }
       }
 
-      patchScope(core, target.scope, target.entityId, buildNestedPatch(patch));
+      if (Object.keys(rejected).length > 0) {
+        presentShapedEditor(core, player, target, mergeNested(values, buildNestedPatch(staged)), back, rejected);
+
+        return;
+      }
+
+      patchForPlayer(core, player, target.scope, target.entityId, buildNestedPatch(patch));
 
       // Saving leaves the screen: a leaf is one section's settings, and there is
       // nothing further to do on it once they are written. Where it goes is where
@@ -541,15 +644,6 @@ export function presentShapedEditor(
   return true;
 }
 
-/**
- * A submitted field, back in the entry's own type.
- *
- * The engine reports what its control holds — a boolean from a toggle, a number
- * from a slider, a string from a box — and the schema says what the setting is.
- * A value outside the entry's range is clamped rather than refused: the control
- * that produced it was built from the same range, so an out-of-range answer is
- * a schema that moved, not a player doing something wrong.
- */
 /**
  * A multiselect's checkboxes, back as the array the setting holds.
  *
@@ -591,38 +685,16 @@ const foldOptions = (submitted: Record<string, unknown>, schema: Record<string, 
   return folded;
 };
 
-const settingValue = (entry: EntrySchema, raw: unknown): unknown => {
-  if (entry.type === 'multiselect') {
-    // Segments answer with the indices that are on; checkboxes, once folded, with the options themselves.
-    const picked = Array.isArray(raw)
-      ? raw
-          .map((option: unknown) => (typeof option === 'number' ? entry.options?.[option] : option))
-          .filter((option): option is string => typeof option === 'string')
-      : [];
+/** Resolves validation messages in the viewing player's language. */
+function fieldErrorText(core: Runtime, player: Player, error: FieldError): string {
+  const { t } = translationsFor(core.translations.forPlayer(player));
 
-    return picked.filter(option => entry.options?.includes(option) === true);
+  switch (error.kind) {
+    case 'boolean': return t($ => $.validation.boolean);
+    case 'number': return t($ => $.validation.number);
+    case 'range': return t($ => $.validation.range, { min: String(error.min ?? '-Infinity'), max: String(error.max ?? 'Infinity') });
+    case 'string': return t($ => $.validation.string);
+    case 'length': return t($ => $.validation.length, { max: String(error.max) });
+    case 'choice': return t($ => $.validation.choice);
   }
-
-  if (entry.type === 'boolean') {
-    return Boolean(raw);
-  }
-
-  if (entry.type === 'number') {
-    const parsed = typeof raw === 'number' ? raw : Number(raw);
-
-    if (!Number.isFinite(parsed)) {
-      return undefined;
-    }
-
-    return Math.min(entry.max ?? Number.POSITIVE_INFINITY, Math.max(entry.min ?? Number.NEGATIVE_INFINITY, parsed));
-  }
-
-  if (entry.type === 'select') {
-    // Segments and a dropdown report the chosen INDEX; a radio reports the value itself.
-    const chosen = typeof raw === 'number' ? entry.options?.[raw] : raw;
-
-    return typeof chosen === 'string' && entry.options?.includes(chosen) === true ? chosen : undefined;
-  }
-
-  return typeof raw === 'string' ? raw : undefined;
-};
+}

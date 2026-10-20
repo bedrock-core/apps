@@ -1,8 +1,9 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { BODY, Card, FRAME, Header, HEADER_HEIGHT, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { BODY, Card, FRAME, Header, HEADER_HEIGHT, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
-import { Button, Image, List, Panel, Screen, Scroll, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
+import { Image, List, Panel, Screen, Scroll, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
+import { ConfigBody, CONFIG_BODY_PADDING, CONFIG_ROW_HEIGHT } from './layout';
 
 /**
  * A screen of rows that lead somewhere, as ONE compiled screen: the entity
@@ -30,9 +31,9 @@ const ROW_SUBTITLE_MAX = 40;
 const EMPTY_MAX = 48;
 const PAGE_MAX = 8;
 
-const ROW_HEIGHT = 26;
+const ROW_HEIGHT = CONFIG_ROW_HEIGHT;
 const ROW_GAP = spacing.xs;
-const BODY_PADDING = spacing.sm;
+const BODY_PADDING = CONFIG_BODY_PADDING;
 const PAGER_HEIGHT = 16;
 const PAGER_BUTTON = 24;
 
@@ -66,6 +67,9 @@ export interface MenuListModel {
   page: number;
   pages: number;
   onRow?: (index: number, event: PressEvent) => unknown;
+  rowPresses?: readonly ((event: PressEvent) => unknown)[];
+  previousPage?: (event: PressEvent) => unknown;
+  nextPage?: (event: PressEvent) => unknown;
   onReset?: (index: number, event: PressEvent) => unknown;
   onPage?: (page: number, event: PressEvent) => unknown;
   onBack?: (event: PressEvent) => unknown;
@@ -73,11 +77,13 @@ export interface MenuListModel {
 
 export interface MenuListProps {
   model?: MenuListModel;
+  /** Fixed compiled capacity; runtime rosters reserve a full page by default. */
+  capacity?: number;
 }
 
 const EMPTY_MODEL: MenuListModel = { trail: '', rows: [], empty: '', page: 1, pages: 1 };
 
-export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL }: MenuListProps): JSX.Element => {
+export const MenuListView: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL, capacity = MENU_ROWS }: MenuListProps): JSX.Element => {
   const exit = useExit();
   const { rows, page, pages } = model;
   const isEmpty = rows.length === 0;
@@ -86,114 +92,101 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
   const contentWidth = BODY.width - 2 * BODY_PADDING;
 
   return (
-    <Screen>
-      <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-        <Header trail={model.trail} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} height={HEADER_HEIGHT} />
-        <Panel flexDirection={'column'} gap={spacing.xs} padding={BODY_PADDING} marginLeft={BODY.x} width={BODY.width} height={BODY.height}>
-          <Scroll width={contentWidth} height={listHeight}>
-            <List
-              max={MENU_ROWS}
-              items={rows}
-              gap={ROW_GAP}
-              row={(item: MenuListRow | undefined, index: number): JSX.Element => {
-                const action = item?.action;
+    <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
+      <Header trail={model.trail} onBack={model.onBack ?? ((): void => {})} onClose={exit} height={HEADER_HEIGHT} />
+      <ConfigBody>
+        <Scroll width={contentWidth} height={listHeight}>
+          <List
+            max={capacity}
+            items={rows}
+            gap={ROW_GAP}
+            row={(item: MenuListRow | undefined, index: number): JSX.Element => {
+              const action = item?.action;
 
-                // A row's text is live, and a button's children bake into its
-                // face, so the face is a button beneath and the text a panel above it.
-                // The face takes whatever width the list gives the row, less one
-                // square: the slot beside it is the row's whether or not this row
-                // shows a button in it, and whichever button it shows sits in it.
-                return (
-                  <Panel width={'100%'} height={ROW_HEIGHT} flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
-                    <Panel flexGrow={1} flexShrink={1} width={0} height={ROW_HEIGHT}>
-                      <Button
+              return (
+                <Panel width={'100%'} height={ROW_HEIGHT} flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
+                  <MenuRow
+                    flexGrow={1}
+                    flexShrink={1}
+                    width={0}
+                    height={ROW_HEIGHT}
+                    title={item?.title ?? ''}
+                    subtitle={item?.subtitle ?? ''}
+                    titleMaxLength={ROW_TITLE_MAX}
+                    subtitleMaxLength={ROW_SUBTITLE_MAX}
+                    onPress={model.rowPresses?.[index] ?? ((event): unknown => model.onRow?.(index, event))}
+                  />
+                  <Panel width={ROW_HEIGHT} height={ROW_HEIGHT}>
+                    {action !== 'remove' && action !== 'none' && (
+                    // Always drawn, because the square is the row's whether or
+                    // not this row can use it: the row's boxes are solved at
+                    // build, so a row without the button would be a row with a
+                    // hole. Disabled says the same thing the hole was trying to
+                    // — there is nothing here to reset — and says it visibly.
+                      <OreButton
                         position={'absolute'}
                         left={0}
                         top={0}
-                        width={'100%'}
+                        variant={'secondary'}
+                        width={ROW_HEIGHT}
                         height={ROW_HEIGHT}
-                        background={row.textures.background}
-                        backgroundHover={row.textures.backgroundHover}
-                        backgroundPressed={row.textures.backgroundPressed}
-                        onPress={(event): unknown => model.onRow?.(index, event)}
-                      />
-                      <Panel position={'absolute'} left={0} top={0} width={'100%'} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={row.padding} paddingLeft={row.padding + spacing.xs}>
-                        <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
-                          <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={ROW_TITLE_MAX}>{item?.title ?? ''}</Text>
-                          <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={ROW_SUBTITLE_MAX}>{item?.subtitle ?? ''}</Text>
-                        </Panel>
-                        <Text>{`${row.textStyle.muted}>`}</Text>
-                      </Panel>
-                    </Panel>
-                    <Panel width={ROW_HEIGHT} height={ROW_HEIGHT}>
-                      {action !== 'remove' && action !== 'none' && (
-                        // Always drawn, because the square is the row's whether or
-                        // not this row can use it: the row's boxes are solved at
-                        // build, so a row without the button would be a row with a
-                        // hole. Disabled says the same thing the hole was trying to
-                        // — there is nothing here to reset — and says it visibly.
-                        <OreButton
-                          position={'absolute'}
-                          left={0}
-                          top={0}
-                          variant={'secondary'}
-                          width={ROW_HEIGHT}
-                          height={ROW_HEIGHT}
-                          paddingLeft={0}
-                          paddingRight={0}
-                          paddingTop={0}
-                          paddingBottom={0}
-                          enabled={action === 'reset'}
-                          onPress={(event): unknown => model.onReset?.(index, event)}
-                        >
-                          <Image width={10} height={10} texture={ICON_RESET} />
-                        </OreButton>
-                      )}
-                      {action === 'remove' && (
-                        <OreButton
-                          position={'absolute'}
-                          left={0}
-                          top={0}
-                          variant={'secondary'}
-                          width={ROW_HEIGHT}
-                          height={ROW_HEIGHT}
-                          paddingLeft={0}
-                          paddingRight={0}
-                          paddingTop={0}
-                          paddingBottom={0}
-                          onPress={(event): unknown => model.onReset?.(index, event)}
-                        >
-                          <Image width={10} height={10} texture={ICON_REMOVE} />
-                        </OreButton>
-                      )}
-                    </Panel>
+                        paddingLeft={0}
+                        paddingRight={0}
+                        paddingTop={0}
+                        paddingBottom={0}
+                        enabled={action === 'reset'}
+                        onPress={(event): unknown => model.onReset?.(index, event)}
+                      >
+                        <Image width={10} height={10} texture={ICON_RESET} />
+                      </OreButton>
+                    )}
+                    {action === 'remove' && (
+                      <OreButton
+                        position={'absolute'}
+                        left={0}
+                        top={0}
+                        variant={'secondary'}
+                        width={ROW_HEIGHT}
+                        height={ROW_HEIGHT}
+                        paddingLeft={0}
+                        paddingRight={0}
+                        paddingTop={0}
+                        paddingBottom={0}
+                        onPress={(event): unknown => model.onReset?.(index, event)}
+                      >
+                        <Image width={10} height={10} texture={ICON_REMOVE} />
+                      </OreButton>
+                    )}
                   </Panel>
-                );
-              }}
-            />
-          </Scroll>
-          {/* Over the scroll rather than in it: a scroll whose only child is the list follows the live row count. */}
-          {isEmpty && (
-            <Panel position={'absolute'} left={BODY_PADDING} top={BODY_PADDING} width={contentWidth} height={listHeight} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-              <Text wordBreak={'break-word'} color={row.textStyle.mutedRgb} maxLength={EMPTY_MAX}>{model.empty}</Text>
-            </Panel>
-          )}
-          {paged && (
-            <Panel flexDirection={'row'} alignItems={'center'} justifyContent={'center'} gap={spacing.sm} height={PAGER_HEIGHT}>
-              <OreButton variant={'secondary'} width={PAGER_BUTTON} height={PAGER_HEIGHT} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} enabled={page > 1} onPress={(event): unknown => model.onPage?.(page - 1, event)}>
-                <Text>{`§0${t($ => $.paging.previous)}`}</Text>
-              </OreButton>
-              <Text maxLength={PAGE_MAX}>{t($ => $.paging.of, { page: String(page), pages: String(pages) })}</Text>
-              <OreButton variant={'secondary'} width={PAGER_BUTTON} height={PAGER_HEIGHT} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} enabled={page < pages} onPress={(event): unknown => model.onPage?.(page + 1, event)}>
-                <Text>{`§0${t($ => $.paging.next)}`}</Text>
-              </OreButton>
-            </Panel>
-          )}
-        </Panel>
-      </Card>
-    </Screen>
+                </Panel>
+              );
+            }}
+          />
+        </Scroll>
+        {/* Over the scroll rather than in it: a scroll whose only child is the list follows the live row count. */}
+        {isEmpty && (
+          <Panel position={'absolute'} left={BODY_PADDING} top={BODY_PADDING} width={contentWidth} height={listHeight} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
+            <Text wordBreak={'break-word'} color={row.textStyle.mutedRgb} maxLength={EMPTY_MAX}>{model.empty}</Text>
+          </Panel>
+        )}
+        {paged && (
+          <Panel flexDirection={'row'} alignItems={'center'} justifyContent={'center'} gap={spacing.sm} height={PAGER_HEIGHT}>
+            <OreButton variant={'secondary'} width={PAGER_BUTTON} height={PAGER_HEIGHT} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} enabled={page > 1} onPress={model.previousPage ?? ((event): unknown => model.onPage?.(page - 1, event))}>
+              <Text>{`§0${t($ => $.paging.previous)}`}</Text>
+            </OreButton>
+            <Text maxLength={PAGE_MAX}>{t($ => $.paging.of, { page: String(page), pages: String(pages) })}</Text>
+            <OreButton variant={'secondary'} width={PAGER_BUTTON} height={PAGER_HEIGHT} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} enabled={page < pages} onPress={model.nextPage ?? ((event): unknown => model.onPage?.(page + 1, event))}>
+              <Text>{`§0${t($ => $.paging.next)}`}</Text>
+            </OreButton>
+          </Panel>
+        )}
+      </ConfigBody>
+    </Card>
   );
 };
+
+/** Standalone host for runtime lists and rosters. */
+export const MenuList: FunctionComponent<MenuListProps> = (props): JSX.Element => <Screen><MenuListView {...props} /></Screen>;
 
 /** The list filled with one present's model, for `render()`. */
 export const menuListElement = (model: MenuListModel): JSX.Element => <MenuList model={model} />;

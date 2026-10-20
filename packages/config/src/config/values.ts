@@ -10,6 +10,7 @@ import { DimensionTypes, world, type Dimension, type Player } from '@minecraft/s
 import { configOf } from '../server';
 import type { EntrySchema, FlatGroupsLike, ConfigScope } from '../types';
 import { isRecord } from './nested';
+import { getIn, sameValue } from '../server/document';
 
 /** A scope's flat schema, as this addon declared it; empty when it declared no config. */
 export function scopeSchema(core: Runtime, scope: ConfigScope): Record<string, EntrySchema> {
@@ -62,6 +63,15 @@ export function getScopeValues(core: Runtime, scope: ConfigScope, entityId?: str
   }
 
   return isRecord(raw) ? raw : {};
+}
+
+/** Whether any declared value differs from its default, including nested groups and arrays. */
+export function hasResetValues(schema: Record<string, EntrySchema>, values: Record<string, unknown>): boolean {
+  return Object.entries(schema).some(([path, entry]) => {
+    const value = getIn(values, path.split('.'));
+
+    return value !== undefined && !sameValue(value, entry.default);
+  });
 }
 
 /** Patch a scope with staged values; nothing when the dimension or player named is not in the world. */

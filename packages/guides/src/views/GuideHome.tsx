@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, theme } from '@bedrock-core/ore-styled';
 import { Disclosure, Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
-import { GuideHeader, GuideMenuRow } from '../navigation/controls';
+import { GuideHeader, GuideIndexLink } from '../navigation/controls';
 import type { GuideTreeNode } from '../types';
 
 const { spacing } = theme.tokens;
@@ -38,18 +38,26 @@ type Page = Extract<GuideTreeNode, { t: 'page' }>;
 
 /**
  * Guide home — a visual index. Categories render as `minecraftTen` section headers with a
- * divider rule; pages render as icon menu rows (thumbnail + title + one-line subtitle + chevron).
+ * divider rule; pages render as text links with optional thumbnails and descriptions.
  * `icon`/`descK` are optional per node, so an unannotated guide degrades to a clean text list.
  */
 export function GuideHomeView({ tree, title, width, height, onClose }: GuideHomeViewProps): JSX.Element {
   const pageRow = (node: Page, depth: number): JSX.Element => (
-    <GuideMenuRow
-      pageId={node.id}
-      icon={node.icon}
-      title={node.titleK}
-      subtitle={node.descK}
-      depth={depth}
-    />
+    <Panel
+      flexDirection={'row'}
+      alignItems={'center'}
+      gap={spacing.sm}
+      padding={spacing.sm}
+      marginLeft={depth * spacing.lg}
+    >
+      {node.icon === undefined ? undefined : <Image texture={node.icon} width={ICON_SIZE} height={ICON_SIZE} />}
+      <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} gap={spacing.xs}>
+        <GuideIndexLink pageId={node.id} testName={`Guide index: ${node.id}`} width={'100%'}>
+          <Text shadow={true} color={[1 / 3, 2 / 3, 1]} maxLines={1} overflow={'ellipsis'}>{node.titleK}</Text>
+        </GuideIndexLink>
+        {node.descK !== undefined && <Text color={theme.components.menuRow.textStyle.mutedRgb} maxLines={1} overflow={'ellipsis'}>{node.descK}</Text>}
+      </Panel>
+    </Panel>
   );
 
   /** The header's content: thumbnail, label, and the fold glyph when there is a fold. */

@@ -57,6 +57,15 @@ export default {
     reset: 'Reset',
   },
 
+  validation: {
+    boolean: 'Choose on or off.',
+    number: 'Enter a finite number.',
+    range: 'Choose a number from {{min}} to {{max}}.',
+    string: 'Enter text.',
+    length: 'Use at most {{max}} characters.',
+    choice: 'Choose from the available options.',
+  },
+
   field: {
     numberRange: '({{min}} to {{max}})',
     enterNumber: 'Enter number',

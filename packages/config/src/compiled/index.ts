@@ -7,6 +7,7 @@ import { ItemsList } from './items.screen';
 import { MenuList } from './menu.screen';
 import { ScopePicker } from './picker.screen';
 import { configScreens, registerConfigScreens } from './shaped';
+import { configNavigationScreen, registerConfigNavigation } from './navigation.screen';
 
 /** The screens the ui-compiler filter bakes from this package into an addon's pack, by name. */
 const screens: Record<string, FunctionComponent> = {
@@ -30,7 +31,11 @@ export default screens;
  */
 export function shape({ definition }: { definition: ConfigDefinition }): Record<string, FunctionComponent> {
   const shaped = configScreens(definition);
+  const menus = configNavigationScreen(definition);
 
+  registerConfigNavigation(menus);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- optional model props allow the compiler to render the default schema menus
+  shaped.config_navigation = menus as FunctionComponent;
   registerConfigScreens(shaped);
 
   return shaped;

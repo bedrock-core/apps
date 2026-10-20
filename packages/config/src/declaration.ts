@@ -26,15 +26,16 @@
  */
 import { back, closeUi, navigateAsync } from '@bedrock-core/navigation';
 import { navigation } from '@bedrock-core/navigation/core';
+import type { ScreenLocation } from '@bedrock-core/navigation/runtime';
 import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { registerConfig as registerSubsystem, configOf, type Config, type ConfigDefinition } from './server';
 import { registerAddonCommands } from './commands/addon';
-import { clampTarget } from './permissions';
+import { clampTarget, isOperator } from './permissions';
 import { getScopeValues } from './config/values';
 import {
   canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel,
-  presentEntityRoster, presentListEditor, presentScopePicker, presentShapedEditor,
+  presentConfigNavigation, presentEntityRoster, presentListEditor, presentScopePicker, presentShapedEditor,
   trailOf, type SectionListOpeners, type SectionTarget,
 } from './compiled/configHost';
 import { i18n } from './i18n';
@@ -109,8 +110,8 @@ export function registerConfig<I extends ConfigDefinition>(definition: I, option
       const open = (player: Player, target: Partial<Omit<ConfigTarget, 'kind'>> = {}): Promise<void> =>
         draw(core, player, { kind: CONFIG_APP, addonId: core.id, ...target }, false);
 
-      realm.register({ key: `${core.id}:${CONFIG_APP}`, kind: 'custom', parameters: configParameters }, (player, { params }) =>
-        drawHere(core, player, { ...params, kind: CONFIG_APP, addonId: core.id }),
+      realm.register({ key: `${core.id}:${CONFIG_APP}`, kind: 'custom', parameters: configParameters }, (player, { params, location }) =>
+        drawHere(core, player, { ...params, kind: CONFIG_APP, addonId: core.id }, location),
       );
 
       if (options.commands !== false) {
@@ -140,9 +141,11 @@ function draw(core: Runtime, player: Player, target: ConfigTarget, replace = tru
   return navigateAsync(entry.key, player, { params, replace }).then(() => undefined);
 }
 
-function drawHere(core: Runtime, player: Player, target: ConfigTarget): boolean {
+function drawHere(core: Runtime, player: Player, target: ConfigTarget, location?: ScreenLocation): boolean {
   const addonId = core.id;
   const clamped = clampTarget({ ...target, addonId }, player);
+
+  if (presentConfigNavigation(core, player, clamped, next => draw(core, player, next), () => leave(core, player, addonId), location)) { return true; }
 
   // The compiled scope picker when this build carries it. Its rows come back here with the scope
   // chosen, so the roster, the sections and the editor are reached the way a command reaches them.
@@ -230,9 +233,11 @@ const levelOpeners = (core: Runtime, player: Player): SectionListOpeners => ({
   list: ({ addonId, scope, entityId, key, trail }): Promise<void> =>
     draw(core, player, { kind: CONFIG_APP, addonId, scope, scopeId: entityId, list: key, trail }),
   back: ({ addonId, scope, entityId }): Promise<void> =>
-    draw(core, player, scope === 'server' || entityId === undefined
-      ? { kind: CONFIG_APP, addonId }
-      : { kind: CONFIG_APP, addonId, scope }),
+    !isOperator(player)
+      ? leave(core, player, addonId)
+      : draw(core, player, scope === 'server' || entityId === undefined
+          ? { kind: CONFIG_APP, addonId }
+          : { kind: CONFIG_APP, addonId, scope }),
 });
 
 /**
@@ -253,7 +258,7 @@ function presentShaped(core: Runtime, player: Player, target: ConfigTarget, valu
   // same step every level's own back takes.
   const up = (): unknown => (path === ''
     ? openers.back(level)
-    : openLevel(core, player, { ...level, path: path.slice(0, Math.max(0, path.lastIndexOf('.'))), trail: trail.slice(0, -1) }, openers));
+    : openers.editor({ ...level, path: path.slice(0, Math.max(0, path.lastIndexOf('.'))), trail: trail.slice(0, -1) }));
 
   return presentShapedEditor(core, player, level, values, up);
 }
