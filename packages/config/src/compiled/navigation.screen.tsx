@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { CommonActions, StackActions, createStackNavigator, createStaticNavigation, useLinkProps } from '@bedrock-core/navigation';
+import { CommonActions, createStackNavigator, createStaticNavigation, useLinkProps } from '@bedrock-core/navigation';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { createContext, Panel, Screen, useContext, type FunctionComponent, type JSX } from '@bedrock-core/ui-runtime';
 import { FRAME } from '@bedrock-core/ore-styled';
@@ -45,7 +45,7 @@ export function configNavigationScreen(definition: ConfigDefinition): FunctionCo
   screens.picker = {
     screen: function ConfigPicker(): JSX.Element {
       const model = useContext(Model);
-      const server = useLinkProps({ action: CommonActions.navigate(sectionRoute('server', '')) }).onPress;
+      const server = useLinkProps({ action: { type: 'NAVIGATE', payload: { name: sectionRoute('server', '') } } }).onPress;
 
       return (
         <ScopePickerView model={{ ...model.picker, scopePresses: {
@@ -81,10 +81,10 @@ export function configNavigationScreen(definition: ConfigDefinition): FunctionCo
           screen: function ConfigSection(): JSX.Element {
             const model = useContext(Model);
             const back = useLinkProps({ action: CommonActions.goBack() }).onPress;
-            const previous = useLinkProps({ action: StackActions.replace(sectionRoute(scope, section.path, Math.max(1, page - 1))) }).onPress;
-            const next = useLinkProps({ action: StackActions.replace(sectionRoute(scope, section.path, Math.min(pages, page + 1))) }).onPress;
+            const previous = useLinkProps({ action: { type: 'REPLACE', payload: { name: sectionRoute(scope, section.path, Math.max(1, page - 1)) } } }).onPress;
+            const next = useLinkProps({ action: { type: 'REPLACE', payload: { name: sectionRoute(scope, section.path, Math.min(pages, page + 1)) } } }).onPress;
             const rowPresses = shown.rows.map((item) => {
-              const local = useLinkProps({ action: CommonActions.navigate(sectionRoute(scope, item.path ?? '')) }).onPress;
+              const local = useLinkProps({ action: { type: 'NAVIGATE', payload: { name: sectionRoute(scope, item.path ?? '') } } }).onPress;
 
               return item.local ? local : (): unknown => model.onOpen?.(scope, item.path, item.list);
             });

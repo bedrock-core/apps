@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "include": [
+    "./navigation-consumer.tsx"
+  ],
+  "exclude": [
+    "../node_modules"
+  ]
+}

@@ -7,7 +7,7 @@ import type { PageId } from '../types';
 export const guidePageRoute = (pageId: PageId): string => `page:${pageId}`;
 
 export function GuideButton({ edge, ...props }: ButtonProps & { edge: string }): JSX.Element {
-  return Button({ ...props, ...useLinkProps({ action: CommonActions.navigate(edge) }) });
+  return Button({ ...props, ...useLinkProps({ action: { type: 'NAVIGATE', payload: { name: edge } } }) });
 }
 
 export function GuideIndexLink({ pageId, ...props }: LinkLayoutProps & { pageId: PageId }): JSX.Element {
@@ -15,7 +15,7 @@ export function GuideIndexLink({ pageId, ...props }: LinkLayoutProps & { pageId:
 
   return Link({ ...props, background: textures.default, backgroundHover: textures.hover,
     backgroundPressed: textures.pressed, backgroundLocked: textures.default,
-    action: CommonActions.navigate(guidePageRoute(pageId)) });
+    action: { type: 'NAVIGATE', payload: { name: guidePageRoute(pageId) } } });
 }
 
 export function GuideHeader(props: Pick<HeaderProps, 'title' | 'breadcrumbs' | 'onClose'>): JSX.Element {
