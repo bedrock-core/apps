@@ -12,7 +12,7 @@ import { i18n, translationsFor } from '../i18n';
 import { allowedScopes, canEditScope, isOperator } from '../permissions';
 import { currentLocation, renderDestination, type ScreenLocation } from '@bedrock-core/navigation/runtime';
 import type { ConfigTarget } from '../target';
-import { configNavigation, sectionRoute } from './navigation.screen';
+import { configNavigation, sectionRoutes } from './navigation.screen';
 import { validateField, type FieldError } from '../config/validation';
 import type { PickerModel } from './picker.screen';
 import type { ConfigScope, EntrySchema } from '../types';
@@ -176,19 +176,9 @@ export function presentConfigNavigation(
   if (scope !== undefined && ((scope !== 'server' && scopeId === undefined)
     || !isSectionLevel(core, { addonId: core.id, scope, entityId: scopeId, path, trail: [] }))) { return false; }
 
-  const routes: string[] = ['picker'];
-
-  if (scope !== undefined) {
-    for (let depth = 0; depth <= path.split('.').length; depth++) {
-      const prefix = path.split('.').slice(0, depth).join('.');
-
-      if (depth > 0 && prefix === '') { continue; }
-
-      if (isSectionLevel(core, { addonId: core.id, scope, entityId: scopeId, path: prefix, trail: [] })) {
-        routes.push(sectionRoute(scope, prefix));
-      }
-    }
-  }
+  const routes = scope === undefined
+    ? ['picker']
+    : sectionRoutes(scope, buildSectionTree(scopeSchema(core, scope), scopeGroups(core, scope)), path);
 
   const again = (confirmed = location): void => { presentConfigNavigation(core, player, target, open, leave, confirmed); };
 

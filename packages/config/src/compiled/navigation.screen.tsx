@@ -1,10 +1,10 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { CommonActions, createStackNavigator, createStaticNavigation, useLinkProps } from '@bedrock-core/navigation';
+import { CommonActions, createStackNavigator, createStaticNavigation, useLinkProps, type InitialState } from '@bedrock-core/navigation';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { createContext, Panel, Screen, useContext, type FunctionComponent, type JSX } from '@bedrock-core/ui-runtime';
 import { FRAME } from '@bedrock-core/ore-styled';
 import { flattenGroups, flattenSchema, type ConfigDefinition } from '../server';
-import { buildSectionTree, isPureSection, listEntries, type SectionNode } from '../config/schema';
+import { buildSectionTree, findSection, isPureSection, listEntries, type SectionNode } from '../config/schema';
 import { CONFIG_SCOPES, type ConfigScope } from '../types';
 import { i18n } from '../i18n';
 import { MENU_ROWS, MenuListView, pageOf, type MenuListRow } from './menu.screen';
@@ -27,6 +27,23 @@ export interface ConfigNavigationProps {
 /** Route names preserve dots and separators without conflating authored keys. */
 export const sectionRoute = (scope: ConfigScope, path: string, page = 1): string => JSON.stringify([scope, path, page]);
 
+/** The same menu ancestry seeds compilation and validated owner-side entry. */
+export function sectionRoutes(scope: ConfigScope, root: SectionNode, path: string, page = 1): string[] {
+  const routes = ['picker'];
+  const segments = path === '' ? [] : path.split('.');
+
+  for (let depth = 0; depth <= segments.length; depth++) {
+    const prefix = segments.slice(0, depth).join('.');
+    const section = findSection(root, prefix);
+
+    if (section !== undefined && isPureSection(section)) {
+      routes.push(sectionRoute(scope, prefix, prefix === path ? page : 1));
+    }
+  }
+
+  return routes;
+}
+
 let registered: FunctionComponent<ConfigNavigationProps> | undefined;
 
 export function registerConfigNavigation(screen: FunctionComponent<ConfigNavigationProps>): void { registered = screen; }
@@ -39,6 +56,7 @@ export function configNavigationScreen(definition: ConfigDefinition): FunctionCo
   const empty: ConfigNavigationModel = { picker: { trail: '', scopes, canReset: false }, scopes, trail: () => '' };
   const Model = createContext(empty);
   const screens: Record<string, { screen: FunctionComponent; if?: () => boolean }> = {};
+  const entryStates: InitialState[] = [];
 
   const roots = new Map(scopes.map(scope => [scope, buildSectionTree(flattenSchema(definition[scope] ?? {}), flattenGroups(definition[scope] ?? {}))]));
 
@@ -58,8 +76,11 @@ export function configNavigationScreen(definition: ConfigDefinition): FunctionCo
     },
   };
 
+  let maxDepth = 1;
+
   const visit = (scope: ConfigScope, section: SectionNode): void => {
     if (isPureSection(section)) {
+      maxDepth = Math.max(maxDepth, section.path === '' ? 1 : section.path.split('.').length + 1);
       const rows: { row: MenuListRow; path?: string; list?: string; local: boolean }[] = [
         ...section.children.map(child => ({
           row: { title: { translate: child.label }, ...child.description === undefined ? {} : { subtitle: { translate: child.description } } },
@@ -75,6 +96,8 @@ export function configNavigationScreen(definition: ConfigDefinition): FunctionCo
       for (let page = 1; page <= pages; page++) {
         const shown = pageOf(rows, page);
         const route = sectionRoute(scope, section.path, page);
+
+        entryStates.push({ routes: sectionRoutes(scope, roots.get(scope)!, section.path, page).map(name => ({ name })) });
 
         screens[route] = {
           if: (): boolean => useContext(Model).scopes.includes(scope),
@@ -112,7 +135,7 @@ export function configNavigationScreen(definition: ConfigDefinition): FunctionCo
 
   const stack = createStackNavigator({ id: 'config:menus', initialRouteName: 'picker', screenOptions: { headerShown: false }, screens });
   const Navigation = createStaticNavigation(stack, {
-    clientNavigation: { maxDepth: 2, maxStates: 64, fallback: 'server' }, rootBackBehavior: 'caller-or-close',
+    clientNavigation: { history: 'recent', entryStates, maxDepth, maxStates: 128, fallback: 'server' }, rootBackBehavior: 'caller-or-close',
   });
 
   return function ConfigNavigation({ model = empty, routes = ['picker'] }): JSX.Element {
