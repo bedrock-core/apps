@@ -26,7 +26,7 @@ describe('Guide audience boundaries', { timeout: 30000 }, () => {
 
     expect(plan.bodies.map(body => body.name)).toEqual(['page:intro']);
     expect(JSON.stringify(player.document)).not.toContain('Operator-only content');
-    expect(plan.contexts).toHaveLength(1);
+    expect(plan.contexts.flatMap(context => context.state?.routes.map(route => route.name) ?? [])).toEqual(['page:intro']);
   });
 
   it('includes operator routes and a separate index in operator packs', () => {

@@ -30,3 +30,5 @@ export type { CatalogDeclaration, CatalogOptions } from './declaration';
 
 export { catalogOf } from './slot';
 export type { Catalog } from './slot';
+
+export { MAIN as CATALOG_PAGE_AREA } from './frame';

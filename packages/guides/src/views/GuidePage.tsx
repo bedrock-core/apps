@@ -3,7 +3,7 @@ import { Card, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, measureText, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { canSee, paginationFor } from '../access';
-import { GuideButton, GuideHeader, guidePageRoute } from '../navigation/controls';
+import { GuideFooterButton, GuideHeader, guidePageRoute } from '../navigation/controls';
 import { hasGuideIndex } from '../navigation/edges';
 import { GuideBlockList } from '../render/GuideBlockList';
 import type { GuideAudience, GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
@@ -95,29 +95,29 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
       <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.sm} padding={spacing.sm}>
         {prevPage
           ? (
-              <GuideButton testName={'Previous'} edge={guidePageRoute(prevPage.id)} variant={'contrast'} flexGrow={1} minHeight={FOOTER_BUTTON_SIZE} paddingTop={spacing.sm} paddingBottom={spacing.sm}>
+              <GuideFooterButton testName={'Previous'} edge={guidePageRoute(prevPage.id)} variant={'contrast'} flexGrow={1} minHeight={FOOTER_BUTTON_SIZE} paddingTop={spacing.sm} paddingBottom={spacing.sm}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{'§7<'}</Text>
                   <Text>{prevPage.titleK}</Text>
                 </Panel>
-              </GuideButton>
+              </GuideFooterButton>
             )
           : <Panel flexGrow={1} />}
         {showIndex
           ? (
-              <GuideButton testName={'Index'} edge={'index'} variant={'contrast'} width={FOOTER_BUTTON_SIZE} height={FOOTER_BUTTON_SIZE} flexShrink={0} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0}>
+              <GuideFooterButton testName={'Index'} edge={'index'} variant={'contrast'} width={FOOTER_BUTTON_SIZE} height={FOOTER_BUTTON_SIZE} flexShrink={0} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0}>
                 <Image width={12} height={12} texture={ICON_INDEX} />
-              </GuideButton>
+              </GuideFooterButton>
             )
           : null}
         {nextPage
           ? (
-              <GuideButton testName={'Next'} edge={guidePageRoute(nextPage.id)} variant={'contrast'} flexGrow={1} minHeight={FOOTER_BUTTON_SIZE} paddingTop={spacing.sm} paddingBottom={spacing.sm}>
+              <GuideFooterButton testName={'Next'} edge={guidePageRoute(nextPage.id)} variant={'contrast'} flexGrow={1} minHeight={FOOTER_BUTTON_SIZE} paddingTop={spacing.sm} paddingBottom={spacing.sm}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{nextPage.titleK}</Text>
                   <Text>{'§7>'}</Text>
                 </Panel>
-              </GuideButton>
+              </GuideFooterButton>
             )
           : <Panel flexGrow={1} />}
       </Panel>

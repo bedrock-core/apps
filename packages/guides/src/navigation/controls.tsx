@@ -10,6 +10,12 @@ export function GuideButton({ edge, ...props }: ButtonProps & { edge: string }):
   return Button({ ...props, ...useLinkProps({ action: { type: 'NAVIGATE', payload: { name: edge } } }) });
 }
 
+export function GuideFooterButton({ edge, ...props }: ButtonProps & { edge: string }): JSX.Element {
+  return Button({ ...props, ...useLinkProps({ action: edge === 'index'
+    ? { type: 'RESET', payload: { index: 0, routes: [{ name: 'index' }] } }
+    : { type: 'REPLACE', payload: { name: edge } } }) });
+}
+
 export function GuideIndexLink({ pageId, ...props }: LinkLayoutProps & { pageId: PageId }): JSX.Element {
   const textures = theme.components.button.variants.transparent.textures;
 

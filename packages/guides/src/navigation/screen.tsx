@@ -85,7 +85,7 @@ export function guideNavigationScreen(manifest: GuideManifest, options: GuideNav
   const stack = createStackNavigator({ id: `guide:${manifest.ns}:${audience}`, initialRouteName,
     screenOptions: { headerShown: false }, screens });
   const Navigation = createStaticNavigation(stack, {
-    clientNavigation: { maxDepth: 2, maxStates: Math.min(64, 2 * Object.keys(screens).length + 1), fallback: 'server' },
+    clientNavigation: { history: 'recent', maxDepth: 5, maxStates: 512, fallback: 'error' },
     rootBackBehavior: options.back === true ? 'caller-or-close' : 'close',
   });
 

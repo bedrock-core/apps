@@ -1,4 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
+import { Buffer } from 'node:buffer';
 import { compileFormScreen } from '@bedrock-core/ui-compiler';
 import { Link, useRoute } from '@bedrock-core/navigation';
 import { Text, type JSX } from '@bedrock-core/ui-runtime';
@@ -52,10 +53,9 @@ describe('Guide static stack integration', { timeout: 30000 }, () => {
     const result = compile();
     const plan = planOf(result);
 
-    expect(plan.v).toBe(1);
+    expect(plan.v).toBe(2);
     expect(plan.contexts.length).toBeGreaterThan(2);
     expect(plan.contexts.length).toBeLessThanOrEqual(64);
-    expect(plan.contexts.every(context => context.via.length <= 2)).toBe(true);
     expect(plan.bodies.map(body => body.name)).toEqual(['page:intro', 'page:usage', 'page:hidden', 'index']);
     const serialized = JSON.stringify(result.document);
 
@@ -76,7 +76,25 @@ describe('Guide static stack integration', { timeout: 30000 }, () => {
     expect(result.testMetadata?.controls.filter(control => control.interaction === 'local-toggle').length).toBeGreaterThan(2);
   });
 
-  it('keeps a large guide within the shared 64-state budget', () => {
+  it('keeps a small linked guide within a modest native input budget', () => {
+    setBuildLocales({ defaultLocale: 'en_US', tables: { en_US: {} } });
+    const source: GuideManifest = { ...manifest, ns: 'small_guide', tree: [
+      { t: 'page', id: 'intro', titleK: 'Introduction' }, { t: 'page', id: 'usage', titleK: 'Usage' },
+    ], pages: {
+      intro: { id: 'intro', titleK: 'Introduction', next: 'usage', blocks: [
+        { t: 'p', text: { en_US: '<0>Usage</0>' }, links: ['usage'] },
+      ] },
+      usage: { id: 'usage', titleK: 'Usage', prev: 'intro', blocks: [
+        { t: 'p', text: { en_US: '<0>Introduction</0>' }, links: ['intro'] },
+      ] },
+    } };
+    const result = compile(source);
+
+    expect(result.entries.length, 'small guide form input count').toBeLessThanOrEqual(128);
+    expect(JSON.stringify(result.document).length, 'small guide native layout size').toBeLessThan(1_000_000);
+  });
+
+  it('keeps pagination-only guides within a compact native plan', () => {
     const pages = Object.fromEntries(Array.from({ length: 25 }, (_, index) => [String(index), {
       id: String(index), titleK: 'Page ' + index, next: String((index + 1) % 25),
       blocks: [{ t: 'p' as const, k: 'Payload ' + index }],
@@ -86,6 +104,8 @@ describe('Guide static stack integration', { timeout: 30000 }, () => {
     const result = compile(source);
     const plan = planOf(result);
 
+    expect(result.entries.length, 'large guide native fixture entry budget').toBeLessThanOrEqual(1024);
+    expect(Buffer.byteLength(JSON.stringify(result.document)), 'large guide native fixture size budget').toBeLessThanOrEqual(8 * 1024 * 1024);
     expect(plan.bodies).toHaveLength(26);
     expect(plan.contexts.length).toBeLessThanOrEqual(64);
     expect(plan.contexts.length).toBeGreaterThan(25);

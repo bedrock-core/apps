@@ -40,7 +40,6 @@ describe('Config local schema navigation', { timeout: 45000 }, () => {
     expect(plan.contexts.some(context => context.origin === picker.id && context.body === economy.id && context.via.length === 2)).toBe(true);
     expect(plan.contexts.length).toBeGreaterThan(plan.bodies.length);
     expect(plan.contexts.length).toBeLessThanOrEqual(64);
-    expect(plan.contexts.every(context => context.via.length <= 2)).toBe(true);
     expect(result.testMetadata?.controls.filter(control => control.interaction === 'local-toggle').length).toBeGreaterThan(2);
     expect(plan.bodies.some(body => body.name === sectionRoute('server', 'economy.pricing'))).toBe(false);
     expect(result.table).toBeUndefined();

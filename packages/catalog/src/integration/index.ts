@@ -3,6 +3,8 @@ import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { system } from '@minecraft/server';
 import { addonPageReference, pages } from './pages';
 
+export { MAIN as CATALOG_PAGE_AREA } from '../frame';
+
 export { addonPageReference, isAddonPageReference, pages, pageTargeted, PagesRegistry } from './pages';
 export type { AddonPageReference, PageTarget, TargetedPress } from './pages';
 
