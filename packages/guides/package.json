@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/guides",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "In-game guides with client navigation for @bedrock-core/ui",
 	"keywords": [
 		"ui",
