@@ -1,5 +1,31 @@
 # @bedrock-core/guides
 
+## 0.3.0
+
+### Minor Changes
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Render Guides through the shared static stack with bounded local transitions, visited-page Back history and complete server checkpoints. Custom MDX components use the navigation package Links and hooks.
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Provide audience-filtered static guide screens with local page selection and navigation checkpoints for MDX actions. Restore confirmed navigator state across server actions and caller handoffs.
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Register application entry points through `navigation(core)`, reconstruct private models in their owning realm and preserve destination inputs across realm transitions. Determine catalog button availability from registered screens. Export manifest-page publishing separately through `@bedrock-core/catalog/integration`.
+
+### Patch Changes
+
+- [`6ba1736`](https://github.com/bedrock-core/apps/commit/6ba1736adf52d5d95b6201d268b38cd11d97ad7a) Thanks [@drav0011](https://github.com/drav0011)! - Render guide index entries as text links with optional icons and descriptions, preserving category nesting and local navigation history.
+
+- [`ae304d5`](https://github.com/bedrock-core/apps/commit/ae304d5b961d45e659f913f199ac1b6d4ed7946b) Thanks [@drav0011](https://github.com/drav0011)! - Keep guide reading client-side with sibling pagination, loop removal, and five retained Back destinations. Require complete native history coverage at build time.
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Hide the Index action on hidden guide pages while retaining it on declared home and category landing pages. Keep its square button inside the footer at the same size with or without pagination controls.
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Use the navigation host extension entry point and the renderer's shared screen metadata contracts.
+
+- [`54683fa`](https://github.com/bedrock-core/apps/commit/54683fabcc8a5812c4e65e1d849b74ec0b15e62d) Thanks [@drav0011](https://github.com/drav0011)! - Keep Config and Guides internal navigation routes independent of the consumer's registered root navigator types.
+
+- [`81e64d9`](https://github.com/bedrock-core/apps/commit/81e64d9f63a272616eb94335bb1a9a268b303f87) Thanks [@drav0011](https://github.com/drav0011)! - Require the released navigation and UI libraries and the stable reactive packages.
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Preserve Ore layout dimensions and intrinsic captions in resident guide navigation controls. Keep the Index control aligned on eligible pages with or without pagination neighbors.
+
 ## 0.2.0
 
 ### Minor Changes

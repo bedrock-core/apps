@@ -1,5 +1,27 @@
 # @bedrock-core/config
 
+## 0.4.0
+
+### Minor Changes
+
+- [`6ba1736`](https://github.com/bedrock-core/apps/commit/6ba1736adf52d5d95b6201d268b38cd11d97ad7a) Thanks [@drav0011](https://github.com/drav0011)! - Use a bounded client navigation stack for schema menus, enable resets only for non-default values, and preserve invalid editor submissions with localized field errors. Recheck permissions before applying resets and edits. Compile schema menu pages at their authored row capacities.
+  
+  Use consistent card bounds and menu row spacing across scope selection and schema pages. Preserve list-setting breadcrumbs and their parent destinations.
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Register application entry points through `navigation(core)`, reconstruct private models in their owning realm and preserve destination inputs across realm transitions. Determine catalog button availability from registered screens. Export manifest-page publishing separately through `@bedrock-core/catalog/integration`.
+
+### Patch Changes
+
+- [`27ce262`](https://github.com/bedrock-core/apps/commit/27ce262c9c5ab6a93bc901b98100768da58bdd9e) Thanks [@drav0011](https://github.com/drav0011)! - Lay out number sliders below their captions and descriptions so the native track keeps their text readable.
+
+- [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Use the navigation host extension entry point and the renderer's shared screen metadata contracts.
+
+- [`54683fa`](https://github.com/bedrock-core/apps/commit/54683fabcc8a5812c4e65e1d849b74ec0b15e62d) Thanks [@drav0011](https://github.com/drav0011)! - Keep Config and Guides internal navigation routes independent of the consumer's registered root navigator types.
+
+- [`8b77121`](https://github.com/bedrock-core/apps/commit/8b771219f6979cd8ae90ed61ba204ea56aa39662) Thanks [@drav0011](https://github.com/drav0011)! - Keep schema menu navigation on the client with loop-collapsing history and full section ancestry.
+
+- [`81e64d9`](https://github.com/bedrock-core/apps/commit/81e64d9f63a272616eb94335bb1a9a268b303f87) Thanks [@drav0011](https://github.com/drav0011)! - Require the released navigation and UI libraries and the stable reactive packages.
+
 ## 0.3.0
 
 ### Minor Changes
