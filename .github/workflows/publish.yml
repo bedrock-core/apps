@@ -55,7 +55,8 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: apps/yarn.lock
 
-      - run: yarn install --immutable
+      - name: Resolve released library dependencies
+        run: node scripts/prepare-registry.mjs
 
       # No `publish` input: with changesets pending this opens the PR, and with
       # none pending it does nothing.

@@ -35,7 +35,9 @@
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"changeset": "changeset",
 		"version-packages": "changeset version",
-		"release": "yarn lint && yarn typecheck && yarn test && node scripts/publish-tarballs.mjs && node scripts/tag-packages.mjs"
+		"release": "yarn lint && yarn typecheck && yarn test && node scripts/publish-tarballs.mjs && node scripts/tag-packages.mjs",
+		"prepare:registry": "node scripts/prepare-registry.mjs",
+		"test:release": "node --test scripts/prepare-registry.test.mjs"
 	},
 	"dependencies": {
 		"@bedrock-core/catalog": "workspace:*",
@@ -43,7 +45,7 @@
 		"@bedrock-core/guides": "workspace:*"
 	},
 	"devDependencies": {
-		"@bedrock-core/navigation": "*",
+		"@bedrock-core/navigation": "0.13.0",
 		"@changesets/changelog-github": "^0.7.0",
 		"@changesets/cli": "3.0.3",
 		"@eslint/js": "^10.0.1",
@@ -57,25 +59,26 @@
 		"eslint": "^10.3.0",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.2",
-		"vitest": "^4.1.5"
+		"vitest": "^4.1.5",
+		"@bedrock-core/ui-compiler": "0.2.0"
 	},
 	"resolutions": {
-		"@bedrock-core/db": "0.1.0",
-		"@bedrock-core/flexbox": "portal:../ui/packages/flexbox",
+		"@bedrock-core/db": "0.1.1",
+		"@bedrock-core/flexbox": "1.0.1",
 		"@bedrock-core/i18n": "0.2.0",
-		"@bedrock-core/observable": "0.1.0",
-		"@bedrock-core/ore-styled": "portal:../ui/packages/ore-styled",
-		"@bedrock-core/server-runtime": "0.2.0",
-		"@bedrock-core/sync": "0.2.0",
-		"@bedrock-core/ui": "portal:../ui",
-		"@bedrock-core/ui-runtime": "portal:../ui/packages/ui-runtime",
-		"@bedrock-core/ui-compiler": "portal:../ui/packages/ui-compiler",
+		"@bedrock-core/observable": "1.0.0",
+		"@bedrock-core/ore-styled": "0.11.1",
+		"@bedrock-core/server-runtime": "0.2.1",
+		"@bedrock-core/sync": "1.0.0",
+		"@bedrock-core/ui": "0.13.0",
+		"@bedrock-core/ui-runtime": "0.13.0",
+		"@bedrock-core/ui-compiler": "0.2.0",
 		"@minecraft/common": "1.2.0",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",
 		"@minecraft/vanilla-data": "1.26.50",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.5",
-		"@bedrock-core/navigation": "portal:../ui/packages/navigation"
+		"@bedrock-core/navigation": "0.13.0"
 	}
 }
