@@ -49,7 +49,7 @@ describe('Config local schema navigation', { timeout: 45000 }, () => {
     const plan = Object.values(result.snapshot.data ?? {})[0] as NativePlan;
 
     expect(plan.bodies.map(body => body.name)).toEqual(['picker', sectionRoute('server', ''), sectionRoute('server', 'economy'), sectionRoute('player', '')]);
-    expect(plan.v).toBe(2);
+    expect(plan.v).toBe(3);
     const server = sectionRoute('server', '');
     const economy = sectionRoute('server', 'economy');
     let context = nativeContext(plan, ['picker']);
@@ -162,7 +162,7 @@ describe('Config local schema navigation', { timeout: 45000 }, () => {
     const names = ['picker', sectionRoute('server', ''), ...levels.map((_, index) => sectionRoute('server', levels.slice(0, index + 1).join('.')))];
     let context = nativeContext(plan, ['picker']);
 
-    expect(plan.v).toBe(2);
+    expect(plan.v).toBe(3);
     expect(plan.contexts.length).toBeLessThanOrEqual(128);
     expect(plan.bodies.map(body => body.name)).toEqual(names);
 
@@ -182,7 +182,7 @@ describe('Config local schema navigation', { timeout: 45000 }, () => {
     const second = sectionRoute('server', '', 2);
     const child = sectionRoute('server', 'group12');
 
-    expect(plan.v).toBe(2);
+    expect(plan.v).toBe(3);
     expect(plan.bodies.map(body => body.name)).toEqual(['picker', first, second, child]);
     expect(plan.contexts.length).toBeLessThanOrEqual(128);
     let context = nativeContext(plan, ['picker']);

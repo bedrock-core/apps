@@ -1,5 +1,4 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Buffer } from 'node:buffer';
 import { compileFormScreen } from '@bedrock-core/ui-compiler';
 import { Link, useRoute } from '@bedrock-core/navigation';
 import { Text, type JSX } from '@bedrock-core/ui-runtime';
@@ -53,7 +52,7 @@ describe('Guide static stack integration', { timeout: 30000 }, () => {
     const result = compile();
     const plan = planOf(result);
 
-    expect(plan.v).toBe(2);
+    expect(plan.v).toBe(3);
     expect(plan.contexts.length).toBeGreaterThan(2);
     expect(plan.contexts.length).toBeLessThanOrEqual(64);
     expect(plan.bodies.map(body => body.name)).toEqual(['page:intro', 'page:usage', 'page:hidden', 'index']);
@@ -105,7 +104,7 @@ describe('Guide static stack integration', { timeout: 30000 }, () => {
     const plan = planOf(result);
 
     expect(result.entries.length, 'large guide native fixture entry budget').toBeLessThanOrEqual(1024);
-    expect(Buffer.byteLength(JSON.stringify(result.document)), 'large guide native fixture size budget').toBeLessThanOrEqual(8 * 1024 * 1024);
+    expect(new TextEncoder().encode(JSON.stringify(result.document)).byteLength, 'large guide native fixture size budget').toBeLessThanOrEqual(8 * 1024 * 1024);
     expect(plan.bodies).toHaveLength(26);
     expect(plan.contexts.length).toBeLessThanOrEqual(64);
     expect(plan.contexts.length).toBeGreaterThan(25);

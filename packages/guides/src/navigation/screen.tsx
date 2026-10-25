@@ -27,7 +27,7 @@ function residentTree(tree: GuideTreeNode[], pages: ReadonlySet<PageId>): GuideT
   });
 }
 
-/** Guide pages use the shared static stack with bounded local transitions and server checkpoints. */
+/** Guide pages share a complete native reading graph with bounded Back history. */
 export function guideNavigationScreen(manifest: GuideManifest, options: GuideNavigationOptions = {}): FunctionComponent {
   const audience = options.audience === 'op' && manifest.gated === true ? 'op' : 'player';
   const pageIds = visiblePageIds(manifest, audience);
