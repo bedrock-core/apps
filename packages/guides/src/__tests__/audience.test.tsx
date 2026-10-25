@@ -1,6 +1,6 @@
 import { compileFormScreen } from '@bedrock-core/ui-compiler';
 import { describe, expect, it } from 'vitest';
-import type { NativePlan } from '../../../../../ui/packages/navigation/src/static/plan';
+import type { NativePlan } from '../../../../test/navigation-plan';
 import { guideNavigationScreen } from '../navigation/screen';
 import type { GuideManifest } from '../types';
 

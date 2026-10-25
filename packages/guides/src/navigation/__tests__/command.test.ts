@@ -1,9 +1,8 @@
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { registerCompiledScreen, type FunctionComponent } from '@bedrock-core/ui-runtime';
-import { navigateAsync } from '@bedrock-core/navigation';
+import { closeUi, navigateAsync } from '@bedrock-core/navigation';
 import { currentLocation, setNavigator } from '@bedrock-core/navigation/runtime';
-import { clearPlayerNavigation } from '../../../../../../ui/packages/navigation/src/runtime/navigate';
-import { noteLocation } from '../../../../../../ui/packages/navigation/src/runtime/history';
+
 import { navigation } from '@bedrock-core/navigation/core';
 import type { CustomCommand, CustomCommandOrigin, CustomCommandResult, Player } from '@minecraft/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -84,7 +83,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  clearPlayerNavigation(player.id);
+  closeUi(player);
   setNavigator(undefined);
 });
 
@@ -108,7 +107,8 @@ describe('Guide command and Catalog entry', () => {
     const catalogEntry = navigation(core).screens.find(id, 'guide');
 
     expect(catalogEntry?.key).toBe(`${id}:guide`);
-    noteLocation(player.id, { key: `${id}:catalog`, params: { addonId: id } });
+    navigation(core).register({ key: `${id}:catalog`, kind: 'custom', parameters: { addonId: { type: 'string' } } }, () => true);
+    expect(await navigateAsync(`${id}:catalog`, player, { params: { addonId: id } })).toBe(true);
     expect(await navigateAsync(catalogEntry!.key, player)).toBe(true);
     expect(host.renderDestination).toHaveBeenCalledWith(entry, player, { key: `${id}:guide` }, { debug: undefined });
   });

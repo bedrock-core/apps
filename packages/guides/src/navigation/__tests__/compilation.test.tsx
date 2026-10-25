@@ -4,7 +4,7 @@ import { Link, useRoute } from '@bedrock-core/navigation';
 import { Text, type JSX } from '@bedrock-core/ui-runtime';
 import { setBuildLocales } from '@bedrock-core/ui-runtime/compile';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { NativePlan } from '../../../../../../ui/packages/navigation/src/static/plan';
+import type { NativePlan } from '../../../../../test/navigation-plan';
 import type { GuideManifest } from '../../types';
 import { guideNavigationScreen } from '../screen';
 

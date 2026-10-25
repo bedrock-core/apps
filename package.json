@@ -46,6 +46,7 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/navigation": "0.13.0",
+		"@bedrock-core/ui-compiler": "0.2.0",
 		"@changesets/changelog-github": "^0.7.0",
 		"@changesets/cli": "3.0.3",
 		"@eslint/js": "^10.0.1",
@@ -59,8 +60,7 @@
 		"eslint": "^10.3.0",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.2",
-		"vitest": "^4.1.5",
-		"@bedrock-core/ui-compiler": "0.2.0"
+		"vitest": "^4.1.5"
 	},
 	"resolutions": {
 		"@bedrock-core/db": "0.1.1",

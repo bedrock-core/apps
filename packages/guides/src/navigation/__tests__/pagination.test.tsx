@@ -1,10 +1,10 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { useRoute } from '@bedrock-core/navigation';
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { buildScreenTree, childElements, setBuildLocales } from '@bedrock-core/ui-runtime/compile';
+import { buildScreenTree, childElements, compileDataOf, setBuildLocales } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
-import { compileDataOf } from '../../../../../../ui/packages/ui-runtime/src/core/render/data';
-import type { NativePlan } from '../../../../../../ui/packages/navigation/src/static/plan';
+
+import type { NativePlan } from '../../../../../test/navigation-plan';
 import type { GuideManifest } from '../../types';
 import { GuideButton, guidePageRoute } from '../controls';
 import { guideNavigationScreen } from '../screen';
@@ -143,7 +143,6 @@ describe('guide client pagination', () => {
     expect(guide.page()).toBe('index');
   });
 });
-
 
 it('reads a long linked cycle locally while retaining at most five Back destinations', () => {
   const ids = Array.from({ length: 9 }, (_, index) => String(index));

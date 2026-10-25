@@ -52,6 +52,9 @@
 	},
 	"files": [
 		"src",
+		"!src/**/__tests__/**",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx",
 		"tsconfig.json"
 	],
 	"sideEffects": false,
@@ -65,6 +68,7 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/i18n": "*",
+		"@bedrock-core/navigation": "*",
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "*",
 		"@bedrock-core/ui": "*",

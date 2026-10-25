@@ -29,7 +29,7 @@ vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => {
 
 const { registerCatalog } = await import('../declaration');
 const { registerStaticScreens } = await import('@bedrock-core/ui-runtime');
-const { clearPlayerNavigation } = await import('../../../../../ui/packages/navigation/src/runtime/navigate');
+const { closeUi } = await import('@bedrock-core/navigation');
 
 /** One show request this realm sent. */
 interface Sent {
@@ -119,7 +119,7 @@ const pressRow = async (core: unknown, id: string): Promise<void> => {
 };
 
 beforeEach(() => {
-  clearPlayerNavigation(player.id);
+  closeUi(player);
   registerStaticScreens([{ key: 'me:framework_guide', title: 'framework', values: ['t'], actions: [{ back: true }] }]);
   render.mockClear();
   showCompiledTitle.mockReset().mockResolvedValue(undefined);

@@ -5,7 +5,7 @@ import { __lastActionForm, __resetFormMocks, __setDeferredShows } from '@bedrock
 import type { Player } from '@minecraft/server';
 import type { ConfigDefinition } from '../../server';
 import { describe, expect, it, vi } from 'vitest';
-import type { NativePlan } from '../../../../../../ui/packages/navigation/src/static/plan';
+import type { NativePlan } from '../../../../../test/navigation-plan';
 import { configNavigationScreen, sectionRoute, type ConfigNavigationModel } from '../navigation.screen';
 
 const definition = {

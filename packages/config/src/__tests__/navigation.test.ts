@@ -1,9 +1,8 @@
 import type { Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
-import { navigateAsync } from '@bedrock-core/navigation';
+import { back, closeUi, navigateAsync } from '@bedrock-core/navigation';
 import { currentLocation, setNavigator } from '@bedrock-core/navigation/runtime';
-import { clearPlayerNavigation } from '../../../../../ui/packages/navigation/src/runtime/navigate';
-import { navigationSnapshot, noteLocation } from '../../../../../ui/packages/navigation/src/runtime/history';
+
 import { afterEach, expect, it, vi } from 'vitest';
 
 vi.mock('../server', () => ({
@@ -15,7 +14,7 @@ const { registerConfig } = await import('../declaration');
 const player = { id: 'config-navigation', playerPermissionLevel: 1, sendMessage: vi.fn() } as unknown as Player;
 
 afterEach(() => {
-  clearPlayerNavigation(player.id);
+  closeUi(player);
   setNavigator(undefined);
   vi.restoreAllMocks();
 });
@@ -36,13 +35,20 @@ it('retains the previous destination when the owner has no compiled config host'
     rpc: { onRequest: vi.fn() },
   } as unknown as Runtime;
 
+  setNavigator(() => true);
+  expect(await navigateAsync('source:root', player)).toBe(true);
+  expect(await navigateAsync('source:detail', player, { params: { id: 7 } })).toBe(true);
+  const before = currentLocation(player);
+
   registerConfig({}, { commands: false }).install(core);
-  noteLocation(player.id, { key: 'source:detail', params: { id: 7 } });
-  const before = navigationSnapshot(player);
 
   vi.spyOn(console, 'error').mockImplementation(() => {});
   expect(await navigateAsync('config-owner:config', player)).toBe(false);
-  expect(navigationSnapshot(player)).toEqual(before);
+  expect(currentLocation(player)).toEqual(before);
   expect(currentLocation(player)?.params).toEqual({ id: 7 });
   expect(player.sendMessage).toHaveBeenCalledTimes(1);
+
+  setNavigator(() => true);
+  expect(back(player)).toBe(true);
+  expect(currentLocation(player)).toEqual({ key: 'source:root' });
 });
