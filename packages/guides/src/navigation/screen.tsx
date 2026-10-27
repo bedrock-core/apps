@@ -10,6 +10,8 @@ import { GuidePageView } from '../views/GuidePage';
 import { guidePageRoute } from './controls';
 
 export interface GuideNavigationOptions extends CompiledGuideOptions {
+  /** Root component used for the existing guide view and navigation graph. Defaults to Screen. */
+  screenRoot?: typeof Screen;
   /** Initial page when the guide has no confirmed navigation state. */
   entry?: 'home' | 'index' | { page: PageId };
   /** Return to the caller at the root; otherwise close the guide. */
@@ -88,8 +90,9 @@ export function guideNavigationScreen(manifest: GuideManifest, options: GuideNav
     clientNavigation: { history: 'recent', maxDepth: 5, maxStates: 512, fallback: 'error' },
     rootBackBehavior: options.back === true ? 'caller-or-close' : 'close',
   });
+  const Root = options.screenRoot ?? Screen;
 
   return function GuideScreen(): JSX.Element {
-    return <Screen><Panel width={options.width ?? 300} height={options.height ?? 200}><Navigation /></Panel></Screen>;
+    return <Root><Panel width={options.width ?? 300} height={options.height ?? 200}><Navigation /></Panel></Root>;
   };
 }
