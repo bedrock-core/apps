@@ -1,7 +1,7 @@
 import { GuideButton } from '../../navigation/controls';
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider } from '@bedrock-core/ore-styled';
-import { Image, Panel, Text, Trans, type JSX } from '@bedrock-core/ui-runtime';
+import { Image, Panel, Text, Trans, measureText, type JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import type { GuideBlock } from '../../types';
 import { GuideBlockList } from '../GuideBlockList';
@@ -42,10 +42,18 @@ describe('GuideBlockList block mapping', () => {
 
     expect(h1.type).toBe(Text);
     expect(h1.props.font).toBe('minecraftTen');
+    expect(h1.props.scale).toBe(2);
     expect(h1.props.children).toBe('k1');
     expect(h2.props.font).toBe('mojangles');
     expect(h2.props.scale).toBe(1.5);
     expect(h3.props.scale).toBe(1.25);
+  });
+
+  it.each(['Your Settings', 'Tu configuración'])('keeps the H1 %s within the guide prose column', (text) => {
+    const [heading] = renderBlocks([{ t: 'h', l: 1, k: 'heading' }]);
+    const measured = measureText({ text, font: 'minecraftTen', fontSize: Number(heading.props.scale) });
+
+    expect(measured.width).toBeLessThanOrEqual(260);
   });
 
   it('renders a paragraph as one localized Text that wraps', () => {
