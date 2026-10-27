@@ -1,5 +1,16 @@
 # @bedrock-core/guides
 
+## 0.4.0
+
+### Minor Changes
+
+- 278cc52: Allow guide navigation to use an explicit screen root while retaining its views and navigation graph.
+
+### Patch Changes
+
+- 3326f79: Size top-level guide headings to fit the prose column in English and Spanish.
+- Target the coordinated UI 0.14, Navigation 0.13.1 and Ore Styled 0.11.2 stack in application peer dependencies.
+
 ## 0.3.0
 
 ### Minor Changes

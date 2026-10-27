@@ -1,5 +1,11 @@
 # @bedrock-core/config
 
+## 0.4.1
+
+### Patch Changes
+
+- Target the coordinated UI 0.14, Navigation 0.13.1 and Ore Styled 0.11.2 stack in application peer dependencies.
+
 ## 0.4.0
 
 ### Minor Changes
