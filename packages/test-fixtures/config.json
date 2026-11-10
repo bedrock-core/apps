@@ -1,0 +1,29 @@
+{
+  "$schema": "../../node_modules/@bedrock-core/builder/schemas/config.schema.json",
+  "targetVersion": "1.26.50",
+  "name": "core-apps-fixture",
+  "description": "Storage and observable GameTests for @bedrock-core/config",
+  "authors": ["DrAv0011"],
+  "packs": {
+    "behaviorPack": "./packs/BP"
+  },
+  "bedrockCore": {
+    "formatVersion": "1.0.0",
+    "profiles": {
+      "test": {
+        "stages": {
+          "generator": false,
+          "guides": false,
+          "i18n": false,
+          "ui-compiler": false,
+          "bundler": {
+            "tsconfig": "tsconfig.json"
+          }
+        },
+        "export": {
+          "behaviorPack": "./build/BP"
+        }
+      }
+    }
+  }
+}

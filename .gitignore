@@ -12,13 +12,12 @@ node_modules
 # Build outputs
 dist
 **/dist
-*.tsbuildinfo
-**/*.tsbuildinfo
+**/build
+.bds
 
 # Testing
 coverage
 **/coverage
-.nyc_output
 
 # Environment
 .env

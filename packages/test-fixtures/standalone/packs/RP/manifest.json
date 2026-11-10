@@ -1,0 +1,18 @@
+{
+  "format_version": 3,
+  "namespace": "apps_standalone_fixture",
+  "header": {
+    "name": "Standalone Apps Resources",
+    "description": "Compiled standalone application fixtures",
+    "uuid": "26b33863-a88d-4c1d-bd56-9f777d1d8001",
+    "version": "1.0.0",
+    "min_engine_version": "1.26.50"
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "a69ab4b1-4256-446f-9cc1-85f22d29334f",
+      "version": "1.0.0"
+    }
+  ]
+}

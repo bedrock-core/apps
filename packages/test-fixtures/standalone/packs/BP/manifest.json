@@ -1,0 +1,42 @@
+{
+  "format_version": 3,
+  "namespace": "apps_standalone_fixture",
+  "header": {
+    "name": "Standalone Apps GameTests",
+    "description": "Config, Guides and addon pages without a Catalog browser",
+    "uuid": "90f505a8-b42b-4497-a8f0-49b4325de6f5",
+    "version": "1.0.0",
+    "min_engine_version": "1.26.50"
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "30af0cf2-561f-41f7-861f-727d4aa22fe8",
+      "version": "1.0.0"
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "36eade23-48b4-4a7b-b9d4-ee4bc3f4d16e",
+      "entry": "scripts/main.js",
+      "version": "1.0.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "namespace": "apps_standalone_fixture"
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.10.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.2.0"
+    },
+    {
+      "module_name": "@minecraft/server-gametest",
+      "version": "1.0.0-beta"
+    }
+  ]
+}

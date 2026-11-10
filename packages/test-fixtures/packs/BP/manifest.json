@@ -1,0 +1,35 @@
+{
+  "format_version": 3,
+  "namespace": "config_fixture",
+  "header": {
+    "name": "@bedrock-core Apps GameTests",
+    "description": "Config storage and observable acceptance",
+    "uuid": "9bc117ab-625f-40fc-a880-37bc28fb956c",
+    "version": "1.0.0",
+    "min_engine_version": "1.26.50"
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "a50b7ab8-6858-475e-95ab-7d4827fe00b4",
+      "version": "1.0.0"
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "b18637ef-7bbd-40ba-a61b-a2a10be84cdd",
+      "entry": "scripts/gametest.js",
+      "version": "1.0.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.10.0"
+    },
+    {
+      "module_name": "@minecraft/server-gametest",
+      "version": "1.0.0-beta"
+    }
+  ]
+}

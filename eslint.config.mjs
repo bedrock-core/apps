@@ -13,6 +13,9 @@ export default defineConfig([
     ignores: [
       ".yarn/**",
       "dist/**",
+      "**/build/**",
+      "**/.bedrock-core/**",
+      ".bds/**",
       "node_modules/**",
       // Tests are not linted. Test bodies legitimately reach past the public API
       // (casts onto internal shapes to assert on them), which the type-aware

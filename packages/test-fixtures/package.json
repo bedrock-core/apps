@@ -1,0 +1,35 @@
+{
+  "name": "@bedrock-core/apps-test-fixtures",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headless GameTest fixtures for the @bedrock-core applications",
+  "type": "module",
+  "scripts": {
+    "build": "bc-builder build config.json test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "build:standalone": "node ../../../builder/bin/build.ts standalone/config.json test"
+  },
+  "dependencies": {
+    "@bedrock-core/catalog": "workspace:^",
+    "@bedrock-core/config": "workspace:^",
+    "@bedrock-core/db": "*",
+    "@bedrock-core/guides": "workspace:^",
+    "@bedrock-core/navigation": "*",
+    "@bedrock-core/observable": "*",
+    "@bedrock-core/ore-styled": "*",
+    "@bedrock-core/server-runtime": "*",
+    "@bedrock-core/ui": "*",
+    "@bedrock-core/ui-runtime": "*",
+    "@minecraft/common": "*",
+    "@minecraft/server": "*",
+    "@minecraft/server-gametest": "1.0.0-beta.1.26.50-stable",
+    "@minecraft/server-ui": "*",
+    "@minecraft/vanilla-data": "*"
+  },
+  "devDependencies": {
+    "@bedrock-core/builder": "0.1.2",
+    "eslint": "*",
+    "typescript": "*"
+  }
+}

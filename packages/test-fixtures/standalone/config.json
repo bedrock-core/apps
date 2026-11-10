@@ -1,0 +1,30 @@
+{
+  "$schema": "../../../../builder/schemas/config.schema.json",
+  "targetVersion": "1.26.50",
+  "name": "core-apps-standalone-fixture",
+  "description": "Standalone application integration GameTests",
+  "authors": [
+    "DrAv0011"
+  ],
+  "packs": {
+    "behaviorPack": "./packs/BP",
+    "resourcePack": "./packs/RP"
+  },
+  "bedrockCore": {
+    "formatVersion": "1.0.0",
+    "profiles": {
+      "test": {
+        "stages": {
+          "generator": false,
+          "bundler": {
+            "tsconfig": "tsconfig.json"
+          }
+        },
+        "export": {
+          "behaviorPack": "./build/BP",
+          "resourcePack": "./build/RP"
+        }
+      }
+    }
+  }
+}

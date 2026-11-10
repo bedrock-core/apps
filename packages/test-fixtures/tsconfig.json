@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "preserveSymlinks": true
+  },
+  "include": [
+    "packs/BP/scripts/**/*.ts",
+    "standalone/packs/BP/scripts/**/*.ts",
+    "standalone/packs/BP/scripts/**/*.tsx"
+  ]
+}
