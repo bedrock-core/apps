@@ -1,5 +1,5 @@
 // Rewrites JSX conditionals into carried visibility before a screen module runs.
-// Keep this in sync with regolith-filters/ui-compiler/lib/sugar.ts: the build and
+// Keep this in sync with builder/packages/ui-compiler/src/sugar.ts: the build and
 // tests must walk the same fixed screen shape.
 import ts from 'typescript';
 

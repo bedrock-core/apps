@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LeafModel } from '../shaped';
 
 const fixture = vi.hoisted(() => ({ render: vi.fn(), patch: vi.fn(), renderDestination: vi.fn(), location: undefined as ScreenLocation | undefined }));
+vi.mock('@bedrock-core/server-runtime/i18n', () => ({ translations: () => ({ forPlayer: () => undefined }) }));
 vi.mock('@bedrock-core/navigation/runtime', async (original) => ({
   ...await original<typeof import('@bedrock-core/navigation/runtime')>(),
   currentLocation: () => fixture.location,
@@ -39,7 +40,7 @@ registerConfigScreens(configScreens({ server: { group: {
   name: { type: 'string', default: '', label: 'Name', maxLength: 3 },
   enabled: { type: 'boolean', default: true, label: 'Enabled' },
 } } }));
-const core = { id: 'config-test', registry: { get: () => undefined }, translations: { forPlayer: () => undefined } } as unknown as Runtime;
+const core = { id: 'config-test', registry: { get: () => undefined } } as unknown as Runtime;
 const target = { addonId: 'config-test', scope: 'server' as const, path: 'group', trail: ['Config'] };
 const player = { id: 'viewer', playerPermissionLevel: 2 } as unknown as Player;
 const shown = (): LeafModel => (fixture.render.mock.lastCall![0] as JSX.Element).props.model as LeafModel;

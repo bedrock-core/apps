@@ -7,15 +7,14 @@
  * config.server.taxRate.get();   // typed by the definition
  * ```
  *
- * Installing builds the {@link ConfigRegistry} on the runtime's db, fills the
- * `core:config` slot with it, and returns the typed scope accessors. Everything else reads that
- * registry back through `configOf(core)`. Stopping releases its subscriptions.
+ * Installing acquires the library-owned ConfigService and returns typed scope accessors.
+ * Other library code reads it through configOf(core). Each installed definition owns its scopes,
+ * subscriptions and namespaced database until uninstall or rollback; an empty service can remain.
  */
-import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
-import { ConfigRegistry, type Config } from './config-registry';
+import type { Declaration, Installation, Runtime } from '@bedrock-core/server-runtime';
+import type { Config } from './config-service';
+import { configOf } from './service';
 import type { ConfigDefinition } from './schema';
-// Type-only, and erased: it pulls in the `core:config` slot declaration `fill` is keyed by.
-import type {} from './slot';
 
 /** What `registerConfig(definition)` hands `register()`: the installer, and the definition it was given. */
 export interface ConfigDeclaration<I extends ConfigDefinition> extends Declaration<Config<I>> {
@@ -28,19 +27,10 @@ export interface ConfigDeclaration<I extends ConfigDefinition> extends Declarati
 
 /** Declare this addon's config: the scopes, their entries, and the schema version. */
 export function registerConfig<I extends ConfigDefinition>(definition: I): ConfigDeclaration<I> {
-  let registry: ConfigRegistry | undefined;
-
   return {
     definition,
-    install(core: Runtime): Config<I> {
-      registry = new ConfigRegistry(core.db);
-      core.fill('core:config', registry);
-
-      return registry.define(definition);
-    },
-    stop(): void {
-      registry?.stop();
-      registry = undefined;
+    install(core: Runtime, lifetime): Installation<Config<I>> {
+      return { value: configOf(core).define(definition, lifetime) };
     },
   };
 }

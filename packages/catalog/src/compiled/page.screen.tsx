@@ -1,4 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
+import type { AddonManifest } from '@bedrock-core/server-runtime';
 import { Card, FRAME, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import {
   Embed, Image, Panel, Screen, Scroll, Text,
@@ -31,27 +32,16 @@ const { spacing } = theme.tokens;
 // Baked in the package's default locale: the page serves every player. Keys localize on the client.
 const { t } = i18n;
 
-const ICON_MISSING = 'pack_icon';
 const ICON_CONFIG = 'textures/ui/config/config';
 const ICON_GUIDE = 'textures/ui/config/guide';
 
 /** Thumbnail banner proportions (width / height). */
 const THUMBNAIL_RATIO = 16 / 6;
 
-/** What the page bakes about its addon: the manifest's display fields. */
-export interface AddonPageInfo {
-  /** Display name — a localization key, or plain text. */
-  packName: string;
-  version: string;
-  creator: string;
-  creatorName?: string;
-  description?: string;
-  icon?: string;
-  thumbnail?: string;
-}
-
 export interface AddonPageProps {
-  addon: AddonPageInfo;
+  readonly manifest: AddonManifest;
+  /** Override the conventional pack icon when embedding a library page. */
+  readonly icon?: string;
   /** Named page within the compiling addon; absent for its public addon page. */
   embedName?: string;
 }
@@ -75,16 +65,18 @@ const HERO_HEIGHT = Math.round(MAIN.width / THUMBNAIL_RATIO);
  * Built only for an addon that ships one, which the build knows from the
  * manifest.
  */
-const banner = (addon: AddonPageInfo): JSX.Element => (
-  <Panel position={'absolute'} left={0} top={0} width={MAIN.width} height={HERO_HEIGHT} zIndex={0} background={addon.thumbnail ?? ''} />
+const banner = (manifest: AddonManifest): JSX.Element => (
+  <Panel position={'absolute'} left={0} top={0} width={MAIN.width} height={HERO_HEIGHT} zIndex={0} background={manifest.thumbnail ?? ''} />
 );
 
-export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon, embedName }: AddonPageProps): JSX.Element => {
-  const hasBanner = (addon.thumbnail ?? '') !== '';
+export const AddonPage: FunctionComponent<AddonPageProps> = ({ manifest, icon, embedName }: AddonPageProps): JSX.Element => {
+  const hasBanner = (manifest.thumbnail ?? '') !== '';
+  const name = manifest.header.name === 'pack.name' ? `${manifest.namespace}.pack.name` : manifest.header.name ?? manifest.namespace;
+  const description = manifest.header.description === 'pack.description' ? `${manifest.namespace}.pack.description` : manifest.header.description ?? '';
 
   return (
     <Embed name={embedName} frame={FRAME} area={MAIN}>
-      {hasBanner && banner(addon)}
+      {hasBanner && banner(manifest)}
       {/* Over the banner, from the top of the pane: the page reads against it.
           Short of the area on the right, so the track clears the card's border. */}
       <Scroll width={MAIN.width - 2} height={MAIN.height} zIndex={1}>
@@ -95,11 +87,11 @@ export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon, embedName 
           track, and the two together match the left inset. */}
         <Panel flexDirection={'column'} gap={spacing.md} paddingTop={spacing.sm} paddingBottom={spacing.sm} paddingLeft={spacing.md} paddingRight={spacing.sm} width={'100%'}>
           <Panel justifyContent={'center'} alignItems={'center'}>
-            <Image width={40} height={40} texture={addon.icon ?? ICON_MISSING} />
+            <Image width={40} height={40} texture={icon ?? `textures/${manifest.namespace}/pack_icon`} />
           </Panel>
           <Panel flexDirection={'column'}>
-            <Text font={'mojangles'} scale={2} shadow={true}>{addon.packName}</Text>
-            <Text font={'mojangles'} scale={1}>{`§7${t($ => $.addons.version, { version: addon.version })}`}</Text>
+            <Text font={'mojangles'} scale={2} shadow={true}>{name}</Text>
+            <Text font={'mojangles'} scale={1}>{`§7${t($ => $.addons.version, { version: manifest.header.version ?? '' })}`}</Text>
           </Panel>
           <Panel flexDirection={'row'} gap={spacing.sm}>
             <OreButton variant={'secondary'} paddingTop={2} paddingLeft={4} onPress={pressConfig}>
@@ -116,12 +108,12 @@ export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon, embedName 
             </OreButton>
           </Panel>
           <Card variant={'dark'}>
-            <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{addon.description ?? ''}</Text>
+            <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{description}</Text>
           </Card>
           <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
             <Text shadow={true} flexShrink={0}>{`§7${t($ => $.addons.authors)}`}</Text>
             <Panel flexGrow={1} flexShrink={1}>
-              <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{addon.creatorName ?? addon.creator}</Text>
+              <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{{ rawtext: (manifest.metadata?.authors ?? []).flatMap((author, index) => [...index ? [{ text: ', ' }] : [], { translate: author }]) }}</Text>
             </Panel>
           </Panel>
         </Panel>
@@ -139,9 +131,9 @@ export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon, embedName 
  * writes the screen itself and names it in `core.register({ page })`, and this
  * one is not built.
  */
-export const addonPageScreen = (addon: AddonPageInfo): FunctionComponent =>
+export const addonPageScreen = (manifest: AddonManifest): FunctionComponent =>
   (): JSX.Element => (
     <Screen>
-      <AddonPage addon={addon} />
+      <AddonPage manifest={manifest} />
     </Screen>
   );

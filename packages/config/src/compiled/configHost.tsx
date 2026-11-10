@@ -1,4 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
+import { translations } from '@bedrock-core/server-runtime/i18n';
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { configOf } from '../server';
@@ -46,7 +47,11 @@ export interface ScopePickerOpeners {
 const { key } = i18n;
 
 /** The addon's display name as a reference: its key, which the client resolves; its id when it is not registered. */
-const addonNameOf = (core: Runtime, addonId: string): DisplayText => ({ translate: core.registry.get(addonId)?.packName ?? addonId });
+const addonNameOf = (core: Runtime, addonId: string): DisplayText => {
+  const manifest = core.registry.get(addonId)?.manifest;
+
+  return { translate: manifest?.header.name === 'pack.name' ? `${manifest.namespace}.pack.name` : manifest?.header.name ?? addonId };
+};
 
 /** A scope's label as a reference. */
 const scopeLabelOf = (scope: ConfigScope): DisplayText => ({
@@ -120,7 +125,7 @@ export function trailOf(core: Runtime, place: ConfigPlace): DisplayText[] {
  * leaves the trail less room than one wearing the icon.
  */
 const titleTrail = (core: Runtime, player: Player, trail: readonly DisplayText[], back: TrailBack = 'icon'): DisplayText =>
-  trailText(trail, translationsFor(core.translations.forPlayer(player)).resolve, { back });
+  trailText(trail, translationsFor(translations(core).forPlayer(player)).resolve, { back });
 
 /** Reset is available only to an authorized viewer with current non-default values. */
 const canReset = (core: Runtime, player: Player, scope: ConfigScope, entityId?: string): boolean =>
@@ -132,7 +137,7 @@ function patchForPlayer(core: Runtime, player: Player, scope: ConfigScope, entit
 }
 
 function pickerModel(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners, again: (location?: ScreenLocation) => void): PickerModel {
-  const { t } = translationsFor(core.translations.forPlayer(player));
+  const { t } = translationsFor(translations(core).forPlayer(player));
   const addonName = addonNameOf(core, addonId);
   const scopes = allowedScopes(player).filter(scope => Object.keys(scopeSchema(core, scope)).length > 0);
 
@@ -227,7 +232,7 @@ export interface ConfirmResetRequest {
 }
 
 export function presentConfirmReset(core: Runtime, player: Player, request: ConfirmResetRequest): void {
-  const { t } = translationsFor(core.translations.forPlayer(player));
+  const { t } = translationsFor(translations(core).forPlayer(player));
 
   render(confirmResetElement({
     trail: titleTrail(core, player, request.trail),
@@ -677,7 +682,7 @@ const foldOptions = (submitted: Record<string, unknown>, schema: Record<string, 
 
 /** Resolves validation messages in the viewing player's language. */
 function fieldErrorText(core: Runtime, player: Player, error: FieldError): string {
-  const { t } = translationsFor(core.translations.forPlayer(player));
+  const { t } = translationsFor(translations(core).forPlayer(player));
 
   switch (error.kind) {
     case 'boolean': return t($ => $.validation.boolean);

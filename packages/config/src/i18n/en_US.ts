@@ -2,7 +2,7 @@
  * The config app's own UI strings.
  *
  * Keyed under the `core` namespace, the same one the rest of the bedrock-core family uses, and
- * folded into every consuming addon's `.lang` by the i18n Regolith filter. Merge is
+ * folded into every consuming addon's `.lang` by the Builder i18n stage. Merge is
  * last-write-wins per key, so an addon that wants to rename something ships the key itself and
  * wins.
  *

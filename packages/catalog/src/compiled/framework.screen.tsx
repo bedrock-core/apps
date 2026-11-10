@@ -13,12 +13,13 @@ export function FrameworkPage(): JSX.Element {
     <Screen>
       <AddonPage
         embedName={FRAMEWORK_EMBED}
-        addon={{
-          packName: key($ => $.framework.name),
-          version: UI_VERSION,
-          creator: key($ => $.framework.creator),
-          description: key($ => $.framework.description),
-          icon: 'textures/ui/bedrock-core/icon',
+        icon={'textures/ui/bedrock-core/icon'}
+        manifest={{
+          format_version: 3,
+          namespace: 'core_framework',
+          header: { name: key($ => $.framework.name), version: UI_VERSION, description: key($ => $.framework.description) },
+          metadata: { authors: [key($ => $.framework.creator)] },
+          modules: [],
         }}
       />
     </Screen>

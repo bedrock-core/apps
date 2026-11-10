@@ -4,15 +4,15 @@
  * The page is a compiled screen baked into the addon's own pack, drawn into the catalog by every
  * client that holds the pack. What the realm drawing the catalog needs is small — per reserved
  * entry, the value it is shown with and where a press leads — and that is what an addon
- * announces under `core-addon/page`.
+ * publishes through the catalog registry.
  *
  * A compiled manifest page is published through the catalog integration, which
  * can also publish a supplied page without installing a browser. Page buttons
  * name entry points such as `config` and `guide`; the browser resolves them in
  * the selected owner's navigation registry.
  */
-import { Announcement, isRecord, type Runtime } from '@bedrock-core/server-runtime';
-import type { State } from '@bedrock-core/sync';
+import type { Installation, Runtime } from '@bedrock-core/server-runtime';
+import { defineRegistry, type RegistryAccessor, type RegistryDefinition } from '@bedrock-core/server-runtime/library';
 import { compiledSnapshotOf, compiledValuesOf, type DisplayText, type FunctionComponent, type PressEvent } from '@bedrock-core/ui-runtime';
 import { buildScreenTree } from '@bedrock-core/ui-runtime/compile';
 
@@ -55,9 +55,11 @@ export interface AddonPageReference {
   targets: (PageTarget | null)[];
 }
 
-/** The envelope check {@link PagesRegistry} reads through. */
+/** The envelope check {@link CatalogPagesService} reads through. */
 export function isAddonPageReference(value: unknown): value is AddonPageReference {
-  return isRecord(value) && Array.isArray(value['values']) && Array.isArray(value['targets']);
+  return typeof value === 'object' && value !== null
+    && 'values' in value && Array.isArray(value.values)
+    && 'targets' in value && Array.isArray(value.targets);
 }
 
 /**
@@ -74,32 +76,59 @@ export function addonPageReference(Page: FunctionComponent): AddonPageReference 
   };
 }
 
-/** Each addon's page in the shared catalog, announced. */
-export class PagesRegistry extends Announcement<AddonPageReference> {
-  constructor(state: State, addonId: string) {
-    super(state, addonId, 'addon/page', isAddonPageReference);
+const PAGES: RegistryDefinition<AddonPageReference> = { id: 'core:catalog-pages', contract: 1, accepts: isAddonPageReference };
+
+/** Owns local catalog pages and compatible external reads for one Runtime. */
+export class CatalogPagesService {
+  private readonly _core: Runtime;
+  private readonly _registry: RegistryAccessor<AddonPageReference>;
+
+  constructor(core: Runtime) {
+    this._core = core;
+    this._registry = core.install(defineRegistry(PAGES, { revision: 1 }));
+  }
+
+  provide(value: AddonPageReference): void {
+    this._registry.set(this._core.id, value);
+  }
+
+  of(namespace: string): AddonPageReference | undefined {
+    return this._registry.of(namespace)?.[namespace];
+  }
+
+  stop(): void {
+    this._registry.stop();
   }
 }
 
-const registries = new WeakMap<Runtime, PagesRegistry>();
+declare module '@bedrock-core/server-runtime' {
+  interface RuntimeServices {
+    'core:catalog-pages': CatalogPagesService;
+  }
+}
 
 /**
  * The page references on a runtime: `pages(core).provide(...)` to publish this addon's,
  * `pages(core).of(addonId)` for what another addon published.
  *
- * One registry per runtime, created on the first call and kept, so every caller in a realm
+ * One service per runtime, created on the first call and kept, so every caller in a realm
  * reads and writes the same feed.
  */
-export function pages(core: Runtime): PagesRegistry {
-  const found = registries.get(core);
+export function pages(core: Runtime): CatalogPagesService {
+  const found = core.service('core:catalog-pages');
 
   if (found !== undefined) {
     return found;
   }
 
-  const registry = new PagesRegistry(core.node.state, core.id);
+  return core.install({
+    install(runtime, lifetime): Installation<CatalogPagesService> {
+      const service = new CatalogPagesService(runtime);
 
-  registries.set(core, registry);
+      lifetime.defer(() => service.stop());
+      runtime.provideService('core:catalog-pages', service);
 
-  return registry;
+      return { value: service };
+    },
+  });
 }

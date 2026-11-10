@@ -38,8 +38,7 @@
  *
  * ## The same rule binds the addon's OWN commands
  *
- * An addon that mounts this UI has already spent its namespace here, and Minecraft gives a pack
- * exactly one. So every other command that addon registers has to be built from `core.id` too:
+ * Commands and enums use the owning addon's manifest namespace, exposed as `core.id`:
  *
  * ```ts
  * system.beforeEvents.startup.subscribe((ev) => {
@@ -53,15 +52,12 @@
  * });
  * ```
  *
- * Reading it rather than hardcoding it is what makes a rename survivable — `creator`/`pack` in
- * `core.register()` are the only place the namespace is declared, and a literal keeps the old
- * prefix silently. Enums need it just as much as commands: an enum name is world-wide, so an
- * unprefixed `registerEnum('shopaction', ...)` collides with the next addon that thinks of the
- * same word, and the description-leads-with-the-namespace rule above applies verbatim.
+ * `core.id` reads the explicit namespace from the owning manifest. Display-name changes leave
+ * it unchanged. Namespaced enums and commands avoid collisions with other addons, and the
+ * description identifies which addon owns an unqualified command alias.
  *
- * `ui(core, { commands: false })` opts out of the four registered here. It frees the names, not
- * the namespace — the addon is still `core.id` to state, config, RPC and the addon list, and its
- * own commands still belong under it.
+ * `registerConfig(definition, { commands: false })` disables both commands and their enums.
+ * The addon's namespace still identifies its state, config, RPC and registry entry.
  *
  * ## Permissions
  *
@@ -75,6 +71,7 @@
  * is not a cheat, and gating it on a world toggle would make the UI unreachable on exactly the
  * survival worlds it is most useful on. Authority comes from the permission level instead.
  */
+import { translations } from '@bedrock-core/server-runtime/i18n';
 import { CommandPermissionLevel, CustomCommandParamType, system } from '@minecraft/server';
 import type {
   CustomCommandOrigin,
@@ -104,7 +101,7 @@ export type OpenCallback = (player: Player, target: { addonId?: string; scope?: 
 const VERBS = ['get', 'set', 'add', 'remove'] as const;
 
 /**
- * Register this addon's commands. Called by `ui(core)`.
+ * Register this addon's commands from the Config declaration's installer.
  *
  * `onOpen` receives the request completely uninterpreted — who ran it, which kind, and the raw
  * arguments — because a command names a place in the UI and turning that into a target is one
@@ -205,7 +202,7 @@ function runOwn(
 ): CustomCommandResult {
   // The runner is the one being answered, so the reply is built in their language — the chained
   // resolver carries this package's strings for every locale the world ships.
-  const { t } = translationsFor(core.translations.forPlayer(player));
+  const { t } = translationsFor(translations(core).forPlayer(player));
 
   if (key === undefined) {
     return failure(`Which setting? Usage: ${ns}:config ${verb} <setting>${argumentOf(verb)}`);
@@ -272,7 +269,7 @@ function registerConfigAt(
     (origin, verb: string, key: string, a?: string, b?: string) => withOperator(origin, (runner) => {
       // A command block has no runner and therefore no language to answer in; this package's own
       // default locale stands in.
-      const { t } = translationsFor(runner && core.translations.forPlayer(runner));
+      const { t } = translationsFor(runner && translations(core).forPlayer(runner));
       const [scope, path] = splitScopedKey(key);
       const entry = scoped[scope][path];
 

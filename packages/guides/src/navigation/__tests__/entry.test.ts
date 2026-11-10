@@ -6,10 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerGuides } from '../../server/declaration';
 import type { GuideManifest } from '../../types';
 import { guideNavigationScreen } from '../screen';
+import { installDeclaration, stopInstallations } from '../../../../../test/install';
+
+const cleanups: (() => void)[] = [];
 
 const host = vi.hoisted(() => ({ register: vi.fn(), renderDestination: vi.fn(), reference: vi.fn(), present: vi.fn() }));
 
-vi.mock('@bedrock-core/navigation/core', async (importOriginal) => ({
+vi.mock('@bedrock-core/navigation/core', async importOriginal => ({
   ...await importOriginal<Record<string, unknown>>(),
   presentReference: host.present,
   navigation: () => ({
@@ -21,7 +24,7 @@ vi.mock('@bedrock-core/navigation/core', async (importOriginal) => ({
   }),
 }));
 
-vi.mock('@bedrock-core/navigation/runtime', async (importOriginal) => ({
+vi.mock('@bedrock-core/navigation/runtime', async importOriginal => ({
   ...await importOriginal<Record<string, unknown>>(),
   renderDestination: host.renderDestination,
 }));
@@ -38,8 +41,12 @@ const manifest: GuideManifest = {
 function install(owner: string): ScreenOpener {
   const scheduled: (() => void)[] = [];
 
-  vi.spyOn(system, 'run').mockImplementation((callback) => { scheduled.push(callback); return 0; });
-  registerGuides({ commands: false }).install({ id: owner, registered: true, fill: vi.fn() } as unknown as Runtime);
+  vi.spyOn(system, 'run').mockImplementation((callback) => {
+    scheduled.push(callback);
+
+    return 0;
+  });
+  installDeclaration({ id: owner, registered: true, provideService: vi.fn() } as unknown as Runtime, registerGuides({ commands: false }), cleanups);
   scheduled.forEach(callback => callback());
 
   expect(host.register).toHaveBeenCalledWith({ key: `${owner}:guide`, kind: 'custom', parameters: {} }, expect.any(Function));
@@ -60,9 +67,70 @@ beforeEach(() => {
   host.present.mockReset().mockResolvedValue('handed-off');
 });
 
-afterEach(() => { vi.restoreAllMocks(); });
+afterEach(() => { stopInstallations(cleanups); vi.restoreAllMocks(); });
 
 describe('guide runtime entry', () => {
+  it('keeps deferred registration and cleanup local to each installation of a declaration', () => {
+    const scheduled: (() => void)[] = [];
+    const firstCleanup: (() => void)[] = [];
+    const secondCleanup: (() => void)[] = [];
+    const firstRelease = vi.fn();
+    const secondRelease = vi.fn();
+    const declaration = registerGuides({ commands: false });
+
+    host.register.mockReturnValueOnce(firstRelease).mockReturnValueOnce(secondRelease);
+    host.reference.mockImplementation(key => ({ key, title: 'Guide', values: [], targets: [] }));
+    vi.spyOn(system, 'run').mockImplementation(run => { scheduled.push(run); return scheduled.length; });
+    installDeclaration({ id: 'first_owner', registered: true, provideService: vi.fn() } as unknown as Runtime, declaration, firstCleanup);
+    installDeclaration({ id: 'second_owner', registered: true, provideService: vi.fn() } as unknown as Runtime, declaration, secondCleanup);
+    scheduled.forEach(run => run());
+    expect(host.register.mock.calls.map(([screen]) => screen.key)).toEqual(['first_owner:guide', 'second_owner:guide']);
+    stopInstallations(firstCleanup);
+    stopInstallations(firstCleanup);
+    expect(firstRelease).toHaveBeenCalledTimes(1);
+    expect(secondRelease).not.toHaveBeenCalled();
+    stopInstallations(secondCleanup);
+    expect(secondRelease).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels deferred registration and ignores a retained callback after stop', () => {
+    let callback: (() => void) | undefined;
+
+    vi.spyOn(system, 'run').mockImplementation((run) => {
+      callback = run;
+
+      return 42;
+    });
+    const clear = vi.spyOn(system, 'clearRun');
+    const declaration = registerGuides({ commands: false });
+
+    installDeclaration({ id: 'stopped-owner', registered: true, provideService: vi.fn() } as unknown as Runtime, declaration, cleanups);
+    stopInstallations(cleanups);
+    callback?.();
+    expect(clear).toHaveBeenCalledWith(42);
+    expect(host.register).not.toHaveBeenCalled();
+  });
+
+  it('withdraws a registered entry exactly once when stopped', () => {
+    const release = vi.fn();
+    const scheduled: (() => void)[] = [];
+
+    host.register.mockReturnValue(release);
+    host.reference.mockReturnValue({ key: 'withdrawn:guide_home', title: 'Guide', values: [], targets: [] });
+    vi.spyOn(system, 'run').mockImplementation((run) => {
+      scheduled.push(run);
+
+      return 43;
+    });
+    const declaration = registerGuides({ commands: false });
+
+    installDeclaration({ id: 'withdrawn', registered: true, provideService: vi.fn() } as unknown as Runtime, declaration, cleanups);
+    scheduled.forEach(run => run());
+    stopInstallations(cleanups);
+    stopInstallations(cleanups);
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
   it('renders a resident component under its logical guide location', () => {
     const entry = guideNavigationScreen(manifest, { back: true });
 

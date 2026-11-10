@@ -81,7 +81,7 @@ describe('guideKeyFor', () => {
     },
   };
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the realm's UI is all a key lookup reads
-  const core = { slot: (): typeof realm => realm } as unknown as Runtime;
+  const core = { service: (): typeof realm => realm } as unknown as Runtime;
 
   it('picks the set the player may read', () => {
     expect(guideKeyFor(core, 'shop', { back: true, player: playerOf(true) })).toBe('shop:guideop_home_back');

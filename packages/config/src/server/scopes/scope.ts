@@ -15,7 +15,7 @@
  * target through `for()`, kept by identity so repeated calls do not rebuild it.
  *
  * Dynamic properties cannot be read before the first tick, and config is declared during
- * registration, before it. Until the registry opens the {@link Gate} a tree answers with the
+ * registration, before it. Until the service opens the {@link Gate} a tree answers with the
  * schema's defaults and reads nothing; opening it reads every tree built so far, and db tells the
  * subscribers attached in the meantime what actually loaded.
  */
@@ -95,9 +95,16 @@ export type ScopeTree<S> = ConfigTree<S> & { readonly schema: FlatSchema };
 
 // ─── The tree ──────────────────────────────────────────────────────────────────
 
-/** Whether the world can be read yet. One per registry, opened a tick after registration. */
+/** Whether the world can be read yet. One per definition, opened a tick after registration. */
 export interface Gate {
   ready: boolean;
+  stopped?: boolean;
+  subscriptions?: Set<Unsubscribe>;
+}
+
+interface Lifetime {
+  stopped: boolean;
+  readonly subscriptions: Set<Unsubscribe>;
 }
 
 /** What every node of one tree shares: the document, the complete defaults, and the gate. */
@@ -105,29 +112,49 @@ interface Source {
   readonly document: Document<ConfigDocument>;
   readonly defaults: ConfigDocument;
   readonly gate: Gate;
+  readonly lifetime: Lifetime;
+}
+
+function requireActive(source: Source): void {
+  if (source.gate.stopped || source.lifetime.stopped) { throw new Error('config scope is stopped'); }
 }
 
 /** The scope's document as read: the stored overrides over the defaults, or the defaults alone. */
 function effective(source: Source): ConfigDocument {
+  requireActive(source);
+
   if (!source.gate.ready) { return source.defaults; }
 
   return source.document.get() ?? source.defaults;
 }
 
 function watch(source: Source, path: readonly string[], listener: ChangeListener<unknown>): Unsubscribe {
+  if (source.gate.stopped || source.lifetime.stopped) { return (): void => {}; }
+
   const projection = computed(() => getIn(effective(source), path), [source.document], { equals: sameValue });
   const release = projection.subscribe(listener);
+  let active = true;
 
-  return (): void => {
+  const unsubscribe = (): void => {
+    if (!active) { return; }
+
+    active = false;
     release();
     projection.dispose();
+    source.lifetime.subscriptions.delete(unsubscribe);
+    source.gate.subscriptions?.delete(unsubscribe);
   };
+
+  source.lifetime.subscriptions.add(unsubscribe);
+  source.gate.subscriptions?.add(unsubscribe);
+
+  return unsubscribe;
 }
 
 function leaf(source: Source, path: readonly string[]): Record<string, unknown> {
   return {
     get: (): unknown => getIn(effective(source), path),
-    set: (value: unknown): void => { source.document.patch(wrap(path, value)); },
+    set: (value: unknown): void => { requireActive(source); source.document.patch(wrap(path, value)); },
     subscribe: (listener: ChangeListener<unknown>): Unsubscribe => watch(source, path, listener),
   };
 }
@@ -137,8 +164,8 @@ function group(source: Source, tree: SchemaGroup, path: readonly string[]): Reco
     get: (): unknown => getIn(effective(source), path),
     // Everything the new value omits under this path is gone from the document, so it reads as
     // its default; the schema's `normalize` keeps what is at a default out of the bytes.
-    set: (value: unknown): void => { source.document.set(setIn(source.document.get(), path, value)); },
-    patch: (partial: unknown): void => { source.document.patch(wrap(path, partial)); },
+    set: (value: unknown): void => { requireActive(source); source.document.set(setIn(source.document.get(), path, value)); },
+    patch: (partial: unknown): void => { requireActive(source); source.document.patch(wrap(path, partial)); },
     subscribe: (listener: ChangeListener<unknown>): Unsubscribe => watch(source, path, listener),
   };
 
@@ -155,10 +182,11 @@ function treeFor<S extends Record<string, unknown>>(
   defaults: ConfigDocument,
   flatSchema: FlatSchema,
   gate: Gate,
+  lifetime: Lifetime = { stopped: false, subscriptions: new Set() },
 ): ScopeTree<S> {
   // TypeScript cannot see the properties a schema walk produces, which is what this states.
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-  return { schema: flatSchema, ...group({ document, defaults, gate }, tree, []) } as ScopeTree<S>;
+  return { schema: flatSchema, ...group({ document, defaults, gate, lifetime }, tree, []) } as ScopeTree<S>;
 }
 
 /** The scope for a single fixed target — the world. */
@@ -184,7 +212,7 @@ export class EntityScope<S extends Record<string, unknown>, Target> {
   private readonly _tree: SchemaGroup;
   private readonly _defaults: ConfigDocument;
   private readonly _gate: Gate;
-  private readonly _trees = new Map<string, ScopeTree<S>>();
+  private readonly _trees = new Map<string, { tree: ScopeTree<S>; lifetime: Lifetime }>();
 
   readonly schema: FlatSchema;
 
@@ -197,29 +225,41 @@ export class EntityScope<S extends Record<string, unknown>, Target> {
   }
 
   for(target: Target): ScopeTree<S> {
-    const id = identityOf(target);
-    let tree = this._trees.get(id);
+    if (this._gate.stopped) { throw new Error('config scope is stopped'); }
 
-    if (tree === undefined) {
-      tree = treeFor<S>(this._collection.for(target), this._tree, this._defaults, this.schema, this._gate);
-      this._trees.set(id, tree);
+    const id = identityOf(target);
+    let entry = this._trees.get(id);
+
+    if (entry === undefined) {
+      const lifetime: Lifetime = { stopped: false, subscriptions: new Set() };
+
+      entry = { tree: treeFor<S>(this._collection.for(target), this._tree, this._defaults, this.schema, this._gate, lifetime), lifetime };
+      this._trees.set(id, entry);
     }
 
-    return tree;
+    return entry.tree;
   }
 
   /** @internal Read every tree handed out so far, so their subscribers learn what is stored. Called once the gate opens. */
   warm(): void {
-    for (const tree of this._trees.values()) { tree.get(); }
+    for (const { tree } of this._trees.values()) { tree.get(); }
   }
 
-  /** Drop what this scope remembers about a target. Its document stays where it is. */
+  /** Release a target's tree and subscriptions. Its stored document is preserved. */
   forget(target: Target): void {
-    this._trees.delete(identityOf(target));
+    this.forgetId(identityOf(target));
   }
 
   /** The same, for a target that has already left and is only an id now. */
   forgetId(identity: string): void {
+    const entry = this._trees.get(identity);
+
+    if (entry === undefined) { return; }
+
+    entry.lifetime.stopped = true;
+
+    for (const unsubscribe of entry.lifetime.subscriptions) { unsubscribe(); }
+
     this._trees.delete(identity);
   }
 

@@ -1,9 +1,9 @@
 /**
  * bedrock-core's own verbs over the resources in `./en_US` — the same
  * machinery addons get from their generated bundle, built here at runtime with
- * `createResourceBundle` because a library has no Regolith build of its own.
+ * `createResourceBundle` because a library has no addon build of its own.
  * Namespace `core`: real keys come out as `core.addons.title`, exactly what
- * the i18n filter folds into every consuming addon's `.lang`.
+ * the Builder i18n stage folds into every consuming addon's `.lang`.
  */
 import { createI18n, createResourceBundle, overlay } from '@bedrock-core/i18n';
 import type { BoundI18n, TranslationResolver } from '@bedrock-core/i18n';
@@ -24,7 +24,7 @@ export type CoreT = BoundI18n<CoreResources>['t'];
  * source would shadow the host addon's own bundle. Measurement never touches
  * it: the host realm's published bundle already carries this package's
  * resources (the filter folds `bedrockCore.i18n` libraries in, `extra.ts`
- * included), so `core.translations.forPlayer(player)` is the whole world.
+ * included), so `translations(core).forPlayer(player)` is the whole world.
  */
 export const i18n = createI18n(createResourceBundle('core', { en_US }), { asDefault: false });
 
@@ -41,7 +41,7 @@ export function useTranslation(): BoundI18n<CoreResources> {
 /**
  * The same verbs for a caller with no render tree to read a context from — a custom-command
  * callback, which answers one player in chat and is not a component. `published` is
- * `core.translations.forPlayer(player)`; pass `undefined` when nobody ran the command (a
+ * `translations(core).forPlayer(player)`; pass `undefined` when nobody ran the command (a
  * command block or the console), where there is no language to prefer and this package’s own
  * default locale is the only sensible answer.
  */

@@ -1,12 +1,13 @@
 import { navigateAsync } from '@bedrock-core/navigation';
 import { navigation } from '@bedrock-core/navigation/core';
-import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
+import type { Declaration, Installation, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { canPresentAddonList, presentAddonList, type AddonListOpeners } from './compiled/host';
 import { registerCatalogCommand } from './command';
 import { FRAMEWORK_ADDON_ID, FRAMEWORK_GUIDE } from './framework';
-import type { Catalog } from './slot';
-import type {} from './slot';
+import type { Catalog } from './service';
+import type {} from './service';
+import { pages } from './integration/pages';
 
 /** The catalog's registered navigation entry point. */
 export const CATALOG_APP = 'catalog';
@@ -30,21 +31,22 @@ export function registerCatalog(options: CatalogOptions = {}): CatalogDeclaratio
   return {
     app: CATALOG_APP,
     compiled: CATALOG_COMPILED,
-    install(core: Runtime): Catalog {
+    install(core: Runtime, lifetime): Installation<Catalog> {
+      pages(core);
       const realm = navigation(core);
       const open = (player: Player, addonId?: string): Promise<void> => show(core, player, addonId);
 
-      realm.register({ key: `${core.id}:${CATALOG_APP}`, kind: 'custom', parameters: {
+      lifetime.defer(realm.register({ key: `${core.id}:${CATALOG_APP}`, kind: 'custom', parameters: {
         addonId: { type: 'string', optional: true },
-      } }, (player, { params }) => present(core, player, typeof params?.addonId === 'string' ? params.addonId : undefined));
+      } }, (player, { params }) => present(core, player, typeof params?.addonId === 'string' ? params.addonId : undefined)));
 
       if (options.commands !== false) { registerCatalogCommand(core, (player) => { void open(player); }); }
 
       const accessor: Catalog = { open };
 
-      core.fill('core:catalog', accessor);
+      core.provideService('core:catalog', accessor);
 
-      return accessor;
+      return { value: accessor };
     },
   };
 }

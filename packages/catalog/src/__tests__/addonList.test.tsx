@@ -1,3 +1,4 @@
+import { installDeclaration, stopInstallations } from '../../../../test/install';
 /** @jsxImportSource @bedrock-core/ui-runtime */
 /**
  * Which realm answers a press on a row of the catalog.
@@ -6,13 +7,16 @@
  * cannot answer a press on. Those rows use the owner's registered navigation entry,
  * carrying the player's destination and history across the realm boundary.
  */
+import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import type { PressEvent } from '@bedrock-core/ui-runtime';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AddonListModel } from '../compiled/list.screen';
 
 const render = vi.fn();
 const showCompiledTitle = vi.fn();
+
+vi.mock('@bedrock-core/server-runtime/library', async () => (await import('../../../../test/mock-registries')).registryDeclarations());
 
 vi.mock('@bedrock-core/ui-runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@bedrock-core/ui-runtime')>();
@@ -34,51 +38,60 @@ const { closeUi } = await import('@bedrock-core/navigation');
 /** One show request this realm sent. */
 interface Sent {
   owner: string;
-  method: string;
   params: unknown;
 }
+
+const cleanups: (() => void)[] = [];
 
 const PAGE = { v: 1, values: ['page'], targets: [null] };
 
 const addon = (id: string, self: boolean): Record<string, unknown> =>
-  ({ id, self, packName: `${id}.name`, version: '1.0.0', runtimeVersion: '0.1.0' });
+  ({ id, self, manifest: { format_version: 3, namespace: id, header: { name: id === 'me' ? 'pack.name' : `${id}.name`, version: '1.0.0' }, modules: [] }, runtimeVersion: '0.1.0' });
 
 /** A realm running as `me`, with `other` registered beside it and a page published for it. */
 const realm = (answer: () => Promise<unknown>, earlierAddon = false): { core: unknown; sent: Sent[] } => {
   const sent: Sent[] = [];
   const values = new Map<string, unknown>([
-    ['other|core-addon/page', PAGE],
-    ['other|core-navigation/screens', { v: 1, references: {}, screens: [{ key: 'other:catalog', kind: 'custom', parameters: { addonId: { type: 'string', optional: true } } }] }],
+    ['other|page', PAGE],
+    ['other|screens', { v: 1, references: {}, screens: [{ key: 'other:catalog', kind: 'custom', parameters: { addonId: { type: 'string', optional: true } } }] }],
   ]);
-  const state = {
-    get: (namespace: string, key: string): unknown => values.get(`${namespace}|${key}`),
-    set: (namespace: string, key: string, value: unknown): void => { values.set(`${namespace}|${key}`, value); },
-    namespaces: (): string[] => ['me', 'other'],
-    subscribe: (): (() => void) => (): void => {},
-  };
 
   const rows = [...earlierAddon ? [addon('aaa', false)] : [], addon('me', true), addon('other', false)];
-  // Every slot is filled by whatever installs it, exactly as on a real runtime.
-  const slots = new Map<string, unknown>();
+  // Every service is registered by whatever installs it, exactly as on a real runtime.
+  const services = new Map<string, unknown>();
 
-  const core = {
-    id: 'me',
-    node: { state },
+  const installations: (() => void)[] = [];
+  const localDatasets = new Map<string, Record<string, unknown>>();
+  const core: Runtime = {
+    id: 'me', registered: true,
+    registryFixture: {
+      write: (registry: string, entries: Record<string, unknown> | undefined): void => { if (entries === undefined) { localDatasets.delete(registry); } else { localDatasets.set(registry, entries); } },
+      read: (owner: string, registry: string) => owner === 'me' ? localDatasets.get(registry)
+        : { [owner]: values.get(owner + (registry === 'core:screens' ? '|screens' : '|page')) },
+    },
     registry: {
       all: (): unknown[] => rows,
       get: (id: string): unknown => rows.find(row => row.id === id),
     },
-    slot: (key: string): unknown => slots.get(key),
-    fill: (key: string, value: unknown): void => { slots.set(key, value); },
-    rpc: {
-      onRequest: (): (() => void) => (): void => {},
-      request: (owner: string, method: string, params: unknown): Promise<unknown> => {
-        sent.push({ owner, method, params });
-
-        return answer();
-      },
+    service: (key: string): unknown => services.get(key),
+    provideService: (key: string, value: unknown): void => { services.set(key, value); },
+    install: (declaration: Declaration<unknown>): unknown => { return installDeclaration(core, declaration, installations); },
+    api: {
+      provideModule: (): (() => void) => (): void => {},
+      createModule: (owner: string): unknown => ({
+        screens: { get: (): unknown => values.get(owner + '|screens') },
+        open: (params: unknown): Promise<unknown> => {
+          sent.push({ owner, params });
+          return answer();
+        },
+      }),
     },
-  };
+  } as unknown as Runtime;
+
+  cleanups.push(() => {
+    stopInstallations(installations);
+    services.clear();
+  });
 
   return { core, sent };
 };
@@ -106,7 +119,7 @@ const pressRow = async (core: unknown, id: string): Promise<void> => {
   const runtime = core as Parameters<ReturnType<typeof registerCatalog>['install']>[0];
 
   // Commands are off: they need the engine's startup event, and nothing here fires one.
-  const app = registerCatalog({ commands: false }).install(runtime);
+  const app = runtime.install(registerCatalog({ commands: false }));
 
   await app.open(player, 'me');
 
@@ -118,6 +131,10 @@ const pressRow = async (core: unknown, id: string): Promise<void> => {
   await model.onSelect?.(index, press);
 };
 
+afterEach(() => {
+  for (const cleanup of cleanups.splice(0)) { cleanup(); }
+});
+
 beforeEach(() => {
   closeUi(player);
   registerStaticScreens([{ key: 'me:framework_guide', title: 'framework', values: ['t'], actions: [{ back: true }] }]);
@@ -126,11 +143,21 @@ beforeEach(() => {
 });
 
 describe('a press on a row of the catalog', () => {
+  it('reads native manifest names and versions and derives only the displayed icon and translation key', async () => {
+    const { core } = realm(() => Promise.resolve(true));
+
+    await pressRow(core, 'me');
+    const rows = shownModel().rows;
+
+    expect(rows.find(row => row.id === 'me')).toMatchObject({ name: { translate: 'me.pack.name' }, version: '1.0.0', icon: 'textures/me/pack_icon' });
+    expect(rows.find(row => row.id === 'other')?.name).toEqual({ translate: 'other.name' });
+  });
+
   it('selects its own addon by default even when another addon sorts first', async () => {
     const { core } = realm(() => Promise.resolve(true), true);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the stub implements the catalog's Runtime dependencies
     const runtime = core as Parameters<ReturnType<typeof registerCatalog>['install']>[0];
-    const app = registerCatalog({ commands: false }).install(runtime);
+    const app = runtime.install(registerCatalog({ commands: false }));
 
     await app.open(player);
 
@@ -191,7 +218,6 @@ describe('a press on a row of the catalog', () => {
 
     expect(sent).toEqual([{
       owner: 'other',
-      method: 'core:navigation.open',
       params: {
         playerId: 'p1',
         snapshot: {
@@ -206,7 +232,7 @@ describe('a press on a row of the catalog', () => {
 
   it('draws the row here when that realm does not answer', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { core, sent } = realm(() => Promise.reject(new Error("unknown method 'core:navigation.open'")));
+    const { core, sent } = realm(() => Promise.reject(new Error("navigation provider unavailable")));
 
     await pressRow(core, 'other');
 

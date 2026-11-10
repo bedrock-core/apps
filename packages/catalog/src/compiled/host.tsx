@@ -55,9 +55,9 @@ const rowsFor = (core: Runtime): AddonListRow[] => {
   return [
     ...ordered.map((addon): AddonListRow => ({
       id: addon.id,
-      name: { translate: addon.packName },
-      version: addon.version,
-      ...addon.icon === undefined ? {} : { icon: addon.icon },
+      name: { translate: addon.manifest.header.name === 'pack.name' ? `${addon.id}.pack.name` : addon.manifest.header.name ?? addon.id },
+      version: addon.manifest.header.version ?? '',
+      icon: `textures/${addon.manifest.namespace}/pack_icon`,
     })),
     // The framework itself is pinned last and shows the UI library this catalog compiled with.
     { id: FRAMEWORK_ADDON_ID, name: { translate: key($ => $.framework.name) }, version: FRAMEWORK_VERSION, icon: 'textures/ui/bedrock-core/icon' },

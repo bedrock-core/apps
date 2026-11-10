@@ -8,11 +8,11 @@
  * The map:
  *
  * - `declaration.ts` — `registerGuides()`, the field `register()` takes. Start there.
- * - `slot.ts` — `guidesOf(core)`, how anything else reaches what the declaration installed.
+ * - `service.ts` — `guidesOf(core)`, how anything else reaches what the declaration installed.
  * - `keys.ts` — finding an addon's guide entry by key, from any realm, in the set its reader may walk.
  */
 export { registerGuides } from './declaration';
 export type { GuidesDeclaration, GuidesOptions } from './declaration';
 
-export { guidesOf } from './slot';
-export type { Guides } from './slot';
+export { guidesOf } from './service';
+export type { Guides } from './service';

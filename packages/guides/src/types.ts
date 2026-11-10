@@ -1,14 +1,5 @@
 /**
- * Guide IR — the manifest shape the `guides` Regolith filter emits
- * (`data/guides/guides.generated.json`, imported as `@bedrock-core/generated/guides`).
- *
- * This package owns the IR because it is the only code that interprets it. The server
- * framework stores and syncs manifests without ever reading inside one — its
- * `GuideManifest` is a two-field structural shape, and `@bedrock-core/server-runtime` is
- * deliberately not a dependency here, so a guide can be rendered without the framework.
- *
- * Field names are deliberately terse (`t`, `k`, `l`): manifests travel over the cross-addon
- * script-event transport, where payload size is a real budget.
+ * Guide IR emitted by the Builder guides stage and consumed by compiled guide screens.
  */
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 

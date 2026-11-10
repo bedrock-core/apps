@@ -28,7 +28,7 @@ export interface CompiledGuideOptions {
 
 /** Opens the audience-appropriate compiled guide entry. */
 export function openGuide(ns: string, player: PressEvent['player'], options: { back?: boolean; debug?: boolean } = {}): boolean {
-  const realm = core.slot('core:navigation');
+  const realm = core.service('core:navigation');
   const key = guideEntry(
     name => `${ns}:${name}`,
     candidate => screenForKey(candidate) !== undefined || staticScreen(candidate) !== undefined || realm?.screens.reference(candidate) !== undefined,

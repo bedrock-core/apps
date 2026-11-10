@@ -1,6 +1,6 @@
 /**
  * This library's own strings — the default admonition titles the renderer
- * falls back to (`core.guides.adm.*`). Folded by the i18n Regolith filter into
+ * falls back to (`core.guides.adm.*`). Folded by the Builder i18n stage into
  * every consuming addon's bundle and generated `.lang` via the
  * `bedrockCore.i18n` convention (namespace `core`, like the whole
  * bedrock-core family). Kind colors are baked into the values — titles render

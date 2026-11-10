@@ -65,7 +65,6 @@
 		"lint": "eslint ."
 	},
 	"devDependencies": {
-		"@bedrock-core/db": "*",
 		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "*",
 		"@bedrock-core/observable": "*",
@@ -82,7 +81,6 @@
 		"vitest": "*"
 	},
 	"peerDependencies": {
-		"@bedrock-core/db": "^0.1.1",
 		"@bedrock-core/i18n": "^0.2.0",
 		"@bedrock-core/navigation": "^0.13.1",
 		"@bedrock-core/observable": "^1.0.0",
@@ -93,9 +91,6 @@
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0"
 	},
 	"peerDependenciesMeta": {
-		"@bedrock-core/db": {
-			"optional": true
-		},
 		"@bedrock-core/i18n": {
 			"optional": true
 		},
@@ -117,5 +112,8 @@
 		"@bedrock-core/ui-runtime": {
 			"optional": true
 		}
+	},
+	"dependencies": {
+		"@bedrock-core/db": "^0.1.1"
 	}
 }

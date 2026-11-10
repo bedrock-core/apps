@@ -1,13 +1,13 @@
 import { back, closeUi, navigateAsync } from '@bedrock-core/navigation';
 import { navigation, presentReference } from '@bedrock-core/navigation/core';
 import { renderDestination } from '@bedrock-core/navigation/runtime';
-import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
+import type { Declaration, Installation, Runtime } from '@bedrock-core/server-runtime';
 import { screenForKey } from '@bedrock-core/ui-runtime';
 import { system, type Player } from '@minecraft/server';
 import { registerGuideCommand } from './command';
 import { guideKeyFor } from './keys';
-import type { Guides } from './slot';
-import type {} from './slot';
+import type { Guides } from './service';
+import type {} from './service';
 
 /** The registered guide entry point in each owning realm. */
 export const GUIDE_APP = 'guide';
@@ -27,7 +27,20 @@ export interface GuidesDeclaration extends Declaration<Guides> {
 export function registerGuides(options: GuidesOptions = {}): GuidesDeclaration {
   return {
     app: GUIDE_APP,
-    install(core: Runtime): Guides {
+    install(core: Runtime, lifetime): Installation<Guides> {
+      let active = true;
+      let task: number | undefined;
+      let release: (() => void) | undefined;
+
+      lifetime.defer(() => {
+        active = false;
+
+        if (task !== undefined) { system.clearRun(task); }
+
+        task = undefined;
+        release?.();
+        release = undefined;
+      });
       const realm = navigation(core);
 
       const open = (player: Player, addonId = core.id): Promise<void> => {
@@ -42,10 +55,12 @@ export function registerGuides(options: GuidesOptions = {}): GuidesDeclaration {
         return navigateAsync(entry.key, player).then(() => undefined);
       };
 
-      system.run(() => {
-        if (!core.registered || guideKeyFor(core, core.id) === undefined) { return; }
+      task = system.run(() => {
+        task = undefined;
 
-        realm.register({ key: `${core.id}:${GUIDE_APP}`, kind: 'custom', parameters: {} }, (player, hostOptions) => {
+        if (!active || !core.registered || guideKeyFor(core, core.id) === undefined) { return; }
+
+        release = realm.register({ key: `${core.id}:${GUIDE_APP}`, kind: 'custom', parameters: {} }, (player, hostOptions) => {
           const key = guideKeyFor(core, core.id, { back: true, player });
 
           if (key === undefined) { return false; }
@@ -74,9 +89,9 @@ export function registerGuides(options: GuidesOptions = {}): GuidesDeclaration {
 
       const accessor: Guides = { open };
 
-      core.fill('core:guide', accessor);
+      core.provideService('core:guide', accessor);
 
-      return accessor;
+      return { value: accessor };
     },
   };
 }

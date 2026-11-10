@@ -16,8 +16,8 @@
  * The map:
  *
  * - `declaration.ts` — `registerConfig(definition)`, the field `register()` takes.
- * - `slot.ts` — `configOf(core)`, how everything else reaches the registry the declaration filled.
- * - `config-registry.ts` — the registry itself: the local scopes, and the generic view of them
+ * - `service.ts` — `configOf(core)`, how everything else reaches the local service the declaration installed.
+ * - `config-service.ts` — the config service: the local scopes, and the generic view of them
  *   `local` hands out.
  * - `schema.ts` — what a definition may say, and the flat forms a build and a screen key by.
  * - `scopes/` — the dotted accessor tree each scope is; every node an observable.
@@ -28,10 +28,10 @@
 export { registerConfig } from './declaration';
 export type { ConfigDeclaration } from './declaration';
 
-export { configOf } from './slot';
+export { configOf } from './service';
 
-export { ConfigRegistry } from './config-registry';
-export type { Config, LocalConfigScopes } from './config-registry';
+export { ConfigService } from './config-service';
+export type { Config, LocalConfigScopes } from './config-service';
 
 export { EntityScope } from './scopes';
 export type {

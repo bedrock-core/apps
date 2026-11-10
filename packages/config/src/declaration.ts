@@ -27,7 +27,7 @@
 import { back, closeUi, navigateAsync } from '@bedrock-core/navigation';
 import { navigation } from '@bedrock-core/navigation/core';
 import type { ScreenLocation } from '@bedrock-core/navigation/runtime';
-import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
+import type { Declaration, Installation, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { registerConfig as registerSubsystem, configOf, type Config, type ConfigDefinition } from './server';
 import { registerAddonCommands } from './commands/addon';
@@ -103,24 +103,23 @@ export function registerConfig<I extends ConfigDefinition>(definition: I, option
     definition,
     app: CONFIG_APP,
     compiled: CONFIG_COMPILED,
-    install(core: Runtime): ConfigApp<I> {
-      const scopes = base.install(core);
+    install(core: Runtime, lifetime): Installation<ConfigApp<I>> {
+      const scopes = core.install(base);
       const realm = navigation(core);
 
       const open = (player: Player, target: Partial<Omit<ConfigTarget, 'kind'>> = {}): Promise<void> =>
         draw(core, player, { kind: CONFIG_APP, addonId: core.id, ...target }, false);
 
-      realm.register({ key: `${core.id}:${CONFIG_APP}`, kind: 'custom', parameters: configParameters }, (player, { params, location }) =>
+      lifetime.defer(realm.register({ key: `${core.id}:${CONFIG_APP}`, kind: 'custom', parameters: configParameters }, (player, { params, location }) =>
         drawHere(core, player, { ...params, kind: CONFIG_APP, addonId: core.id }, location),
-      );
+      ));
 
       if (options.commands !== false) {
         registerAddonCommands(core, (player, args) => { void draw(core, player, { kind: CONFIG_APP, ...args }); });
       }
 
-      return Object.assign(scopes, { open });
+      return { value: Object.assign(scopes, { open }) };
     },
-    stop: base.stop,
   };
 }
 

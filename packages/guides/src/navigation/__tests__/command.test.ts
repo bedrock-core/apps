@@ -1,4 +1,5 @@
-import type { Runtime } from '@bedrock-core/server-runtime';
+import { installDeclaration, stopInstallations } from '../../../../../test/install';
+import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import { registerCompiledScreen, type FunctionComponent } from '@bedrock-core/ui-runtime';
 import { closeUi, navigateAsync } from '@bedrock-core/navigation';
 import { currentLocation, setNavigator } from '@bedrock-core/navigation/runtime';
@@ -9,6 +10,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerGuides } from '../../server/declaration';
 import type { GuideManifest } from '../../types';
 import { guideNavigationScreen } from '../screen';
+
+vi.mock('@bedrock-core/server-runtime/library', async () => (await import('../../../../../test/mock-registries')).registryDeclarations());
 
 type CommandCallback = (origin: CustomCommandOrigin) => CustomCommandResult | undefined;
 const host = vi.hoisted(() => ({
@@ -29,12 +32,12 @@ vi.mock('@minecraft/server', async (importOriginal) => {
   };
 });
 
-vi.mock('@bedrock-core/server-runtime', async (importOriginal) => ({
+vi.mock('@bedrock-core/server-runtime', async importOriginal => ({
   ...await importOriginal<Record<string, unknown>>(),
   isOperator: (player: { op?: boolean }): boolean => player.op === true,
 }));
 
-vi.mock('@bedrock-core/navigation/runtime', async (importOriginal) => ({
+vi.mock('@bedrock-core/navigation/runtime', async importOriginal => ({
   ...await importOriginal<Record<string, unknown>>(),
   renderDestination: host.renderDestination,
 }));
@@ -50,23 +53,36 @@ const manifest: GuideManifest = {
 
 const register = (key: string, screen: FunctionComponent): void => registerCompiledScreen(screen, { key, title: key });
 const player = { id: 'command-guide-player', typeId: 'minecraft:player', op: false } as unknown as Player;
+const cleanups: (() => void)[] = [];
 
 function install(commands = true) {
   const id = 'command-owner';
-  const slots = new Map<string, unknown>();
-  const core = { id, registered: true,
-    slot: (key: string) => slots.get(key),
-    fill: (key: string, value: unknown) => slots.set(key, value),
-    node: { state: { set: vi.fn(), namespaces: () => [] } },
-    rpc: { onRequest: vi.fn() },
+  const services = new Map<string, unknown>();
+  const installations: (() => void)[] = [];
+  const core: Runtime = { id, registered: true,
+    registryFixture: { write: (): void => {}, read: (): undefined => undefined },
+    service: (key: string) => services.get(key),
+    provideService: (key: string, value: unknown) => services.set(key, value),
+    install: (declaration: Declaration<unknown>) => {
+      return installDeclaration(core, declaration, installations);
+    },
+    registry: { all: () => [], get: () => undefined },
+    api: {
+      provideModule: () => () => {},
+      createModule: () => ({ screens: { get: () => undefined } }),
+    },
   } as unknown as Runtime;
+
+  cleanups.push(() => {
+    stopInstallations(installations);
+  });
   const entry = guideNavigationScreen({ ...manifest, ns: id }, { back: true });
   const operatorEntry = guideNavigationScreen({ ...manifest, ns: id }, { back: true, audience: 'op' });
 
   register(`${id}:guide_home`, guideNavigationScreen({ ...manifest, ns: id }));
   register(`${id}:guide_home_back`, entry);
   register(`${id}:guideop_home_back`, operatorEntry);
-  const accessor = registerGuides({ commands }).install(core);
+  const accessor = core.install(registerGuides({ commands }));
   const registry = vi.fn<(command: CustomCommand, callback: CommandCallback) => void>();
 
   host.startup.forEach(callback => callback({ customCommandRegistry: { registerCommand: registry } }));
@@ -83,6 +99,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  for (const cleanup of cleanups.splice(0)) { cleanup(); }
+
   closeUi(player);
   setNavigator(undefined);
 });
@@ -138,7 +156,9 @@ describe('Guide command and Catalog entry', () => {
   });
 
   it('serves the guide through its accessor with command registration disabled', async () => {
-    const { accessor, entry, registry } = install(false);
+    const { id, core, accessor, entry, registry } = install(false);
+
+    expect(navigation(core).screens.find(id, 'catalog')).toBeUndefined();
 
     expect(registry).not.toHaveBeenCalled();
     await accessor.open(player);
