@@ -8,19 +8,19 @@
     "build": "bc-builder build config.json test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "build:standalone": "node ../../../builder/bin/build.ts standalone/config.json test"
+    "build:standalone": "bc-builder build standalone/config.json test"
   },
   "dependencies": {
     "@bedrock-core/catalog": "workspace:^",
     "@bedrock-core/config": "workspace:^",
-    "@bedrock-core/db": "*",
+    "@bedrock-core/db": "^0.2.0",
     "@bedrock-core/guides": "workspace:^",
-    "@bedrock-core/navigation": "*",
-    "@bedrock-core/observable": "*",
-    "@bedrock-core/ore-styled": "*",
-    "@bedrock-core/server-runtime": "*",
-    "@bedrock-core/ui": "*",
-    "@bedrock-core/ui-runtime": "*",
+    "@bedrock-core/navigation": "^0.14.0",
+    "@bedrock-core/observable": "^1.1.0",
+    "@bedrock-core/ore-styled": "^0.11.3",
+    "@bedrock-core/server-runtime": "^0.3.0",
+    "@bedrock-core/ui": "^0.15.0",
+    "@bedrock-core/ui-runtime": "^0.15.0",
     "@minecraft/common": "*",
     "@minecraft/server": "*",
     "@minecraft/server-gametest": "1.0.0-beta.1.26.50-stable",
@@ -28,7 +28,7 @@
     "@minecraft/vanilla-data": "*"
   },
   "devDependencies": {
-    "@bedrock-core/builder": "0.1.2",
+    "@bedrock-core/builder": "0.2.0",
     "eslint": "*",
     "typescript": "*"
   }

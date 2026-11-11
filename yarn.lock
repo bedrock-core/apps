@@ -62,17 +62,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/apps-test-fixtures@workspace:packages/test-fixtures"
   dependencies:
-    "@bedrock-core/builder": "npm:0.1.2"
+    "@bedrock-core/builder": "npm:0.2.0"
     "@bedrock-core/catalog": "workspace:^"
     "@bedrock-core/config": "workspace:^"
-    "@bedrock-core/db": "npm:*"
+    "@bedrock-core/db": "npm:^0.2.0"
     "@bedrock-core/guides": "workspace:^"
-    "@bedrock-core/navigation": "npm:*"
-    "@bedrock-core/observable": "npm:*"
-    "@bedrock-core/ore-styled": "npm:*"
-    "@bedrock-core/server-runtime": "npm:*"
-    "@bedrock-core/ui": "npm:*"
-    "@bedrock-core/ui-runtime": "npm:*"
+    "@bedrock-core/navigation": "npm:^0.14.0"
+    "@bedrock-core/observable": "npm:^1.1.0"
+    "@bedrock-core/ore-styled": "npm:^0.11.3"
+    "@bedrock-core/server-runtime": "npm:^0.3.0"
+    "@bedrock-core/ui": "npm:^0.15.0"
+    "@bedrock-core/ui-runtime": "npm:^0.15.0"
     "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-gametest": "npm:1.0.0-beta.1.26.50-stable"
@@ -87,12 +87,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/apps@workspace:."
   dependencies:
-    "@bedrock-core/bds-runner": "npm:0.2.1"
+    "@bedrock-core/bds-runner": "npm:^0.3.0"
     "@bedrock-core/catalog": "workspace:*"
     "@bedrock-core/config": "workspace:*"
     "@bedrock-core/guides": "workspace:*"
-    "@bedrock-core/navigation": "npm:0.13.1"
-    "@bedrock-core/ui-compiler": "npm:0.3.0"
+    "@bedrock-core/navigation": "npm:^0.14.0"
+    "@bedrock-core/ui-compiler": "npm:^0.3.2"
     "@changesets/changelog-github": "npm:^0.7.0"
     "@changesets/cli": "npm:3.0.3"
     "@eslint/js": "npm:^10.0.1"
@@ -110,48 +110,46 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/bds-runner@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@bedrock-core/bds-runner@npm:0.2.1"
+"@bedrock-core/bds-runner@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@bedrock-core/bds-runner@npm:0.3.0"
   dependencies:
     jiti: "npm:^2.7.0"
     prismarine-nbt: "npm:^2.7.0"
     yauzl: "npm:^3.2.0"
   bin:
-    bc-bds: bin/bc-bds.mjs
-  checksum: 10c0/964683094995df4ff362e5a76b133d6e839bfd7b9cd524dc4337a2e62ce755c81dbbe1385547ede537f419fb5a3782eaa593c216774d816895b23f454cabb30e
+    bc-bds: ./bin/bc-bds.mjs
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-bundler@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@bedrock-core/builder-bundler@npm:0.1.0"
+"@bedrock-core/builder-bundler@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder-bundler@npm:0.2.0"
   dependencies:
-    "@bedrock-core/builder-manifest": "npm:0.1.0"
-    "@bedrock-core/builder-plugin": "npm:0.1.0"
+    "@bedrock-core/builder-manifest": "npm:0.2.0"
+    "@bedrock-core/builder-plugin": "npm:0.2.0"
     esbuild: "npm:0.25.12"
-    typescript: "npm:5.9.3"
-  checksum: 10c0/c2fe32b64a13c2a192d1ff3e8006eca04113cb7b68e604a9c5e147e3975e86426ae91f1046919d1c2c5413def0cec819fd2f8525afde81cba7394d4b6b9cdd74
+    typescript-native: "npm:typescript@7.1.0-beta"
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-generator@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@bedrock-core/builder-generator@npm:0.1.0"
+"@bedrock-core/builder-generator@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder-generator@npm:0.2.0"
   dependencies:
-    "@bedrock-core/builder-bundler": "npm:0.1.0"
-    "@bedrock-core/builder-plugin": "npm:0.1.0"
+    "@bedrock-core/builder-bundler": "npm:0.2.0"
+    "@bedrock-core/builder-plugin": "npm:0.2.0"
     json-schema-to-typescript: "npm:15.0.4"
-    typescript: "npm:5.9.3"
-  checksum: 10c0/2d57456016f6382499c5af6bc0e370185a64c13ee9808eb6b2f76a95252cc5b920ce9cc55b61f759794b94be9fccc0bb0edd61e1e6c8a96a3a84390302fba19d
+    prettier: "npm:^3.2.5"
+    typescript-native: "npm:typescript@7.1.0-beta"
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-guides@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@bedrock-core/builder-guides@npm:0.1.1"
+"@bedrock-core/builder-guides@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder-guides@npm:0.2.0"
   dependencies:
-    "@bedrock-core/builder-plugin": "npm:0.1.0"
+    "@bedrock-core/builder-plugin": "npm:0.2.0"
     "@types/mdast": "npm:^4.0.4"
     mdast-util-definitions: "npm:^6.0.0"
     mdast-util-to-string: "npm:^4.0.0"
@@ -163,80 +161,75 @@ __metadata:
     remark-parse: "npm:^11.0.0"
     unified: "npm:^11.0.5"
     yaml: "npm:^2.8.0"
-  checksum: 10c0/ebd9618ca585ac67128960c772b8f8e7dd22fb46a2984f1dce1a17a20ee96cb25acab5de08d4fd652a60f06710fbadee0c9d90909da4b0954ec45371e87266a5
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-i18n@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@bedrock-core/builder-i18n@npm:0.1.0"
+"@bedrock-core/builder-i18n@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder-i18n@npm:0.2.0"
   dependencies:
-    "@bedrock-core/builder-bundler": "npm:0.1.0"
-    "@bedrock-core/builder-plugin": "npm:0.1.0"
-  checksum: 10c0/e3fec145df14deacecb5e60f52b37f369609c51193694abd00c9c581d56a3efc5a7f0ca9faf6a44f5b4448dd1430a79bf03c07da306152e0f502af9a8266bcfb
+    "@bedrock-core/builder-bundler": "npm:0.2.0"
+    "@bedrock-core/builder-plugin": "npm:0.2.0"
+    typescript-native: "npm:typescript@7.1.0-beta"
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-manifest@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@bedrock-core/builder-manifest@npm:0.1.0"
+"@bedrock-core/builder-manifest@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder-manifest@npm:0.2.0"
   dependencies:
-    "@bedrock-core/builder-plugin": "npm:0.1.0"
-  checksum: 10c0/a21e24e625c38195aefa64d229e202d868ceac17a7a9c0c008696053d8b66168219cdaff34730e1ae7a83d42cf388efbac0f9fb8d79bcfbf3eb235893813e2c1
+    "@bedrock-core/builder-plugin": "npm:0.2.0"
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-plugin@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@bedrock-core/builder-plugin@npm:0.1.0"
+"@bedrock-core/builder-plugin@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder-plugin@npm:0.2.0"
   dependencies:
     esbuild: "npm:0.25.12"
-  checksum: 10c0/8ab52ecfdf09adbd36eabdb5475a9e96a961b0941ea35e2af2c1465cd535dd3f04577963cb4cda71972c285463970f88753dcdaee9a558a5ce066eda4d57e151
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-ui@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@bedrock-core/builder-ui@npm:0.2.1"
+"@bedrock-core/builder-ui@npm:0.3.0":
+  version: 0.3.0
+  resolution: "@bedrock-core/builder-ui@npm:0.3.0"
   dependencies:
-    "@bedrock-core/builder-bundler": "npm:0.1.0"
-    "@bedrock-core/builder-manifest": "npm:0.1.0"
-    "@bedrock-core/builder-plugin": "npm:0.1.0"
+    "@bedrock-core/builder-bundler": "npm:0.2.0"
+    "@bedrock-core/builder-manifest": "npm:0.2.0"
+    "@bedrock-core/builder-plugin": "npm:0.2.0"
     esbuild: "npm:0.25.12"
-    typescript: "npm:5.9.3"
-  checksum: 10c0/46601edd434476cd42de06741c7d1b288679388561a99006d0f8d512b3e3b851c623dd2e4152c76b847d60801911de1371f07e73e7b948fc1d8ec85cfefe8fce
+    typescript-native: "npm:typescript@7.1.0-beta"
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder-validation@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@bedrock-core/builder-validation@npm:0.1.1"
+"@bedrock-core/builder-validation@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder-validation@npm:0.2.0"
   dependencies:
     "@minecraft/bedrock-schemas": "npm:1.26.50"
     ajv: "npm:8.17.1"
     jsonc-parser: "npm:3.3.1"
     picomatch: "npm:^4.0.2"
-  checksum: 10c0/32257919da331afb328307938e6f6f32f2915d0e728ecc40fa6ec07de78375127922b3b730c5165b42cc2bf089d2329302d661321f66ceacf5104811ca7f837f
   languageName: node
   linkType: hard
 
-"@bedrock-core/builder@npm:0.1.2":
-  version: 0.1.2
-  resolution: "@bedrock-core/builder@npm:0.1.2"
+"@bedrock-core/builder@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/builder@npm:0.2.0"
   dependencies:
-    "@bedrock-core/builder-bundler": "npm:0.1.0"
-    "@bedrock-core/builder-generator": "npm:0.1.0"
-    "@bedrock-core/builder-guides": "npm:0.1.1"
-    "@bedrock-core/builder-i18n": "npm:0.1.0"
-    "@bedrock-core/builder-manifest": "npm:0.1.0"
-    "@bedrock-core/builder-plugin": "npm:0.1.0"
-    "@bedrock-core/builder-ui": "npm:0.2.1"
-    "@bedrock-core/builder-validation": "npm:0.1.1"
+    "@bedrock-core/builder-bundler": "npm:0.2.0"
+    "@bedrock-core/builder-generator": "npm:0.2.0"
+    "@bedrock-core/builder-guides": "npm:0.2.0"
+    "@bedrock-core/builder-i18n": "npm:0.2.0"
+    "@bedrock-core/builder-manifest": "npm:0.2.0"
+    "@bedrock-core/builder-plugin": "npm:0.2.0"
+    "@bedrock-core/builder-ui": "npm:0.3.0"
+    "@bedrock-core/builder-validation": "npm:0.2.0"
     "@types/node": "npm:25.9.9"
     ajv: "npm:8.17.1"
+    typescript-native: "npm:typescript@7.1.0-beta"
   bin:
-    bc-builder: dist/bin/builder.js
-  checksum: 10c0/1b845401d5b83e6d56a2f11370236e360a67d3c68bf526c419edbb426339c9958f555f94d5376ab81939e02a2053b4a397001388ee4b7b75205b6ad85e1a382e
+    bc-builder: ./dist/bin/builder.js
   languageName: node
   linkType: hard
 
@@ -245,13 +238,13 @@ __metadata:
   resolution: "@bedrock-core/catalog@workspace:packages/catalog"
   dependencies:
     "@bedrock-core/guides": "workspace:*"
-    "@bedrock-core/i18n": "npm:*"
-    "@bedrock-core/navigation": "npm:*"
-    "@bedrock-core/observable": "npm:*"
-    "@bedrock-core/ore-styled": "npm:*"
-    "@bedrock-core/server-runtime": "npm:*"
-    "@bedrock-core/ui": "npm:*"
-    "@bedrock-core/ui-runtime": "npm:*"
+    "@bedrock-core/i18n": "npm:^0.3.0"
+    "@bedrock-core/navigation": "npm:^0.14.0"
+    "@bedrock-core/observable": "npm:^1.1.0"
+    "@bedrock-core/ore-styled": "npm:^0.11.3"
+    "@bedrock-core/server-runtime": "npm:^0.3.0"
+    "@bedrock-core/ui": "npm:^0.15.0"
+    "@bedrock-core/ui-runtime": "npm:^0.15.0"
     "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
@@ -260,13 +253,13 @@ __metadata:
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
-    "@bedrock-core/i18n": ^0.2.0
-    "@bedrock-core/navigation": ^0.13.1
-    "@bedrock-core/observable": ^1.0.0
-    "@bedrock-core/ore-styled": ^0.11.2
-    "@bedrock-core/server-runtime": ^0.2.1
-    "@bedrock-core/ui": ^0.14.0
-    "@bedrock-core/ui-runtime": ^0.14.0
+    "@bedrock-core/i18n": ^0.3.0
+    "@bedrock-core/navigation": ^0.14.0
+    "@bedrock-core/observable": ^1.1.0
+    "@bedrock-core/ore-styled": ^0.11.3
+    "@bedrock-core/server-runtime": ^0.3.0
+    "@bedrock-core/ui": ^0.15.0
+    "@bedrock-core/ui-runtime": ^0.15.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
   peerDependenciesMeta:
     "@bedrock-core/i18n":
@@ -288,14 +281,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/config@workspace:packages/config"
   dependencies:
-    "@bedrock-core/db": "npm:^0.1.1"
-    "@bedrock-core/i18n": "npm:*"
-    "@bedrock-core/navigation": "npm:*"
-    "@bedrock-core/observable": "npm:*"
-    "@bedrock-core/ore-styled": "npm:*"
-    "@bedrock-core/server-runtime": "npm:*"
-    "@bedrock-core/ui": "npm:*"
-    "@bedrock-core/ui-runtime": "npm:*"
+    "@bedrock-core/db": "npm:^0.2.0"
+    "@bedrock-core/i18n": "npm:^0.3.0"
+    "@bedrock-core/navigation": "npm:^0.14.0"
+    "@bedrock-core/observable": "npm:^1.1.0"
+    "@bedrock-core/ore-styled": "npm:^0.11.3"
+    "@bedrock-core/server-runtime": "npm:^0.3.0"
+    "@bedrock-core/ui": "npm:^0.15.0"
+    "@bedrock-core/ui-runtime": "npm:^0.15.0"
     "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
@@ -304,13 +297,13 @@ __metadata:
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
-    "@bedrock-core/i18n": ^0.2.0
-    "@bedrock-core/navigation": ^0.13.1
-    "@bedrock-core/observable": ^1.0.0
-    "@bedrock-core/ore-styled": ^0.11.2
-    "@bedrock-core/server-runtime": ^0.2.1
-    "@bedrock-core/ui": ^0.14.0
-    "@bedrock-core/ui-runtime": ^0.14.0
+    "@bedrock-core/i18n": ^0.3.0
+    "@bedrock-core/navigation": ^0.14.0
+    "@bedrock-core/observable": ^1.1.0
+    "@bedrock-core/ore-styled": ^0.11.3
+    "@bedrock-core/server-runtime": ^0.3.0
+    "@bedrock-core/ui": ^0.15.0
+    "@bedrock-core/ui-runtime": ^0.15.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
   peerDependenciesMeta:
     "@bedrock-core/i18n":
@@ -330,21 +323,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/db@file:../server/packages/db::locator=%40bedrock-core%2Fapps%40workspace%3A.":
-  version: 0.1.1
-  resolution: "@bedrock-core/db@file:../server/packages/db#../server/packages/db::hash=61a1b4&locator=%40bedrock-core%2Fapps%40workspace%3A."
+"@bedrock-core/db@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/db@npm:0.2.0"
   dependencies:
-    "@bedrock-core/observable": "workspace:^"
+    "@bedrock-core/observable": "npm:^1.1.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
-  checksum: 10c0/619c35c8abdd5e33696ed4746d0ee4ec9b35c80b473cec9145df5c3b448a9d335e428aace4928e9d0e85a1cc6e6e7e2285ec42215827c49c318ef10d8c7ae640
   languageName: node
   linkType: hard
 
-"@bedrock-core/flexbox@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@bedrock-core/flexbox@npm:1.0.2"
-  checksum: 10c0/f807eef5d973e027cee9870b2318b174d7d1d85009d8783c6a643398d29f7af7260ebad42e26dd6bb391b9ee10d4059b4852964b810d806aecaa1aa86f5ff762
+"@bedrock-core/flexbox@npm:1.0.3":
+  version: 1.0.3
+  resolution: "@bedrock-core/flexbox@npm:1.0.3"
   languageName: node
   linkType: hard
 
@@ -352,12 +343,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/guides@workspace:packages/guides"
   dependencies:
-    "@bedrock-core/i18n": "npm:*"
-    "@bedrock-core/navigation": "npm:*"
-    "@bedrock-core/ore-styled": "npm:*"
-    "@bedrock-core/server-runtime": "npm:*"
-    "@bedrock-core/ui": "npm:*"
-    "@bedrock-core/ui-runtime": "npm:*"
+    "@bedrock-core/i18n": "npm:^0.3.0"
+    "@bedrock-core/navigation": "npm:^0.14.0"
+    "@bedrock-core/ore-styled": "npm:^0.11.3"
+    "@bedrock-core/server-runtime": "npm:^0.3.0"
+    "@bedrock-core/ui": "npm:^0.15.0"
+    "@bedrock-core/ui-runtime": "npm:^0.15.0"
     "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
@@ -366,12 +357,12 @@ __metadata:
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
-    "@bedrock-core/i18n": ^0.2.0
-    "@bedrock-core/navigation": ^0.13.1
-    "@bedrock-core/ore-styled": ^0.11.2
-    "@bedrock-core/server-runtime": ^0.2.1
-    "@bedrock-core/ui": ^0.14.0
-    "@bedrock-core/ui-runtime": ^0.14.0
+    "@bedrock-core/i18n": ^0.3.0
+    "@bedrock-core/navigation": ^0.14.0
+    "@bedrock-core/ore-styled": ^0.11.3
+    "@bedrock-core/server-runtime": ^0.3.0
+    "@bedrock-core/ui": ^0.15.0
+    "@bedrock-core/ui-runtime": ^0.15.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
   peerDependenciesMeta:
     "@bedrock-core/i18n":
@@ -389,24 +380,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/i18n@file:../server/packages/i18n::locator=%40bedrock-core%2Fapps%40workspace%3A.":
-  version: 0.2.0
-  resolution: "@bedrock-core/i18n@file:../server/packages/i18n#../server/packages/i18n::hash=0a7f61&locator=%40bedrock-core%2Fapps%40workspace%3A."
+"@bedrock-core/i18n@npm:0.3.0":
+  version: 0.3.0
+  resolution: "@bedrock-core/i18n@npm:0.3.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
-  checksum: 10c0/989e669613f6cd431d1b65be5badc88c2973bf7c2b490f7a5df13cd57dc53e0a0180d6bbd3ef956284fed03ec0f35e4413891b621882403bb4861cfe7c3f07cf
   languageName: node
   linkType: hard
 
-"@bedrock-core/navigation@file:../ui/packages/navigation::locator=%40bedrock-core%2Fapps%40workspace%3A.":
-  version: 0.13.2
-  resolution: "@bedrock-core/navigation@file:../ui/packages/navigation#../ui/packages/navigation::hash=e6a963&locator=%40bedrock-core%2Fapps%40workspace%3A."
+"@bedrock-core/navigation@npm:0.14.0":
+  version: 0.14.0
+  resolution: "@bedrock-core/navigation@npm:0.14.0"
   dependencies:
-    "@bedrock-core/observable": "npm:^1.0.0"
-    "@bedrock-core/ui-runtime": "workspace:*"
+    "@bedrock-core/observable": "npm:^1.1.0"
+    "@bedrock-core/ui-runtime": "npm:0.15.0"
   peerDependencies:
-    "@bedrock-core/i18n": "*"
-    "@bedrock-core/server-runtime": "*"
+    "@bedrock-core/i18n": ^0.3.0
+    "@bedrock-core/server-runtime": ^0.3.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
     "@minecraft/server-ui": "*"
   peerDependenciesMeta:
@@ -414,13 +404,12 @@ __metadata:
       optional: true
     "@bedrock-core/server-runtime":
       optional: true
-  checksum: 10c0/acb8bfee92fd94a41011fc13f64908fc195e706daf8436087081363dcf396ee80d8d52bf682c7f17595a2a2a73297ee61eb653cc99ec292d139f5ec1fbdcd922
   languageName: node
   linkType: hard
 
-"@bedrock-core/observable@file:../server/packages/observable::locator=%40bedrock-core%2Fapps%40workspace%3A.":
-  version: 1.0.0
-  resolution: "@bedrock-core/observable@file:../server/packages/observable#../server/packages/observable::hash=2b8354&locator=%40bedrock-core%2Fapps%40workspace%3A."
+"@bedrock-core/observable@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@bedrock-core/observable@npm:1.1.0"
   peerDependencies:
     "@minecraft/server": ">=2.0.0"
     "@minecraft/server-ui": ">=2.1.0"
@@ -429,95 +418,98 @@ __metadata:
       optional: true
     "@minecraft/server-ui":
       optional: true
-  checksum: 10c0/17e90d8e100838bc594ecae3c386207dc13c7cac3cfb54a93c568ccbe816e707a30359cc2ecca11b5e77b5eb1a30aee36819931d6c8e4b996cd2d48ae94c2feb
   languageName: node
   linkType: hard
 
-"@bedrock-core/ore-styled@npm:0.11.2":
-  version: 0.11.2
-  resolution: "@bedrock-core/ore-styled@npm:0.11.2"
+"@bedrock-core/ore-styled@npm:0.11.3":
+  version: 0.11.3
+  resolution: "@bedrock-core/ore-styled@npm:0.11.3"
   peerDependencies:
-    "@bedrock-core/i18n": "*"
-    "@bedrock-core/navigation": "*"
-    "@bedrock-core/ui-runtime": "*"
-  checksum: 10c0/ab43bc80925579b977e2df417ceb033c4a57efd1d6926df2de0b225d6783709f970bb4044731341a4337b001526c430ee7a11a5fa5f5bf8e6dee60d4788a056e
+    "@bedrock-core/i18n": ^0.3.0
+    "@bedrock-core/navigation": ^0.14.0
+    "@bedrock-core/ui-runtime": ^0.15.0
   languageName: node
   linkType: hard
 
-"@bedrock-core/server-runtime@file:../server/packages/server-runtime::locator=%40bedrock-core%2Fapps%40workspace%3A.":
-  version: 0.2.1
-  resolution: "@bedrock-core/server-runtime@file:../server/packages/server-runtime#../server/packages/server-runtime::hash=344d35&locator=%40bedrock-core%2Fapps%40workspace%3A."
-  dependencies:
-    "@bedrock-core/i18n": "workspace:^"
-    "@bedrock-core/observable": "workspace:^"
-    "@bedrock-core/sync": "workspace:^"
-  peerDependencies:
-    "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
-  checksum: 10c0/8e8868ce17ba4078592dd1419fdc1c7f64ae0c11e7c465bb55f044cc62108ec9f1a4d17e12c63eaf38fea6dcf8a3995745e8f9f6784882bb25a7a95085b5a107
-  languageName: node
-  linkType: hard
-
-"@bedrock-core/sync@file:../server/packages/sync::locator=%40bedrock-core%2Fapps%40workspace%3A.":
-  version: 1.0.0
-  resolution: "@bedrock-core/sync@file:../server/packages/sync#../server/packages/sync::hash=7466ef&locator=%40bedrock-core%2Fapps%40workspace%3A."
-  dependencies:
-    "@bedrock-core/observable": "workspace:^"
-  peerDependencies:
-    "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
-  checksum: 10c0/519a68881a5bd7748abcd14c4d9498a0ccccc22e9ef7c86566d3a4a70fb7926a9eeea1151af343a05d4d2ae4d43485653bda95556fad90bf5b54c0607884f29a
-  languageName: node
-  linkType: hard
-
-"@bedrock-core/ui-compiler@npm:0.3.0":
+"@bedrock-core/server-runtime@npm:0.3.0":
   version: 0.3.0
-  resolution: "@bedrock-core/ui-compiler@npm:0.3.0"
+  resolution: "@bedrock-core/server-runtime@npm:0.3.0"
   dependencies:
-    "@bedrock-core/ui-runtime": "npm:0.14.0"
+    "@bedrock-core/i18n": "npm:^0.3.0"
+    "@bedrock-core/observable": "npm:^1.1.0"
+    "@bedrock-core/sync": "npm:^2.0.0"
   peerDependencies:
-    "@bedrock-core/i18n": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
-    "@minecraft/server-ui": "*"
-  peerDependenciesMeta:
-    "@bedrock-core/i18n":
-      optional: true
-  checksum: 10c0/739d7bbb0cb39745440f439352a943e3a346a37ec3ebe93e27062d2c4ec31b42a27e6d534c3d24c1987c876df56a6b4626c4cf6f9ff70991847118a4db8d250d
   languageName: node
   linkType: hard
 
-"@bedrock-core/ui-runtime@file:../ui/packages/ui-runtime::locator=%40bedrock-core%2Fapps%40workspace%3A.":
-  version: 0.14.1
-  resolution: "@bedrock-core/ui-runtime@file:../ui/packages/ui-runtime#../ui/packages/ui-runtime::hash=9653de&locator=%40bedrock-core%2Fapps%40workspace%3A."
+"@bedrock-core/sync@npm:2.0.0":
+  version: 2.0.0
+  resolution: "@bedrock-core/sync@npm:2.0.0"
   dependencies:
-    "@bedrock-core/flexbox": "workspace:*"
     "@bedrock-core/observable": "npm:^1.1.0"
   peerDependencies:
-    "@bedrock-core/i18n": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
-    "@minecraft/server-ui": "*"
-  peerDependenciesMeta:
-    "@bedrock-core/i18n":
-      optional: true
-  checksum: 10c0/ba54e632f316ccfc653d58c46a6007973fa6c92c2ccf653102ef60655a416458fda1e03fc1685c0800cd43886b8ee51151516fae3738ede4729d54b1c779d4f6
   languageName: node
   linkType: hard
 
-"@bedrock-core/ui@npm:0.14.0":
-  version: 0.14.0
-  resolution: "@bedrock-core/ui@npm:0.14.0"
+"@bedrock-core/ui-compiler@npm:0.3.2":
+  version: 0.3.2
+  resolution: "@bedrock-core/ui-compiler@npm:0.3.2"
   dependencies:
-    "@bedrock-core/flexbox": "npm:1.0.2"
-    "@bedrock-core/navigation": "npm:0.13.1"
-    "@bedrock-core/ore-styled": "npm:0.11.2"
-    "@bedrock-core/ui-compiler": "npm:0.3.0"
-    "@bedrock-core/ui-runtime": "npm:0.14.0"
+    "@bedrock-core/flexbox": "npm:1.0.3"
+    "@bedrock-core/ui-runtime": "npm:0.15.0"
   peerDependencies:
-    "@bedrock-core/i18n": "*"
+    "@bedrock-core/i18n": ^0.3.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
     "@minecraft/server-ui": "*"
   peerDependenciesMeta:
     "@bedrock-core/i18n":
       optional: true
-  checksum: 10c0/0783b977dd828dbdbcd300a60a60fd561fa64e92e74f66ee7a1e6dfab2fc4e649907c98014f60a577cdf76e9acbe54b2668068a9dc5b7204ebd63106b5c0bdc0
+  languageName: node
+  linkType: hard
+
+"@bedrock-core/ui-runtime@npm:0.15.0":
+  version: 0.15.0
+  resolution: "@bedrock-core/ui-runtime@npm:0.15.0"
+  dependencies:
+    "@bedrock-core/flexbox": "npm:1.0.3"
+    "@bedrock-core/observable": "npm:^1.1.0"
+  peerDependencies:
+    "@bedrock-core/i18n": ^0.3.0
+    "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+    "@minecraft/server-ui": "*"
+    vitest: ^4.1.5
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
+    vitest:
+      optional: true
+  languageName: node
+  linkType: hard
+
+"@bedrock-core/ui@npm:0.15.0":
+  version: 0.15.0
+  resolution: "@bedrock-core/ui@npm:0.15.0"
+  dependencies:
+    "@bedrock-core/flexbox": "npm:1.0.3"
+    "@bedrock-core/navigation": "npm:0.14.0"
+    "@bedrock-core/ore-styled": "npm:0.11.3"
+    "@bedrock-core/ui-compiler": "npm:0.3.2"
+    "@bedrock-core/ui-runtime": "npm:0.15.0"
+  peerDependencies:
+    "@bedrock-core/i18n": ^0.3.0
+    "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+    "@minecraft/server-ui": "*"
+    eslint: ^10.3.0
+    eslint-plugin-react-hooks: 7.1.1
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
+    eslint:
+      optional: true
+    eslint-plugin-react-hooks:
+      optional: true
   languageName: node
   linkType: hard
 
@@ -1641,6 +1633,153 @@ __metadata:
     "@typescript-eslint/types": "npm:8.70.0"
     eslint-visitor-keys: "npm:^5.0.0"
   checksum: 10c0/43fe28dc1045a686deead8c9334f6e9d8b3fa8f84917147aabd9747783b8bc531254a95a9bfb33355b25cf5ec9a72c62bcde313f13869d7a5e5603d96be593a9
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-aix-ppc64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-aix-ppc64@npm:7.1.0-beta"
+  conditions: os=aix & cpu=ppc64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-android-arm64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-android-arm64@npm:7.1.0-beta"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-darwin-arm64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-darwin-arm64@npm:7.1.0-beta"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-darwin-x64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-darwin-x64@npm:7.1.0-beta"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-freebsd-arm64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-freebsd-arm64@npm:7.1.0-beta"
+  conditions: os=freebsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-freebsd-x64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-freebsd-x64@npm:7.1.0-beta"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-arm64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-arm64@npm:7.1.0-beta"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-arm@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-arm@npm:7.1.0-beta"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-loong64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-loong64@npm:7.1.0-beta"
+  conditions: os=linux & cpu=loong64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-mips64el@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-mips64el@npm:7.1.0-beta"
+  conditions: os=linux & cpu=mips64el
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-ppc64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-ppc64@npm:7.1.0-beta"
+  conditions: os=linux & cpu=ppc64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-riscv64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-riscv64@npm:7.1.0-beta"
+  conditions: os=linux & cpu=riscv64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-s390x@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-s390x@npm:7.1.0-beta"
+  conditions: os=linux & cpu=s390x
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-x64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-linux-x64@npm:7.1.0-beta"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-netbsd-arm64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-netbsd-arm64@npm:7.1.0-beta"
+  conditions: os=netbsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-netbsd-x64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-netbsd-x64@npm:7.1.0-beta"
+  conditions: os=netbsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-openbsd-arm64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-openbsd-arm64@npm:7.1.0-beta"
+  conditions: os=openbsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-openbsd-x64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-openbsd-x64@npm:7.1.0-beta"
+  conditions: os=openbsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-sunos-x64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-sunos-x64@npm:7.1.0-beta"
+  conditions: os=sunos & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-win32-arm64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-win32-arm64@npm:7.1.0-beta"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-win32-x64@npm:7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "@typescript/typescript-win32-x64@npm:7.1.0-beta"
+  conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
@@ -4325,6 +4464,80 @@ __metadata:
     eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
     typescript: ">=4.8.4 <6.1.0"
   checksum: 10c0/bf6625631bfcc7392bb1403681ef934f4f428c41a6a090b081a77ed0d342326c31097956900d701d078ac0c8a599d53377b504455fa9ce7214365c4c8d4635a3
+  languageName: node
+  linkType: hard
+
+"typescript-native@npm:typescript@7.1.0-beta":
+  version: 7.1.0-beta
+  resolution: "typescript@npm:7.1.0-beta"
+  dependencies:
+    "@typescript/typescript-aix-ppc64": "npm:7.1.0-beta"
+    "@typescript/typescript-android-arm64": "npm:7.1.0-beta"
+    "@typescript/typescript-darwin-arm64": "npm:7.1.0-beta"
+    "@typescript/typescript-darwin-x64": "npm:7.1.0-beta"
+    "@typescript/typescript-freebsd-arm64": "npm:7.1.0-beta"
+    "@typescript/typescript-freebsd-x64": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-arm": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-arm64": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-loong64": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-mips64el": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-ppc64": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-riscv64": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-s390x": "npm:7.1.0-beta"
+    "@typescript/typescript-linux-x64": "npm:7.1.0-beta"
+    "@typescript/typescript-netbsd-arm64": "npm:7.1.0-beta"
+    "@typescript/typescript-netbsd-x64": "npm:7.1.0-beta"
+    "@typescript/typescript-openbsd-arm64": "npm:7.1.0-beta"
+    "@typescript/typescript-openbsd-x64": "npm:7.1.0-beta"
+    "@typescript/typescript-sunos-x64": "npm:7.1.0-beta"
+    "@typescript/typescript-win32-arm64": "npm:7.1.0-beta"
+    "@typescript/typescript-win32-x64": "npm:7.1.0-beta"
+  dependenciesMeta:
+    "@typescript/typescript-aix-ppc64":
+      optional: true
+    "@typescript/typescript-android-arm64":
+      optional: true
+    "@typescript/typescript-darwin-arm64":
+      optional: true
+    "@typescript/typescript-darwin-x64":
+      optional: true
+    "@typescript/typescript-freebsd-arm64":
+      optional: true
+    "@typescript/typescript-freebsd-x64":
+      optional: true
+    "@typescript/typescript-linux-arm":
+      optional: true
+    "@typescript/typescript-linux-arm64":
+      optional: true
+    "@typescript/typescript-linux-loong64":
+      optional: true
+    "@typescript/typescript-linux-mips64el":
+      optional: true
+    "@typescript/typescript-linux-ppc64":
+      optional: true
+    "@typescript/typescript-linux-riscv64":
+      optional: true
+    "@typescript/typescript-linux-s390x":
+      optional: true
+    "@typescript/typescript-linux-x64":
+      optional: true
+    "@typescript/typescript-netbsd-arm64":
+      optional: true
+    "@typescript/typescript-netbsd-x64":
+      optional: true
+    "@typescript/typescript-openbsd-arm64":
+      optional: true
+    "@typescript/typescript-openbsd-x64":
+      optional: true
+    "@typescript/typescript-sunos-x64":
+      optional: true
+    "@typescript/typescript-win32-arm64":
+      optional: true
+    "@typescript/typescript-win32-x64":
+      optional: true
+  bin:
+    tsc: bin/tsc
+  checksum: 10c0/4ae43c8a57944a5ecb30093aa93ea94c9726e013e20e97e31ffd976018f507aeadb3d515136429dd894871419dca532b5b8c259f3aae1d0eaef112d197ac3b2c
   languageName: node
   linkType: hard
 

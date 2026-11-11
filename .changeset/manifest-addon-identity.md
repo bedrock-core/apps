@@ -1,6 +1,5 @@
 ---
 '@bedrock-core/catalog': minor
-'@bedrock-core/apps': minor
 ---
 
 Build catalog pages from authored addon manifests with explicit namespaces, native metadata and author lists.
