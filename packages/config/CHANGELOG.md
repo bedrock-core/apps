@@ -1,5 +1,26 @@
 # @bedrock-core/config
 
+## 0.5.0
+
+### Minor Changes
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Expose ConfigService and CatalogPagesService as local behavior and lifecycle managers. Config scopes and shared catalog page records retain their existing library accessors.
+
+### Patch Changes
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Own each Config definition's namespaced database, scopes and subscriptions, with storage created on installation and released on uninstall or rollback.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Dispose config subscriptions on registry shutdown and when an entity scope is
+  forgotten. Cancel pending startup reads when the registry stops.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Read addon names, versions and authors directly from native manifest fields. Catalog pages accept AddonManifest and derive translation keys and conventional icons when displayed.
+
+- [`1e5733c`](https://github.com/bedrock-core/apps/commit/1e5733cb99de889f71c6ab39fbe77b170aa16c15) Thanks [@drav0011](https://github.com/drav0011)! - Require compatible registry releases of Server Runtime, database, translations and UI libraries.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Install and retrieve typed local services through Runtime, with cleanup and rollback owned by each installation.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Publish and read Catalog pages through one installed registry accessor, and use the translation library integration for Config rendering and commands.
+
 ## 0.4.1
 
 ### Patch Changes
@@ -11,7 +32,7 @@
 ### Minor Changes
 
 - [`6ba1736`](https://github.com/bedrock-core/apps/commit/6ba1736adf52d5d95b6201d268b38cd11d97ad7a) Thanks [@drav0011](https://github.com/drav0011)! - Use a bounded client navigation stack for schema menus, enable resets only for non-default values, and preserve invalid editor submissions with localized field errors. Recheck permissions before applying resets and edits. Compile schema menu pages at their authored row capacities.
-  
+
   Use consistent card bounds and menu row spacing across scope selection and schema pages. Preserve list-setting breadcrumbs and their parent destinations.
 
 - [`529eaf0`](https://github.com/bedrock-core/apps/commit/529eaf04f5099c537502cba01836efb233ab794d) Thanks [@drav0011](https://github.com/drav0011)! - Register application entry points through `navigation(core)`, reconstruct private models in their owning realm and preserve destination inputs across realm transitions. Determine catalog button availability from registered screens. Export manifest-page publishing separately through `@bedrock-core/catalog/integration`.
@@ -33,25 +54,25 @@
 ### Minor Changes
 
 - [`e69758e`](https://github.com/bedrock-core/apps/commit/e69758e3bf6a58755145d0a357eb657a7497eaf9) Thanks [@drav0011](https://github.com/drav0011)! - **Breaking.** The UI is three peer apps, and each one is a field of `core.register()`.
-  
+
   `@bedrock-core/config` was the addon list, the config screens and the guide viewer in one mount.
   Those are three different things to want, so they are three packages: `@bedrock-core/catalog`
   browses every addon in the world, `@bedrock-core/config` holds an addon's settings and the screens
   that edit them, and `@bedrock-core/guides` shows its guide. Each installs on its own.
-  
+
   ```ts
   // before
-  import { ui } from '@bedrock-core/config';
-  import { config } from '@bedrock-core/config/server';
-  
+  import { ui } from "@bedrock-core/config";
+  import { config } from "@bedrock-core/config/server";
+
   core.register({ manifest, config: config(definition) });
   ui(core); // the list, the config screens, the guide, and four commands
-  
+
   // after
-  import { registerCatalog } from '@bedrock-core/catalog';
-  import { registerConfig } from '@bedrock-core/config';
-  import { registerGuides } from '@bedrock-core/guides/server';
-  
+  import { registerCatalog } from "@bedrock-core/catalog";
+  import { registerConfig } from "@bedrock-core/config";
+  import { registerGuides } from "@bedrock-core/guides/server";
+
   const { config } = core.register({
     manifest,
     catalog: registerCatalog(),
@@ -59,26 +80,26 @@
     guides: registerGuides(),
   });
   ```
-  
+
   `register()` is the whole mount — there is no second call, and taking two of the three is dropping
   a field rather than passing a flag. Each declaration installs its own command, serves its own
   `core:<app>.show` method and announces that this addon offers that app, so what a realm can do for
   a player follows from what the addon asked for.
-  
+
   A declaration takes only what the build cannot work out for itself. `registerConfig(definition)`
-  takes the definition because the definition *is* the declaration: the runtime installs the scopes
+  takes the definition because the definition _is_ the declaration: the runtime installs the scopes
   from it and the ui-compiler filter reads it out of that very call to shape one screen per section.
   `registerCatalog()` and `registerGuides()` take nothing at all — the roster is `core.registry`, and
   the guide's pages are already compiled into the pack — so their presence is the entire statement.
   Each also takes `{ commands: false }`, which frees the command name without unmounting the app.
-  
+
   Each app owns one command, under the addon's own namespace: `<ns>:config` and `<ns>:configat` stay
   here, `<ns>:catalog` belongs to the catalog (`<ns>:list` is gone — vanilla owns `/list`, and the
   alias Bedrock grants the first registrant cannot be claimed for a name it already has), and
   `<ns>:guide` belongs to the guide app.
-  
+
   Removed from `@bedrock-core/config`, with where each went:
-  
+
   - `ui`, `openUi` and `UiOptions` — `registerConfig()` mounts, and `config.open(player, target?)` on
     the returned accessor is the funnel that `openUi` was. The permission clamp is still behind it.
   - `addonPageScreen` and `AddonPageInfo` — the page is `AddonPage` and `AddonPageInfo` on
@@ -90,13 +111,13 @@
     `CONFIG_SCOPES`, `ConfigScope`, `EntrySchema` and `FlatSchemaLike` — internal.
     `registerConfig(definition, { commands: false })` with `config.open(player, target?)` makes your
     own entry point, and `isOperator` is `@bedrock-core/server`'s.
-  
+
   `@bedrock-core/config/server` renames its field factory `config` to `registerConfig`, matching the
   name the root exports: the two are the same field, one with screens and one without, and an addon
   that draws nothing imports the subpath alone. The subsystem reaches the runtime through a
   namespaced slot rather than a fixed property — `configOf(core)` reads what the declaration filled
   under `core:config`.
-  
+
   `@bedrock-core/guides` gains `@bedrock-core/guides/server`, the guide app's server half:
   `registerGuides`, `guidesOf` and their types. It runs on a bare `Runtime` and draws nothing. The
   package root re-exports it beside the screen factories the guides filter's generated modules call,
@@ -109,77 +130,77 @@
 
 - [`e69758e`](https://github.com/bedrock-core/apps/commit/e69758e3bf6a58755145d0a357eb657a7497eaf9) Thanks [@drav0011](https://github.com/drav0011)! - **Breaking.** A screen is drawn by the addon whose pack holds it, and a crossing carries the way
   back.
-  
+
   A config target naming another addon is handed to that addon's realm before anything is drawn:
   the screens read and write the addon's own scopes, so its settings, its page and its guide are
   served by it. No realm draws another addon's settings.
-  
+
   Config is local. `configOf(core).of()`, `configOf(core).subscribe()`, `RemoteConfigAccessor`,
   `TypedRemoteConfig`, `ConfigAccessOptions`, the nine `core:config.<scope>.<get|patch|set>` RPC
   methods and the `core-config/schema` and `core-config/groups` announcements are gone, and
   `configOf(core).local` gains `groups`. An addon that wants its settings read or written from
   another realm serves them over its own RPC.
-  
+
   One method does all of it, `core:ui.show(playerId, target, returnTo?)`, and the third argument is
   what makes a crossing survivable. A return address names a PLACE rather than a screen key — a
   list, a menu level and a roster are each drawn from a model, and rendering their component with no
   model draws the empty shape of the screen. Each hop carries the whole way back in the request, so
   a chain of any depth walks home through the realms it came through rather than dead-ending on the
   far side.
-  
+
   A row whose realm does not answer is still drawn here, from the page reference that addon
   published, exactly as before. Handing off is what happens when the owner is present, not a
   requirement for appearing at all.
-  
+
   The open target is now one per app rather than one shared union, and internal to it.
   `isOpenTarget`, `OpenTarget` and `OpenCommand` are gone — a target crosses a realm as plain
   data, and each app reads its own. A realm running an older copy understands as much of a target as
   it knows and falls back for the rest.
-  
+
   The permission clamp applies on arrival rather than at the entry points. A target also arrives
   from the wire, where no caller in this realm has applied it, so a non-operator cannot reach past
   their own player scope even when the request says otherwise.
 
 - [`ea00fe0`](https://github.com/bedrock-core/apps/commit/ea00fe0a8c94ef9e55c508375f0062293876f954) Thanks [@drav0011](https://github.com/drav0011)! - An addon's screens follow from what it declared.
-  
+
   `core.register()` is read at build time, and what follows from it is compiled: one config screen per section of the declared schema — shaped for the settings that section has, each drawn as the control it is, with its label baked — and the addon's page in the shared list, drawn from its manifest. A list's items get a screen of their own, with the options a present offers filled in rather than baked.
-  
+
   There is no cap on rows or options, because a screen serving any schema is the only thing that needed one.
 
 - [`514e866`](https://github.com/bedrock-core/apps/commit/514e8662f6881a6ddf6e3a919b88dd664ba9316f) Thanks [@drav0011](https://github.com/drav0011)! - **Breaking.** The `enum` entry type is `select`, and `EnumEntry` is `SelectEntry`. A `list` is free
   strings only: `itemType` and `options` are gone from it, and a setting drawn from a fixed set is a
   `multiselect`.
-  
+
   A `select` and a `multiselect` take `options` as a string array or a string `enum`, and both infer
   from them: a select reads back as one of its options, and a multiselect as an array of them where
   it read back as `string[]`. `EntryOptions` and `OptionValue` are exported beside the entry types.
 
 - [`e69758e`](https://github.com/bedrock-core/apps/commit/e69758e3bf6a58755145d0a357eb657a7497eaf9) Thanks [@drav0011](https://github.com/drav0011)! - A setting is drawn as the control it is, showing what is actually stored.
-  
+
   A shaped leaf reads the scope's stored document rather than the schema's defaults. Values are
   nested the way the schema is while a field is named by its flat path, so each one is read down its
   path and falls back to what the schema declares only where nothing is set. A section deep-linked
   from a command fetches before its first render, so it opens on the values in the world instead of
   on defaults it then has to correct.
-  
+
   Each row takes the shape vanilla gives that control, inside full-width dividers:
-  
+
   - a toggle sits beside its caption and note;
   - a slider sits under its caption and note, with the value at the caption's end;
   - every other control takes the note after it.
-  
+
   A short enum is a segmented control and a longer one stays a dropdown. A multiselect draws a
   checkbox per option, answering under `<key>#<n>`, and the host folds those back into the array —
   clearing the last box yields an empty array rather than dropping the setting. Save writes and then
   goes back; dismissing goes back without writing. A list returns to the section holding it rather
   than to the scope root, and the list editor re-presents with its patch merged down the setting's
   own path.
-  
+
   Screen bodies share one rect inside the card's border, so the insets read equal from one screen to
   the next, and an addon page keeps a narrower right inset beside the scroll gutter.
 
 - [`ea00fe0`](https://github.com/bedrock-core/apps/commit/ea00fe0a8c94ef9e55c508375f0062293876f954) Thanks [@drav0011](https://github.com/drav0011)! - A guide page ships as a table, not as a component.
-  
+
   A guide page is a static screen: every string it shows is baked and every press it takes is a `<Link>`. `GuideBlockList`, `GuidePageView`, `GuideHomeView` and the guide manifest are absent from a built addon, and opening a page is one form call. `openGuide(ns, player)` no longer takes the manifest: it navigates to the guide's key, and the manifest is build input that never reaches the addon. A `cmp` block in a guide may not take a press: somewhere to go is a `<Link>`, anything else is decoration.
 
 ## 0.2.0
@@ -232,7 +253,6 @@
   Non-operators reach their own player scope only, enforced on both sides. Caller side: `clampTarget` narrows a request before the first render, the List's Config button goes straight to their own settings rather than a picker with one usable row, and the scope screens never enter their stack. Owner side: every read and write carries the viewing player as `actorId`, which the owning addon checks independently — covering a realm that fell back to an older copy of this UI. Operator status is read from the readonly `playerPermissionLevel`, never the script-writable `commandPermissionLevel`.
 
   ## Details
-
   - A request that names a scope fetches that scope's values before mounting, so it opens showing what is actually set rather than every field at its schema default — `Config` presents a native modal and cannot fetch its own without presenting twice.
   - bedrock-core has its own built-in guide covering the commands: the framework has a row in the list but no realm behind it, so nothing can publish one on its behalf. Its prose — and every UI string in this package — is typed i18n resources (`core.*` keys, `src/i18n/en_US.ts`): the i18n Regolith filter folds them into every consuming realm's bundle and generated `.lang`, so they paint, measure and translate exactly like an addon's own keys, addon overrides included. The UI's measurement source is one call: `core.translations.forPlayer(player)`.
   - A screen opened for an addon whose config or guide has not replicated yet returns to the list with that addon selected, rather than showing a dead end.

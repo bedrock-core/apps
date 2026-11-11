@@ -1,5 +1,27 @@
 # @bedrock-core/catalog
 
+## 0.3.0
+
+### Minor Changes
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Expose ConfigService and CatalogPagesService as local behavior and lifecycle managers. Config scopes and shared catalog page records retain their existing library accessors.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Build catalog pages from authored addon manifests with explicit namespaces, native metadata and author lists.
+
+  Publish catalog page references through read-only peer observables with runtime-owned cleanup.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Read addon names, versions and authors directly from native manifest fields. Catalog pages accept AddonManifest and derive translation keys and conventional icons when displayed.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Publish and read Catalog pages through one installed registry accessor, and use the translation library integration for Config rendering and commands.
+
+### Patch Changes
+
+- [`1e5733c`](https://github.com/bedrock-core/apps/commit/1e5733cb99de889f71c6ab39fbe77b170aa16c15) Thanks [@drav0011](https://github.com/drav0011)! - Require compatible registry releases of Server Runtime, database, translations and UI libraries.
+
+- [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba) Thanks [@drav0011](https://github.com/drav0011)! - Install and retrieve typed local services through Runtime, with cleanup and rollback owned by each installation.
+- Updated dependencies [[`1e5733c`](https://github.com/bedrock-core/apps/commit/1e5733cb99de889f71c6ab39fbe77b170aa16c15), [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba), [`b6041c1`](https://github.com/bedrock-core/apps/commit/b6041c19d6efff5b4054407dbbd088bedad282ba)]:
+  - @bedrock-core/guides@0.4.1
+
 ## 0.2.1
 
 ### Patch Changes
