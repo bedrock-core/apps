@@ -119,6 +119,7 @@ __metadata:
     yauzl: "npm:^3.2.0"
   bin:
     bc-bds: ./bin/bc-bds.mjs
+  checksum: 10c0/c486a5e5ba2adec99923c01878b4348b3a594ea4e8827b3300d33072dc50266cd2217e8fef73228f9dcd0185e18fd6c9e867976af5c4dc86cddfba1acf4ff4b5
   languageName: node
   linkType: hard
 
@@ -130,6 +131,7 @@ __metadata:
     "@bedrock-core/builder-plugin": "npm:0.2.0"
     esbuild: "npm:0.25.12"
     typescript-native: "npm:typescript@7.1.0-beta"
+  checksum: 10c0/61814f7b859c5691a6fba0f1b43e7c82e155863c2ceb5ca06589329dc01e2eb7c8915a2f46f1995ecbdeac0ab575f38208901d3a8cea23ea5d57284d8e3ea676
   languageName: node
   linkType: hard
 
@@ -142,6 +144,7 @@ __metadata:
     json-schema-to-typescript: "npm:15.0.4"
     prettier: "npm:^3.2.5"
     typescript-native: "npm:typescript@7.1.0-beta"
+  checksum: 10c0/bd6340acabaaf4f49dcc8c19ffc60b61f99507075e7844ad81eb1f3388fa6247cb4c6a583a8173f5f0832eed9ca198d543ea7a2a563e5bb11ac7d890d275e13f
   languageName: node
   linkType: hard
 
@@ -161,6 +164,7 @@ __metadata:
     remark-parse: "npm:^11.0.0"
     unified: "npm:^11.0.5"
     yaml: "npm:^2.8.0"
+  checksum: 10c0/455d1edcd165569d847af28b21708af4965dc190f5dd9f55ae5284f1c10f563a5ac88c462ab4892344b3f3729060c21851cf7357790df126f2a0dc9f787f2cb0
   languageName: node
   linkType: hard
 
@@ -171,6 +175,7 @@ __metadata:
     "@bedrock-core/builder-bundler": "npm:0.2.0"
     "@bedrock-core/builder-plugin": "npm:0.2.0"
     typescript-native: "npm:typescript@7.1.0-beta"
+  checksum: 10c0/2e7e1eaf141bf0de33f59703eebd6c021a0119253d1cdfb1893a7743c970df3ad417a089c1ce8c6a3dea4fea3a49b7f9d50e6476c0161137652689ff9093d306
   languageName: node
   linkType: hard
 
@@ -179,6 +184,7 @@ __metadata:
   resolution: "@bedrock-core/builder-manifest@npm:0.2.0"
   dependencies:
     "@bedrock-core/builder-plugin": "npm:0.2.0"
+  checksum: 10c0/10623a402c453a8d788ce953f27be0a03b1742f7b8f057876c7e2546a061dda5486ed81b495cd587368744c168a304e0ab4f23afcbbb6aec8eb7ec237aecf00d
   languageName: node
   linkType: hard
 
@@ -187,6 +193,7 @@ __metadata:
   resolution: "@bedrock-core/builder-plugin@npm:0.2.0"
   dependencies:
     esbuild: "npm:0.25.12"
+  checksum: 10c0/86bb6f8bb84fbe8501f1d739bf063484a48fe20904180209a61e84359949dcbe74fc1e846673188b242c797488738864e5dfe7f54e203acb01c067a963b50e2f
   languageName: node
   linkType: hard
 
@@ -199,6 +206,7 @@ __metadata:
     "@bedrock-core/builder-plugin": "npm:0.2.0"
     esbuild: "npm:0.25.12"
     typescript-native: "npm:typescript@7.1.0-beta"
+  checksum: 10c0/97ab0bd4598cbb8406e7e4827e73019356e7024cfeea535ed2da4872aaad5d19235e6d75c249dc0ebbedf7807cecfcc53ecf577b0687197324f883bf73343abe
   languageName: node
   linkType: hard
 
@@ -210,6 +218,7 @@ __metadata:
     ajv: "npm:8.17.1"
     jsonc-parser: "npm:3.3.1"
     picomatch: "npm:^4.0.2"
+  checksum: 10c0/defe3bb9c225702b28de4afbb94cd48242944c837692e7fa58fd4d93bcb19328fcfba1d6e784f54c8e867e3d78a9fd61dfb4463eebd2e9cf98c21ce164c222a5
   languageName: node
   linkType: hard
 
@@ -230,6 +239,7 @@ __metadata:
     typescript-native: "npm:typescript@7.1.0-beta"
   bin:
     bc-builder: ./dist/bin/builder.js
+  checksum: 10c0/f752d55c7e9d12b7cd98f2639e31d95b4aa3c00a0776f679a06d35de56a855eb13d66f8d8824ac4623db02e72af03a219925079498d0fa22b8459dc2275874e6
   languageName: node
   linkType: hard
 
@@ -330,12 +340,14 @@ __metadata:
     "@bedrock-core/observable": "npm:^1.1.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/7b2358c0c8b90605fd3b3e2f56b97db6533f5997256c1b224c822b88087a5a55c0106d2b7113cdb9f44ad57aae42248bd3abc853dd8003e24223e8afec85fdee
   languageName: node
   linkType: hard
 
 "@bedrock-core/flexbox@npm:1.0.3":
   version: 1.0.3
   resolution: "@bedrock-core/flexbox@npm:1.0.3"
+  checksum: 10c0/eae326487be00a975bfa6e987758245489bffcdc61ed39aa2b226ca7ff60197577144067cf5752483f793db158f22c2933a80ddf5cddb8f8c5874d0f9dca9a5d
   languageName: node
   linkType: hard
 
@@ -385,6 +397,7 @@ __metadata:
   resolution: "@bedrock-core/i18n@npm:0.3.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/c026ab308bec5452234ad2feecadad18b9ee6d9b7896e87a7e837f8245266888574a4e60cd092f6d23230a57e46caf613862424f77c2bc05bd8070b13539a122
   languageName: node
   linkType: hard
 
@@ -404,6 +417,7 @@ __metadata:
       optional: true
     "@bedrock-core/server-runtime":
       optional: true
+  checksum: 10c0/58788d6c536aaffdf4b9117c2931d3d1997f3ad01ab0b7605fd546aab572d25034cb9b3fef41157c3abf489a62c070fd84b9be384f5587823408ac56e3d3a920
   languageName: node
   linkType: hard
 
@@ -418,6 +432,7 @@ __metadata:
       optional: true
     "@minecraft/server-ui":
       optional: true
+  checksum: 10c0/d848686b371282c48c77bfece18471a7f195e454e7982d22e261eff6d3870f1651e3f9e51fe76147489e7b6c880026cce6d723090f8cf440eaa499a6651be831
   languageName: node
   linkType: hard
 
@@ -428,6 +443,7 @@ __metadata:
     "@bedrock-core/i18n": ^0.3.0
     "@bedrock-core/navigation": ^0.14.0
     "@bedrock-core/ui-runtime": ^0.15.0
+  checksum: 10c0/f58c84585b7af9ccfaa3e389337d54f293bd47866500540d8fc1160c141311b66edb436466f552ebacd31a0f193528ce2566126c14e30e765548d39fcaafe71f
   languageName: node
   linkType: hard
 
@@ -440,6 +456,7 @@ __metadata:
     "@bedrock-core/sync": "npm:^2.0.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/58777c6a3bcb2b62e7f545fa76ab4c3751b5051810dd787e7ec4309365436791e6ba46985741754dce1748a3d73e88d93a67d2e7397050a01ce9ec0ec7cb1470
   languageName: node
   linkType: hard
 
@@ -450,6 +467,7 @@ __metadata:
     "@bedrock-core/observable": "npm:^1.1.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/1d959e4fc63abfe4653d136fc301e13cee20f32eaa1ae6accd32ff402b4ffe19d50329a4895fae10a355813ce769e7af5d26a3d17bb21b2713f474606c70846f
   languageName: node
   linkType: hard
 
@@ -466,6 +484,7 @@ __metadata:
   peerDependenciesMeta:
     "@bedrock-core/i18n":
       optional: true
+  checksum: 10c0/70200698dd48d808a2a95e6d48b0d1ae20cde54cffabf328858b655bcb80c2edbfa0ee8bf52697d6a453d6256f85151102cf627d585b29ca540681198c798d71
   languageName: node
   linkType: hard
 
@@ -485,6 +504,7 @@ __metadata:
       optional: true
     vitest:
       optional: true
+  checksum: 10c0/9e68e24223c2629be3eee74764b152ec20744c424f415a4298d4a9c82dcc4750dcf3502b0e94cbc7bcf5e4a6eb6da794147cc2cb17790539a874c3abc05db7ed
   languageName: node
   linkType: hard
 
@@ -510,6 +530,7 @@ __metadata:
       optional: true
     eslint-plugin-react-hooks:
       optional: true
+  checksum: 10c0/95717b7186becbcc789007008c3415ebc9e676b1eb393c957b3d128c027b65bd3f7776415d0cb8f3cd156884b721451d92cbe78b260167670f4ce2878377c710
   languageName: node
   linkType: hard
 
