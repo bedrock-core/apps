@@ -47,11 +47,20 @@ jobs:
           path: apps
           fetch-depth: 0
 
-      - run: corepack enable
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26.13.0
+          package-manager-cache: false
+
+      - name: Install pinned Corepack before restoring the Yarn cache
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable yarn
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.13.0
           cache: 'yarn'
           cache-dependency-path: apps/yarn.lock
 
@@ -84,13 +93,20 @@ jobs:
           path: apps
           fetch-depth: 0
 
-      - run: corepack enable
 
-      # Node 24, not 22: trusted publishing needs the OIDC exchange that shipped in
-      # npm 11.5.1, and the 22 line tops out at npm 10.9.x. 24.5.0+ bundles 11.5.1+.
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26.13.0
+          package-manager-cache: false
+
+      - name: Install pinned Corepack before restoring the Yarn cache
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable yarn
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.13.0
           cache: 'yarn'
           cache-dependency-path: apps/yarn.lock
           registry-url: 'https://registry.npmjs.org'

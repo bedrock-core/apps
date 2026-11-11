@@ -3,10 +3,11 @@ import { spawnSync } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import ts from 'typescript';
 
 /** Verify published APIs without sibling source redirects while retaining owned workspace aliases. */
 export async function validateRegistryTypes(root) {
+  const { default: ts } = await import('typescript');
+
   root = path.resolve(root);
   const projects = [path.join(root, 'tsconfig.json')];
   const packages = await readdir(path.join(root, 'packages'), { withFileTypes: true }).catch(error => {

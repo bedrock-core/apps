@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
+import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import ts from 'typescript';
 import { prepareRegistry, validateRegistryTypes } from './prepare-registry.mjs';
@@ -57,6 +60,20 @@ test('check mode is read-only and rejects local portal dependencies', async (t) 
   const portal = await fixture(t, { '@bedrock-core/ui': 'portal:../ui' });
 
   await assert.rejects(prepareRegistry(portal, { fetch: () => { throw new Error('unexpected network'); } }), /exact release version/);
+});
+
+test('registry checks load before dependencies are installed', async (t) => {
+  const root = await fixture(t);
+  const script = path.join(root, 'prepare-registry.mjs');
+
+  await writeFile(script, await readFile(new URL('./prepare-registry.mjs', import.meta.url)));
+  await promisify(execFile)(process.execPath, ['--input-type=module', '-e', `
+    const { prepareRegistry } = await import(${JSON.stringify(pathToFileURL(script).href)});
+    await prepareRegistry(${JSON.stringify(root)}, {
+      checkOnly: true,
+      fetch: async () => new Response('{}', { status: 200 }),
+    });
+  `], { cwd: root });
 });
 
 test('registry API checks ignore sibling source aliases while retaining owned workspace aliases', async (t) => {

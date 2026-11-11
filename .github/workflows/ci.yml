@@ -28,13 +28,19 @@ jobs:
         with:
           path: apps
 
-      # Corepack installs the exact Yarn named in package.json's `packageManager`, so CI and every
-      # developer run the same release without pinning it a second time here.
-      - run: corepack enable
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.13.0
+          package-manager-cache: false
+
+      - name: Install pinned Corepack before restoring the Yarn cache
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable yarn
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26.13.0
           cache: yarn
           cache-dependency-path: apps/yarn.lock
 
