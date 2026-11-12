@@ -15,6 +15,7 @@ import type { Installation, Runtime } from '@bedrock-core/server-runtime';
 import { defineRegistry, type RegistryAccessor, type RegistryDefinition } from '@bedrock-core/server-runtime/library';
 import { compiledSnapshotOf, compiledValuesOf, type DisplayText, type FunctionComponent, type PressEvent } from '@bedrock-core/ui-runtime';
 import { buildScreenTree } from '@bedrock-core/ui-runtime/compile';
+import { PAGE_SLOTS } from '../frame';
 
 /** Where a press on the page leads: the app the owning realm is asked for. */
 export type PageTarget = string;
@@ -59,7 +60,8 @@ export interface AddonPageReference {
 export function isAddonPageReference(value: unknown): value is AddonPageReference {
   return typeof value === 'object' && value !== null
     && 'values' in value && Array.isArray(value.values)
-    && 'targets' in value && Array.isArray(value.targets);
+    && 'targets' in value && Array.isArray(value.targets)
+    && value.values.length < PAGE_SLOTS && value.targets.length === value.values.length;
 }
 
 /**
@@ -68,6 +70,10 @@ export function isAddonPageReference(value: unknown): value is AddonPageReferenc
  */
 export function addonPageReference(Page: FunctionComponent): AddonPageReference {
   const { entries, values } = compiledValuesOf(buildScreenTree(Page), compiledSnapshotOf(Page));
+
+  if (values.length >= PAGE_SLOTS) {
+    throw new Error(`A catalog page needs ${String(values.length)} entries; at most ${String(PAGE_SLOTS - 1)} fit after its marker.`);
+  }
 
   return {
     v: 1,

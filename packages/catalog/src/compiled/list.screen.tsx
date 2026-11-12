@@ -105,8 +105,8 @@ export const AddonList: FunctionComponent<AddonListProps> = ({ model = EMPTY_MOD
                     <Panel position={'absolute'} left={0} top={0} width={'100%'} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={spacing.xs}>
                       <Image live={true} width={ROW_ICON} height={ROW_ICON} texture={item?.icon ?? ICON_MISSING} />
                       <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
-                        <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={NAME_MAX}>{item?.name ?? ''}</Text>
-                        <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{item?.version ?? ''}</Text>
+                        <Text width={'100%'} font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={NAME_MAX}>{item?.name ?? ''}</Text>
+                        <Text width={'100%'} font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{item?.version ?? ''}</Text>
                       </Panel>
                     </Panel>
                   </Panel>

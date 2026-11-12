@@ -25,7 +25,7 @@ const ICON_RESET = 'textures/ui/config/reset';
 const RESET_SIZE = CONFIG_ROW_HEIGHT;
 
 // Keys localize on the client; a string that takes a colour code bakes in the package's default locale.
-const { key, t } = i18n;
+const { raw, t } = i18n;
 
 export interface PickerModel {
   /** The trail the screen is titled with, composed by `trailText`. */
@@ -63,7 +63,7 @@ export const ScopePickerView: FunctionComponent<ScopePickerProps> = ({ model = E
           {hasServer && (
             <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>
               <Panel flexGrow={1}>
-                <MenuRow height={CONFIG_ROW_HEIGHT} title={key($ => $.scope.server.label)} subtitle={key($ => $.scope.server.hint)} onPress={model.scopePresses?.server ?? ((event): unknown => model.onScope?.('server', event))} />
+                <MenuRow height={CONFIG_ROW_HEIGHT} title={raw($ => $.scope.server.label)} subtitle={raw($ => $.scope.server.hint)} onPress={model.scopePresses?.server ?? ((event): unknown => model.onScope?.('server', event))} />
               </Panel>
               <OreButton variant={'secondary'} width={RESET_SIZE} height={RESET_SIZE} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} enabled={model.canReset === true} onPress={model.onReset}>
                 <Image width={10} height={10} texture={ICON_RESET} />
@@ -71,10 +71,10 @@ export const ScopePickerView: FunctionComponent<ScopePickerProps> = ({ model = E
             </Panel>
           )}
           {hasDimension && (
-            <MenuRow height={CONFIG_ROW_HEIGHT} title={key($ => $.scope.dimension.label)} subtitle={key($ => $.scope.dimension.hint)} onPress={model.scopePresses?.dimension ?? ((event): unknown => model.onScope?.('dimension', event))} />
+            <MenuRow height={CONFIG_ROW_HEIGHT} title={raw($ => $.scope.dimension.label)} subtitle={raw($ => $.scope.dimension.hint)} onPress={model.scopePresses?.dimension ?? ((event): unknown => model.onScope?.('dimension', event))} />
           )}
           {hasPlayer && (
-            <MenuRow height={CONFIG_ROW_HEIGHT} title={key($ => $.scope.player.label)} subtitle={key($ => $.scope.player.hint)} onPress={model.scopePresses?.player ?? ((event): unknown => model.onScope?.('player', event))} />
+            <MenuRow height={CONFIG_ROW_HEIGHT} title={raw($ => $.scope.player.label)} subtitle={raw($ => $.scope.player.hint)} onPress={model.scopePresses?.player ?? ((event): unknown => model.onScope?.('player', event))} />
           )}
           {isEmpty && (
             <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>

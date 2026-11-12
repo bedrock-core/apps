@@ -108,7 +108,7 @@ export const AddonPage: FunctionComponent<AddonPageProps> = ({ manifest, icon, e
             </OreButton>
           </Panel>
           <Card variant={'dark'}>
-            <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{description}</Text>
+            <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{{ translate: description }}</Text>
           </Card>
           <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
             <Text shadow={true} flexShrink={0}>{`§7${t($ => $.addons.authors)}`}</Text>

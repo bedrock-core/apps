@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { analyze, buildScreenTree, probeLiveness, shapeOf, visiblesAt } from '@bedrock-core/ui-runtime/compile';
+import { analyze, bakedWalk, buildScreenTree, isTextElementType, LIST_SLOT_TYPE, probeLiveness, shapeOf, visiblesAt } from '@bedrock-core/ui-runtime/compile';
 import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { AddonList, type AddonListModel } from '../list.screen';
@@ -27,6 +27,27 @@ const shapeAgainstBake = <P,>(Screen: FunctionComponent<P>, shown: JSX.Element):
 };
 
 describe('the compiled catalog keeps its shape when shown', () => {
+  it('reserves sidebar label widths before addon names and versions arrive', () => {
+    const labels = (tree: JSX.Element): number[] => {
+      const list = bakedWalk(tree).find(element => element.type === LIST_SLOT_TYPE);
+
+      expect(list).toBeDefined();
+
+      return bakedWalk(list!).filter(element => isTextElementType(element.type))
+        .map(element => Number(element.props.jsonUIWidth));
+    };
+    const baked = labels(buildScreenTree(<AddonList />));
+    const shown = labels(buildScreenTree(<AddonList model={{
+      rows: [{ id: 'graves', name: { translate: 'graves.pack.name' }, version: '1.0.0' }],
+      selected: 0,
+      main: { kind: 'fallback' },
+    }} />));
+
+    expect(baked).toHaveLength(24);
+    expect(baked.every(width => width > 50)).toBe(true);
+    expect(shown).toEqual(baked);
+  });
+
   it('addon list', () => {
     const model: AddonListModel = {
       rows: [{ id: 'a', name: { translate: 'a.meta.name' }, version: '1' }, { id: 'b', name: 'B', version: '2', icon: 'x' }],

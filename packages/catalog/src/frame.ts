@@ -24,8 +24,8 @@ export const MAIN = {
   height: FRAME.height - (PADDING + HEADER_HEIGHT + HEADER_GAP) - PADDING_BOTTOM,
 } as const;
 
-/** Entries reserved for the page: the marker, then the page's own presses. */
-export const PAGE_SLOTS = 8;
+/** Entries reserved for the page: its marker, presses and value carriers. */
+export const PAGE_SLOTS = 16;
 
 /** Rows the sidebar is baked with; a world with more addons shows the first. */
 export const ADDONS_MAX = 12;

@@ -7,7 +7,6 @@ import { navigation } from '@bedrock-core/navigation/core';
 import { isAddonPageReference, pages, type AddonPageReference } from '../integration/pages';
 import { FRAMEWORK_ADDON_ID, FRAMEWORK_APPS, FRAMEWORK_EMBED, FRAMEWORK_VERSION, frameworkPageReference } from '../framework';
 import { i18n } from '../i18n';
-import { PAGE_SLOTS } from '../frame';
 import { AddonList, addonListElement, type AddonListMain, type AddonListModel, type AddonListRow } from './list.screen';
 
 /**
@@ -76,7 +75,7 @@ const pageSlots = (namespace: string, reference: AddonPageReference, apps: reado
     return target === null ? value : (apps.includes(target) ? FLAG_ON : FLAG_OFF);
   });
 
-  return [embedMarker(namespace, name), ...values].slice(0, PAGE_SLOTS);
+  return [embedMarker(namespace, name), ...values];
 };
 
 export function presentAddonList(core: Runtime, player: Player, openers: AddonListOpeners, selectedId?: string): void {
