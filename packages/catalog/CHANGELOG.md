@@ -1,5 +1,13 @@
 # @bedrock-core/catalog
 
+## 0.3.1
+
+### Patch Changes
+
+- [`62af902`](https://github.com/bedrock-core/apps/commit/62af9026b2c4e4e1769d1fa0621ee0b1506f801d) Thanks [@drav0011](https://github.com/drav0011)! - Preserve catalog sidebar label widths and client translations for addon descriptions and configuration scope labels and hints. Catalog pages support up to 15 entries after their marker and reject pages exceeding that capacity.
+
+  Rebuild both behavior and resource packs when updating so compiled catalog entry indices match the runtime.
+
 ## 0.3.0
 
 ### Minor Changes
