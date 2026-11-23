@@ -13,11 +13,12 @@
  * the unqualified alias for it. There is no way to opt out (`CustomCommand` has no alias field)
  * and no way to detect it (`CustomCommandOrigin` carries no command name), so a shared `/catalog`
  * would silently mean one arbitrary addon's. What can be fixed is the player not knowing which,
- * so the description leads with the namespace.
+ * so the description names the pack.
  *
  * The same rule binds every other command the addon registers: build the name from `core.id`,
  * never a string literal, so a rename survives.
  */
+import { currentI18n } from '@bedrock-core/i18n';
 import { CommandPermissionLevel, system } from '@minecraft/server';
 import type { CustomCommandOrigin, CustomCommandRegistry, CustomCommandResult, Player } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
@@ -28,16 +29,22 @@ export type OpenCallback = (player: Player) => void;
 /** Register `<namespace>:catalog`. Called by the `catalog()` declaration unless commands are off. */
 export function registerCatalogCommand(core: Runtime, onOpen: OpenCallback): void {
   system.beforeEvents.startup.subscribe((ev) => {
-    register(ev.customCommandRegistry, core.id, onOpen);
+    register(ev.customCommandRegistry, core, onOpen);
   });
 }
 
-function register(registry: CustomCommandRegistry, ns: string, onOpen: OpenCallback): void {
+function register(registry: CustomCommandRegistry, core: Runtime, onOpen: OpenCallback): void {
+  const ns = core.id;
+  const name = core.manifest.header.name;
+  const pack = name === undefined || name === 'pack.name'
+    ? currentI18n()?.resolve(`${ns}.pack.name`) || 'this pack'
+    : name;
+
   try {
     registry.registerCommand(
       {
         name: `${ns}:catalog`,
-        description: `${ns} - browse every installed addon, with this one selected.`,
+        description: `Browse addons starting with ${pack}.`,
         permissionLevel: CommandPermissionLevel.Any,
         cheatsRequired: false,
       },

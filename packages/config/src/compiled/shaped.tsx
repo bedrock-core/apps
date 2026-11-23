@@ -101,8 +101,8 @@ const NOTE_SCALE = 0.8;
 /** Space between a caption and its note, and between a caption and the box under it. */
 const NOTE_GAP = spacing.sm;
 
-/** Space a slider's track keeps below the lines above it, which the thumb overhangs. */
-const TRACK_GAP = spacing.sm;
+/** Leaves a line for the native value above the centered slider thumb. */
+const SLIDER_HEIGHT = 38;
 
 /** One setting's rows, stacked: caption, then what follows it. */
 const stacked = (parts: JSX.Element[]): JSX.Element => (
@@ -151,14 +151,11 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
     const max = entry.max ?? 100;
     const value = typeof current === 'number' ? current : Number(current ?? entry.default ?? 0);
 
-    return (
-      <Panel flexDirection={'column'} gap={TRACK_GAP} width={'100%'}>
-        <Panel flexDirection={'column'} gap={NOTE_GAP} width={'100%'}>
-          {[caption, ...note(entry.description)]}
-        </Panel>
-        <Slider name={name} min={min} max={max} step={entry.step} defaultValue={value} width={'100%'} />
-      </Panel>
-    );
+    return stacked([
+      caption,
+      ...note(entry.description),
+      <Slider name={name} min={min} max={max} step={entry.step} defaultValue={value} width={'100%'} height={SLIDER_HEIGHT} />,
+    ]);
   }
 
   if (entry.type === 'multiselect' && entry.options !== undefined) {
@@ -210,10 +207,10 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
 const BODY_PADDING = spacing.sm;
 
 /** A row's inset on both sides, inside the dividers, which span the card's width. */
-const ROW_PADDING_X = spacing.lg;
+const ROW_PADDING_X = spacing.md;
 
 /** Space a row keeps above and below itself, either side of the divider that follows it. */
-const ROW_PADDING_Y = spacing.sm + spacing.xs;
+const ROW_PADDING_Y = spacing.sm;
 
 /** The submit button's row, held below the scroll rather than scrolling with it. */
 const ACTION_HEIGHT = 20;
@@ -245,18 +242,14 @@ export const sheet = (model: LeafModel | undefined, rows: readonly [string, Entr
         <Header trail={model?.trail ?? ''} cancel={i18n.key($ => $.action.cancel)} height={HEADER_HEIGHT} />
         <Panel flexDirection={'column'} gap={spacing.xs} paddingBottom={BODY_PADDING} marginLeft={BODY.x} width={BODY.width} height={BODY.height}>
           <Scroll width={BODY.width} height={scrollHeight}>
-            {/* The whole column the region shows: the layout leaves the track's
-                width beside it only when the content actually scrolls. */}
-            <Panel flexDirection={'column'} width={'100%'}>
-              {rows.map(([key, entry]): JSX.Element => (
-                <Panel flexDirection={'column'} gap={ROW_PADDING_Y} paddingTop={ROW_PADDING_Y} stack={true}>
-                  <Panel width={'100%'} paddingLeft={ROW_PADDING_X} paddingRight={ROW_PADDING_X}>
-                    {rowFor(key, entry, model)}
-                  </Panel>
-                  <Text testId={`error:${key}`} visible={model?.errors?.[key] !== undefined} liveVisible={true} width={'100%'} height={18} paddingLeft={ROW_PADDING_X} paddingRight={ROW_PADDING_X} color={[1, 0.35, 0.35]} wordBreak={'break-word'} maxLength={128}>{model?.errors?.[key] ?? ''}</Text>
-                  <Divider />
-                </Panel>
-              ))}
+            <Panel flexDirection={'column'} width={'100%'} stack={true}>
+              {rows.flatMap(([key, entry]): JSX.Element[] => [
+                <Panel width={'100%'} paddingLeft={ROW_PADDING_X} paddingRight={ROW_PADDING_X} paddingTop={ROW_PADDING_Y} paddingBottom={ROW_PADDING_Y}>
+                  {rowFor(key, entry, model)}
+                </Panel>,
+                <Text testId={`error:${key}`} visible={model?.errors?.[key] !== undefined} liveVisible={true} width={'100%'} height={18} paddingLeft={ROW_PADDING_X} paddingRight={ROW_PADDING_X} color={[1, 0.35, 0.35]} wordBreak={'break-word'} maxLength={128}>{model?.errors?.[key] ?? ''}</Text>,
+                <Divider />,
+              ])}
             </Panel>
           </Scroll>
           <Form.Button type={'submit'} width={contentWidth} height={ACTION_HEIGHT} marginLeft={BODY_PADDING} justifyContent={'center'} alignItems={'center'}>

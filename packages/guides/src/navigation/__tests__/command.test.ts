@@ -1,4 +1,5 @@
 import { installDeclaration, stopInstallations } from '../../../../../test/install';
+import { createI18n } from '@bedrock-core/i18n';
 import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import { registerCompiledScreen, type FunctionComponent } from '@bedrock-core/ui-runtime';
 import { closeUi, navigateAsync } from '@bedrock-core/navigation';
@@ -57,9 +58,11 @@ const cleanups: (() => void)[] = [];
 
 function install(commands = true) {
   const id = 'command-owner';
+  createI18n({ en_US: { pack: { name: 'Example Pack' } } }, { namespace: id });
   const services = new Map<string, unknown>();
   const installations: (() => void)[] = [];
   const core: Runtime = { id, registered: true,
+    manifest: { header: { name: 'pack.name' } },
     registryFixture: { write: (): void => {}, read: (): undefined => undefined },
     service: (key: string) => services.get(key),
     provideService: (key: string, value: unknown) => services.set(key, value),
@@ -111,6 +114,7 @@ describe('Guide command and Catalog entry', () => {
     const [command, callback] = registry.mock.calls[0];
 
     expect(command.name).toBe(`${id}:guide`);
+    expect(command.description).toBe('Open the guide for Example Pack.');
     expect(command.cheatsRequired).toBe(false);
     expect(callback({ sourceEntity: player } as unknown as CustomCommandOrigin)).toEqual({ status: 0 });
     expect(host.renderDestination).not.toHaveBeenCalled();

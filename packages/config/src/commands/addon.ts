@@ -24,18 +24,6 @@
  * the third argument is the target, for every writing verb it is the value or item and the fourth
  * is the target.
  *
- * ## Every description starts with the namespace
- *
- * Bedrock gives the first pack to register a name an unqualified alias for it — the first
- * `x:guide` in the world also becomes plain `/guide`, and later packs are told to use their full
- * name. There is no way to opt out (`CustomCommand` has no alias field) and no way to detect it
- * (`CustomCommandOrigin` carries no command name), so `/guide` silently means one arbitrary
- * addon's guide and nothing in the callback can tell.
- *
- * What can be fixed is the player not knowing which. The command list shows the description, so
- * every one of these leads with the namespace: `/guide` reads as "bt_gc_economy - open this
- * addon's in-game guide", and the arbitrariness stops being a surprise.
- *
  * ## The same rule binds the addon's OWN commands
  *
  * Commands and enums use the owning addon's manifest namespace, exposed as `core.id`:
@@ -46,7 +34,7 @@
  *
  *   ev.customCommandRegistry.registerEnum(`${ns}:shopaction`, ['buy', 'sell']);
  *   ev.customCommandRegistry.registerCommand(
- *     { name: `${ns}:shop`, description: `${ns} - open the shop.`, ... },
+ *     { name: `${ns}:shop`, description: 'Open the Economy shop.', ... },
  *     origin => ...,
  *   );
  * });
@@ -71,6 +59,7 @@
  * is not a cheat, and gating it on a world toggle would make the UI unreachable on exactly the
  * survival worlds it is most useful on. Authority comes from the permission level instead.
  */
+import { currentI18n } from '@bedrock-core/i18n';
 import { translations } from '@bedrock-core/server-runtime/i18n';
 import { CommandPermissionLevel, CustomCommandParamType, system } from '@minecraft/server';
 import type {
@@ -118,6 +107,10 @@ export function registerAddonCommands(core: Runtime, onOpen: OpenCallback): void
 }
 
 function registerAll(reg: CustomCommandRegistry, core: Runtime, ns: string, onOpen: OpenCallback): void {
+  const name = core.manifest.header.name;
+  const pack = name === undefined || name === 'pack.name'
+    ? currentI18n()?.resolve(`${ns}.pack.name`) || 'this pack'
+    : name;
   const local = configOf(core).local;
   const scoped: ScopedSchemas | undefined = local && {
     server: local.server.schema,
@@ -133,10 +126,10 @@ function registerAll(reg: CustomCommandRegistry, core: Runtime, ns: string, onOp
   const verbs = (ownKeys.length > 0 || allKeys.length > 0)
     && attempt(ns, verbEnum, () => { reg.registerEnum(verbEnum, [...VERBS]); });
 
-  registerConfig(reg, core, ns, verbs ? verbEnum : undefined, scoped?.player, ownKeys, onOpen);
+  registerConfig(reg, core, ns, pack, verbs ? verbEnum : undefined, scoped?.player, ownKeys, onOpen);
 
   if (verbs && allKeys.length > 0 && scoped) {
-    attempt(ns, `${ns}:configat`, () => { registerConfigAt(reg, core, ns, verbEnum, scoped, allKeys); });
+    attempt(ns, `${ns}:configat`, () => { registerConfigAt(reg, core, ns, pack, verbEnum, scoped, allKeys); });
   }
 }
 
@@ -151,6 +144,7 @@ function registerConfig(
   reg: CustomCommandRegistry,
   core: Runtime,
   ns: string,
+  pack: string,
   verbEnum: string | undefined,
   schema: FlatSchemaLike | undefined,
   ownKeys: string[],
@@ -167,9 +161,7 @@ function registerConfig(
     reg.registerCommand(
       {
         name: `${ns}:config`,
-        description: editable
-          ? `${ns} - open this addon's config, or: get <setting> | set <setting> <value> | add|remove <setting> <item>`
-          : `${ns} - open this addon's config.`,
+        description: `Open settings for ${pack}.`,
         permissionLevel: CommandPermissionLevel.Any,
         cheatsRequired: false,
         optionalParameters: editable
@@ -238,6 +230,7 @@ function registerConfigAt(
   reg: CustomCommandRegistry,
   core: Runtime,
   ns: string,
+  pack: string,
   verbEnum: string,
   scoped: ScopedSchemas,
   allKeys: string[],
@@ -251,7 +244,7 @@ function registerConfigAt(
   reg.registerCommand(
     {
       name: `${ns}:configat`,
-      description: `${ns} - any setting, any scope: get <scope.setting> [target] | set|add|remove <scope.setting> <value> [target]`,
+      description: `Manage settings for ${pack}.`,
       permissionLevel: CommandPermissionLevel.Admin,
       cheatsRequired: false,
       mandatoryParameters: [
