@@ -104,9 +104,9 @@ __metadata:
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@vitest/coverage-v8": "npm:^4.1.5"
     eslint: "npm:^10.3.0"
-    typescript: "npm:^6.0.3"
+    typescript: "npm:*"
     typescript-eslint: "npm:^8.59.2"
-    vitest: "npm:^4.1.5"
+    vitest: "npm:*"
   languageName: unknown
   linkType: soft
 
@@ -271,6 +271,7 @@ __metadata:
     "@bedrock-core/ui": ^0.15.0
     "@bedrock-core/ui-runtime": ^0.15.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+    "@minecraft/vanilla-data": 1.26.50 || 1.26.60 || 1.26.70-preview.26
   peerDependenciesMeta:
     "@bedrock-core/i18n":
       optional: true
@@ -315,6 +316,7 @@ __metadata:
     "@bedrock-core/ui": ^0.15.0
     "@bedrock-core/ui-runtime": ^0.15.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+    "@minecraft/vanilla-data": 1.26.50 || 1.26.60 || 1.26.70-preview.26
   peerDependenciesMeta:
     "@bedrock-core/i18n":
       optional: true
@@ -376,6 +378,7 @@ __metadata:
     "@bedrock-core/ui": ^0.15.0
     "@bedrock-core/ui-runtime": ^0.15.0
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+    "@minecraft/vanilla-data": 1.26.50 || 1.26.60 || 1.26.70-preview.26
   peerDependenciesMeta:
     "@bedrock-core/i18n":
       optional: true

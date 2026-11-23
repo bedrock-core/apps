@@ -2,22 +2,103 @@ name: Minecraft API compatibility
 
 on:
   push:
-    branches: [main]
+    branches: [renovate/minecraft-sources]
   pull_request:
+    paths:
+      - 'sources.json'
+      - '.github/workflows/minecraft-compatibility.yml'
   workflow_dispatch:
-  repository_dispatch:
-    types: [minecraft-compatibility]
 
 permissions:
   contents: read
 
+env:
+  ACT: ''
+
 concurrency:
-  group: minecraft-compatibility-${{ github.ref }}
+  group: minecraft-compatibility-apps-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  check:
-    uses: bedrock-core/bds-runner/.github/workflows/minecraft-compatibility.yml@main
+  resolve:
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      github.head_ref != 'automation/minecraft-update'
+    uses: bedrock-core/.github/.github/workflows/minecraft-release.yml@main
     with:
-      project: apps
-      builder-ref: ${{ vars.COMPATIBILITY_BUILDER_REF || '' }}
+      require-gametest: true
+
+  prepare:
+    if: github.event_name == 'push'
+    needs: resolve
+    runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.update.outputs.base }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: bedrock-core/.github/.github/actions/prepare-minecraft-update@main
+        id: update
+        with:
+          matrix: ${{ needs.resolve.outputs.matrix }}
+
+  check:
+    needs: [resolve, prepare]
+    if: >-
+      !cancelled() && needs.resolve.result == 'success' &&
+      (needs.prepare.result == 'success' || needs.prepare.result == 'skipped')
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.base || github.sha }}
+          persist-credentials: false
+      - uses: bedrock-core/.github/.github/actions/apply-minecraft-update@main
+        if: needs.prepare.result == 'success'
+      - uses: bedrock-core/.github/.github/actions/setup-minecraft-compatibility@main
+        id: setup
+        with:
+          target: ${{ toJSON(matrix) }}
+          fixtures: packages/test-fixtures
+      - run: yarn typecheck
+      - run: yarn build
+      - run: yarn test
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+      - uses: actions/cache@v6
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' && matrix.id != 'locked' }}
+        with:
+          path: .bds/cache
+          key: bds-${{ runner.os }}-${{ matrix.gameChannel }}-${{ matrix.gameVersion }}
+      - run: yarn test:mc
+        id: gametests
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' && matrix.id != 'locked' }}
+        env:
+          BC_BDS_VERSION: ${{ matrix.gameVersion }}
+          BC_BDS_CHANNEL: ${{ matrix.gameChannel }}
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() && steps.gametests.outcome != 'skipped' && env.ACT != 'true' }}
+        with:
+          name: compatibility-${{ matrix.id }}
+          path: .bds/logs/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+  publish:
+    if: github.event_name == 'push'
+    needs: [prepare, check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: bedrock-core/.github/.github/actions/publish-minecraft-update@main
+        with:
+          base: ${{ needs.prepare.outputs.base }}
