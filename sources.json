@@ -2,16 +2,16 @@
   "bds": {
     "repository": "https://github.com/Bedrock-OSS/BDS-Versions",
     "branch": "main",
-    "commit": "0000000000000000000000000000000000000000"
+    "commit": "5ffff88a55df042dbd3a8b854bef50cf6bf0ab13"
   },
   "npm": {
-    "@minecraft/common": "0",
-    "@minecraft/server": "0",
-    "@minecraft/server-ui": "0",
-    "@minecraft/server-gametest": "0",
-    "@minecraft/vanilla-data": "0"
+    "@minecraft/common": "1790805433716",
+    "@minecraft/server": "1795038386527",
+    "@minecraft/server-ui": "1795038438167",
+    "@minecraft/server-gametest": "1795038298291",
+    "@minecraft/vanilla-data": "1794933750848"
   },
   "releases": {
-    "Mojang/bedrock-samples": "0"
+    "Mojang/bedrock-samples": "1795210433000"
   }
 }
