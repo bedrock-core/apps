@@ -90,7 +90,7 @@
 		"@bedrock-core/server-runtime": "^0.3.0",
 		"@bedrock-core/ui": "^0.15.0",
 		"@bedrock-core/ui-runtime": "^0.15.0",
-		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
+		"@minecraft/server": "~2.10.0 || ~2.11.0 || 2.12.0-rc.1.26.70-preview.26 || 2.13.0-beta.1.26.70-preview.26",
 		"@minecraft/vanilla-data": "1.26.50 || 1.26.60 || 1.26.70-preview.26"
 	},
 	"peerDependenciesMeta": {
