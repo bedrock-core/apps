@@ -76,7 +76,7 @@
 		"@bedrock-core/ui": "0.15.0",
 		"@bedrock-core/ui-runtime": "0.15.0",
 		"@bedrock-core/ui-compiler": "0.3.2",
-		"@minecraft/common": "1.2.0",
+		"@minecraft/common": "1.3.0",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",
 		"@minecraft/vanilla-data": "1.26.50",
