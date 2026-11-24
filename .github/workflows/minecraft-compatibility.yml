@@ -95,10 +95,8 @@ jobs:
     if: github.event_name == 'push'
     needs: [prepare, check]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: bedrock-core/.github/.github/actions/publish-minecraft-update@main
         with:
           base: ${{ needs.prepare.outputs.base }}
+          token: ${{ secrets.MINECRAFT_AUTOMATION_TOKEN }}
