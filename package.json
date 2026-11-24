@@ -58,7 +58,7 @@
 		"@minecraft/server": "*",
 		"@minecraft/server-ui": "*",
 		"@minecraft/vanilla-data": "*",
-		"@stylistic/eslint-plugin": "^5.10.0",
+		"@stylistic/eslint-plugin": "^6.0.0",
 		"@vitest/coverage-v8": "^4.1.5",
 		"eslint": "^10.3.0",
 		"typescript": "*",
