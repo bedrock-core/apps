@@ -1,5 +1,11 @@
 # @bedrock-core/guides
 
+## 0.4.2
+
+### Patch Changes
+
+- [`0e9d896`](https://github.com/bedrock-core/apps/commit/0e9d89698efe30d365887156cc4473639812210c) Thanks [@drav0011](https://github.com/drav0011)! - Use short command descriptions with the pack's display name for Config, Catalog, and Guides. Tighten Config's field spacing and keep the slider value clear of the track.
+
 ## 0.4.1
 
 ### Patch Changes
