@@ -50,7 +50,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
           package-manager-cache: false
 
       - name: Install pinned Corepack before restoring the Yarn cache
@@ -60,7 +60,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
           cache: 'yarn'
           cache-dependency-path: apps/yarn.lock
 
@@ -96,7 +96,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
           package-manager-cache: false
 
       - name: Install pinned Corepack before restoring the Yarn cache
@@ -106,7 +106,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
           cache: 'yarn'
           cache-dependency-path: apps/yarn.lock
           registry-url: 'https://registry.npmjs.org'
